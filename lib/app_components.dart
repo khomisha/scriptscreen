@@ -1,0 +1,35 @@
+
+// ignore_for_file: prefer_const_constructors_in_immutables, slash_for_doc_comments
+
+import 'package:flutter/material.dart';
+import 'package:scriptscreen/form_presenter.dart';
+import 'base/base_components.dart';
+import 'list_presenter.dart';
+
+/**
+ * Data list with data form to edit selected list item
+ */
+class DataList extends BaseList< ListPresenter > {
+
+    DataList( { Key? key } ) : super( key: key );
+
+    @override
+    T getForm< T extends BaseForm >( ) {
+        return DataForm( ) as T;
+    }
+}
+
+class DataForm extends BaseForm< ListPresenter > {
+
+    DataForm( { Key? key } ) : super( key: key );
+}
+
+class ProjectForm extends BaseForm< FormPresenter > {
+
+    ProjectForm( { Key? key } ) : super( key: key );
+}
+
+class ScriptForm extends BaseForm< FormPresenter > {
+
+    ScriptForm( { Key? key } ) : super( key: key );
+}
