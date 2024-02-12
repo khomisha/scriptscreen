@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <!--<meta charset="UTF-8">-->
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="./tinymce/js/tinymce/tinymce.min.js"></script>
+    <script>
+      tinymce.init({
+        selector: 'textarea#mytextarea',
+        height: 500,
+        plugins: [
+          'advlist', 'lists',
+          'searchreplace', 'visualblocks', 'charmap', 'fullscreen',
+          'insertdatetime', 'noneditable', 'paste', 'help', 'wordcount'
+        ],
+        toolbar: 'undo redo | blocks | fontfamily | fontsize |' +
+          'bold italic underline | alignleft aligncenter alignright alignjustify |' +
+          'bullist numlist outdent indent | charmap | searchreplace | help',
+        init_instance_callback: function(editor) {
+          editor.execCommand('mceFullScreen');
+        },
+        content_style: 'body { font-family:Courier New,Arial,sans-serif; font-size:12px }',
+        promotion: false,
+        menubar: false,
+        forced_root_block : 'div'
+      });
+    </script>
+  </head>
+
+  <body>
+      <textarea id="mytextarea"></textarea>
+  </body>
+</html>
+
+
+
+
+
