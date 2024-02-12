@@ -6,10 +6,9 @@ import 'package:path/path.dart' as path;
 class Config {    
     static final Config _instance = Config._( );
     Map< String, dynamic > config = < String, dynamic >{ };
-    late final String _fileName;
+    final String _fileName = path.join( 'assets', 'cfg', 'app_settings.json' );
 
     Config._( ) {
-        _fileName = path.join( 'assets', 'cfg', 'app_settings.json' );
         var file = File( _fileName );
         config = json.decode( file.readAsStringSync( ) );
     }

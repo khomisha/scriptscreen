@@ -34,7 +34,7 @@ dynamic emptyItem( String type ) {
                 < ListItem > [],
                 < ListItem > [],
                 < ListItem > [],
-                ""
+                "sun shine"
             );
         case PROJECT:
             return ProjectData( 

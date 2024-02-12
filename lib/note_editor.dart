@@ -92,6 +92,7 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      * Deletes the specified component and based on custom data
      */
     void delete( String componentId ) {
+        selectComponent( componentId );
         presenter.delete( getItemIndex( componentId ) );
         refresh( );
     }
@@ -150,7 +151,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
             presenter.onSelect( null, getItemIndex( componentId ) );
         }
         selectComponent( componentId );
-        debugPrint( componentId );
     }
 
     @override
@@ -325,7 +325,10 @@ class Note extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left
         );
-        var count = Text( ( componentData.data.customData.index ).toString( ), style: Style( ).theme.textTheme.labelSmall );
+        var count = Text( 
+            ( componentData.data.customData.index ).toString( ), 
+            style: Style( ).theme.textTheme.labelSmall 
+        );
         var editBtn = Focus(
             descendantsAreFocusable: false,
             canRequestFocus: false,

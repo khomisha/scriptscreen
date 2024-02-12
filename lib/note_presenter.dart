@@ -30,6 +30,14 @@ class NotePresenter extends WidgetPresenter {
     }
 
     @override
+    void delete( int index ) {
+        if( list[ index ].selected ) {
+            Editor( ).setContent( "" );
+        }
+        super.delete( index );
+    }
+
+    @override
     void startEdit( int index ) {
         super.startEdit( index );
         stackIndex = 1;
@@ -84,20 +92,30 @@ class NotePresenter extends WidgetPresenter {
     /**
      * On select saves selected note (if any) content and loads selecting 
      * note content to the text editor.
-     * selectedIndex the selected note index
-     * selectingIndex the selecting note index 
+     * selected the selected note index
+     * selecting the selecting note index 
      */
-    Future< void > onSelect( int? selectedIndex, int selectingIndex ) async {
+    Future< void > onSelect( int? selected, int selecting ) async {
         if( !Editor( ).created ) {
             Editor( ).create( );
             await Future.delayed( const Duration( seconds: 2 ) );   // ???   
         }
-        if( selectedIndex != null ) {
+        if( selected != null ) {
+            var note = list[ selected ].customData as NoteData;
+            Editor( ).getContent( ).then( ( value ) { note.body = value.substring( 1, value.length - 1 ); } );
+            AppPresenter( ).save( );
+        }
+        var note = list[ selecting ].customData as NoteData;
+        Editor( ).setContent( note.body );
+    }
+
+    /**
+     * Refreshes selected (if any) note content
+     */
+    void refreshNoteData( ) {
+        if( selectedIndex > -1 ) {
             var note = list[ selectedIndex ].customData as NoteData;
             Editor( ).getContent( ).then( ( value ) { note.body = value.substring( 1, value.length - 1 ); } );
-            //AppPresenter( ).save( );
         }
-        var note = list[ selectingIndex ].customData as NoteData;
-        Editor( ).setContent( note.body );
     }
 }

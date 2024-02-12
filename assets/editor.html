@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-      <!--<meta charset="UTF-8">-->
+      <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="./tinymce/js/tinymce/tinymce.min.js"></script>
     <script>
@@ -11,18 +11,21 @@
         plugins: [
           'advlist', 'lists',
           'searchreplace', 'visualblocks', 'charmap', 'fullscreen',
-          'insertdatetime', 'noneditable', 'paste', 'help', 'wordcount'
+          'insertdatetime', 'help', 'wordcount', 'code'
         ],
-        toolbar: 'undo redo | blocks | fontfamily | fontsize |' +
+        toolbar: 'undo redo | fontfamily fontsize |' +
           'bold italic underline | alignleft aligncenter alignright alignjustify |' +
-          'bullist numlist outdent indent | charmap | searchreplace | help',
+          'bullist numlist outdent indent | charmap code | searchreplace | help',
         init_instance_callback: function(editor) {
           editor.execCommand('mceFullScreen');
         },
-        content_style: 'body { font-family:Courier New,Arial,sans-serif; font-size:12px }',
+        content_style: 'body { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
         promotion: false,
         menubar: false,
-        forced_root_block : 'div'
+        forced_root_block : 'div',
+        contextmenu: false,
+        // example <div class="nonedit">You cannot edit this</div>
+        noneditable_class: 'nonedit'
       });
     </script>
   </head>

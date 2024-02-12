@@ -107,4 +107,12 @@ abstract class Presenter {
             wp.list = getData( type );
         }
     }
+
+    /**
+     * Returns specified presenter
+     * type the presenter type
+     */
+    WidgetPresenter getPresenter( String type ) {
+        return _subscribers[ type ]!;
+    }
 }

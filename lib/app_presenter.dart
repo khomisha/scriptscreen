@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:scriptscreen/base/config.dart';
 import 'package:scriptscreen/base/root_widget.dart';
 import 'package:scriptscreen/data.dart';
+//import 'package:scriptscreen/note_presenter.dart';
 import 'app_const.dart';
 import 'base/util.dart';
 import 'presenter.dart';
@@ -19,7 +20,11 @@ class AppPresenter extends Presenter {
     AppPresenter._( ) : super( ) {
         _timer = Timer.periodic( 
             Duration( seconds: Config( ).config[ 'default_autosave' ] ), 
-            ( _ ) { save( ); } 
+            ( _ ) { 
+                // var notePresenter = getPresenter( NOTE ) as NotePresenter;
+                // notePresenter.refreshNoteData( );
+                save( ); 
+            } 
         );
     }
 

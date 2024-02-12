@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:path/path.dart' as p;
+import 'package:scriptscreen/base/config.dart';
 
 class Editor {
     static final Editor _instance = Editor._( );
@@ -13,7 +14,7 @@ class Editor {
     late String _path;
 
     Editor._( ) {
-        _path = p.join( p.current, 'editor.html' );
+        _path = p.join( p.current, 'assets', Config( ).config[ 'editor_config' ] );
     }
 
     factory Editor( ) {
@@ -25,8 +26,8 @@ class Editor {
             configuration: CreateConfiguration(
                 userDataFolderWindows: p.join( Platform.environment[ 'HOME' ] ?? Platform.environment[ 'USERPROFILE' ]!, 'editor' ),
                 titleBarHeight: 0,
-                windowWidth: 1000,
-                windowHeight: 200
+                windowWidth: 1200,
+                windowHeight: 400
             )
         );
         _webview
