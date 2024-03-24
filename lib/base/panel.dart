@@ -26,8 +26,8 @@ class Panel extends StatefulWidget {
     final Icon icon;
 
     const Panel( 
-        { Key? key, required this.title, required this.childWidget, required this.icon, this.menu } 
-    ) : super( key: key );
+        { super.key, required this.title, required this.childWidget, required this.icon, this.menu } 
+    );
 
     @override
     State< Panel > createState( ) => _PanelState( );

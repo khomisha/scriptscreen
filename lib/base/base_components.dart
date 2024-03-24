@@ -19,7 +19,7 @@ abstract class BaseList< V extends WidgetPresenter > extends StatelessWidget {
     final Agent agent = Agent( );
     final bool addBtnVisible;
 
-    BaseList( { Key? key, this.addBtnVisible = false } ) : super( key: key );
+    BaseList( { super.key, this.addBtnVisible = false } );
 
     @override
     Widget build( BuildContext context ) {
@@ -114,7 +114,7 @@ abstract class BaseForm< T extends WidgetPresenter > extends StatelessWidget {
     final _fields = < String, Field > { };
     final Agent agent = Agent( );
 
-    BaseForm( { Key? key } ) : super( key: key );
+    BaseForm( { super.key } );
 
     @override
     Widget build( BuildContext context ) {  
@@ -154,7 +154,6 @@ abstract class BaseForm< T extends WidgetPresenter > extends StatelessWidget {
             padding: const EdgeInsets.symmetric( horizontal: 32, vertical: 6 ),
             children: widgets
         );
-
     }
 
     /**
@@ -206,7 +205,7 @@ abstract class BaseForm< T extends WidgetPresenter > extends StatelessWidget {
                 }
             }
         }
-       agent.presenter.endEdit( true );
+        agent.presenter.endEdit( true );
     }
 
     /**

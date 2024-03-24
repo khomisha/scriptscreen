@@ -45,7 +45,11 @@ class AppPresenter extends Presenter {
                 rootWidget.destroy( );
             }
         } else if( data.attributes[ 'result' ] == FAILURE ) {
-            logger.e( data.attributes[ ERR_MSG ], data.attributes[ ERROR ], data.attributes[ STACK ] );
+            logger.e( 
+                data.attributes[ ERR_MSG ], 
+                error: data.attributes[ ERROR ], 
+                stackTrace: data.attributes[ STACK ] 
+            );
         }
         rootWidget.manageSplashscreen( false );
     }

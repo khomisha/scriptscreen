@@ -15,10 +15,10 @@ abstract class WidgetPresenter extends ChangeNotifier {
         _list = value;
         _list.sort( );
         selectedIndex = _list.isEmpty ? -1 : 0;
-        debugPrint( "refresh data" );
         notifyListeners( );
     }
     bool readOnly = true;
+    bool adding = false;
 
     /**
      * Adds empty data
@@ -31,6 +31,7 @@ abstract class WidgetPresenter extends ChangeNotifier {
      */
     void delete( int index ) {
         _list.removeAt( index );
+        selectedIndex = index >= list.length ? list.length - 1 : index;
         AppPresenter( ).save( );
     }
 
@@ -50,8 +51,12 @@ abstract class WidgetPresenter extends ChangeNotifier {
     void endEdit( bool ok ) {
         if( ok ) {
             AppPresenter( ).save( );
+        } else {
+            if( !adding ) {
+                notifyListeners( );
+            }
         }
-        readOnly = true;
+        adding = false;
     }
 
     /**
@@ -64,10 +69,12 @@ abstract class WidgetPresenter extends ChangeNotifier {
         var value = list[ editIndex ].customData[ attributeName ];
         if( value is List ) {
             var length = value.length;
+            // if try to add item which already in list, remove it
             value.removeWhere( 
                 ( e ) => e.customData.attributes[ 'name' ] == newValue.customData.attributes[ 'name' ] 
             );
             if( value.length == length ) {
+                // on previous step there is no item to remove, therefore new item will be add 
                 value.add( newValue );
             }
             value.sort( );

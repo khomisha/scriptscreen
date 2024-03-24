@@ -18,7 +18,7 @@ const double HEIGHT_OFFSET = COMPONENT_HEIGHT + 10;
 
 class NoteDiagramEditor extends StatefulWidget {
 
-    const NoteDiagramEditor( { Key? key } ) : super( key: key );
+    const NoteDiagramEditor( { super.key } );
 
     @override
     State< NoteDiagramEditor > createState( ) => _DiagramEditorState( );
@@ -294,7 +294,7 @@ ComponentData createComponent( Offset position, dynamic item ) {
 class Note extends StatelessWidget {
     final ComponentData componentData;
 
-    const Note( { Key? key, required this.componentData } ) : super( key: key );
+    const Note( { super.key, required this.componentData } );
 
     @override
     Widget build( BuildContext context ) {
@@ -429,7 +429,7 @@ class Note extends StatelessWidget {
  */
 class NoteForm extends BaseForm< NotePresenter > {
 
-    NoteForm( { Key? key } ) : super( key: key );
+    NoteForm( { super.key } );
 
     @override
     Field createField( String attributeName, int index ) {

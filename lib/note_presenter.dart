@@ -46,6 +46,7 @@ class NotePresenter extends WidgetPresenter {
     @override
     void endEdit( bool ok ) {
         stackIndex = 0;
+        readOnly = true;
         super.endEdit( ok );
     }
 
@@ -98,7 +99,7 @@ class NotePresenter extends WidgetPresenter {
     Future< void > onSelect( int? selected, int selecting ) async {
         if( !Editor( ).created ) {
             Editor( ).create( );
-            await Future.delayed( const Duration( seconds: 2 ) );   // ???   
+            await Future.delayed( const Duration( seconds: 2 ) );   // ???
         }
         if( selected != null ) {
             var note = list[ selected ].customData as NoteData;

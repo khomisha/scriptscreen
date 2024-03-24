@@ -16,6 +16,7 @@ class ListPresenter extends WidgetPresenter {
 
     @override
     int add( ) {
+        adding = true;
         list.add( ListItem( emptyItem( dataType ) ) );
         selectedIndex = list.length - 1;
         startEdit( list.length - 1 );
@@ -26,8 +27,6 @@ class ListPresenter extends WidgetPresenter {
     void delete( int index ) {
         deleteReference( index );
         super.delete( index );
-        selectedIndex = list.length - 1;
-//        notifyListeners( );
     }
 
     @override
@@ -38,12 +37,12 @@ class ListPresenter extends WidgetPresenter {
 
     @override
     void endEdit( bool ok ) {
-        if( !ok ) {
+        readOnly = true;
+        if( !ok && adding ) {
             delete( editIndex );
         }
         super.endEdit( ok );
-//        notifyListeners( );
-    }
+   }
 
     @override
     void select( int index ) {
@@ -63,9 +62,9 @@ class ListPresenter extends WidgetPresenter {
      */
     void deleteReference( int index ) {
         var deletingItem = list[ index ].customData;
-        var notes = AppPresenter( ).getData( NOTE );
-        for( var item in notes ) {
-            var note = item.customData as NoteData;
+        var noteItems = AppPresenter( ).getData( NOTE );
+        for( var noteItem in noteItems ) {
+            var note = noteItem.customData as NoteData;
             note.attributes[ dataType ].removeWhere( 
                 ( ListItem item ) {
                     return item.customData.attributes[ 'name' ] == deletingItem.attributes[ 'name' ];

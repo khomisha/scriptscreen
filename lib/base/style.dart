@@ -20,7 +20,7 @@ class Style {
     late ButtonStyle styleButton;
 
     Style._( ) {
-        theme = ThemeData( primarySwatch: Colors.blue );
+        theme = ThemeData( colorScheme: ColorScheme.fromSeed( seedColor: Colors.blue ) );
         theme = ThemeData.localize(
             theme, 
             theme.typography.geometryThemeFor( ScriptCategory.englishLike ) 

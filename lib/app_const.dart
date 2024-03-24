@@ -1,5 +1,5 @@
 
-// ignore_for_file: constant_identifier_names, slash_for_doc_comments
+// ignore_for_file: constant_identifier_names, slash_for_doc_comments, dangling_library_doc_comments
 
 /**
  * Application constants and typedefs

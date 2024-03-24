@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scriptscreen/app_presenter.dart';
-import 'package:scriptscreen/base/root_widget.dart';
+import 'base/root_widget.dart' as base;
 import 'package:scriptscreen/detail_panel.dart';
 import 'package:scriptscreen/location_panel.dart';
 import 'package:scriptscreen/project_panel.dart';
@@ -20,11 +20,11 @@ import 'note_editor.dart';
 import 'note_panel.dart';
 import 'note_presenter.dart';
 
-class MainPanel extends StatefulWidget implements RootWidget {
+class MainPanel extends StatefulWidget implements base.RootWidget {
     late final List< Panel > panels;
     late final Function( bool ) _manageSplashscreen;
 
-    MainPanel( { Key? key } ) : super( key: key ) {
+    MainPanel( { super.key } ) {
         AppPresenter( ).rootWidget = this;
         panels = [
             ProjectPanel( ProjectForm( ) ).panel,
@@ -65,13 +65,14 @@ class _MainPanelState extends State< MainPanel > with WindowListener {
         if( _loading ) {
             return const Center( child: CircularProgressIndicator( ) );
         }
+        final ThemeData theme = Theme.of( context );
         var navBar = BottomNavigationBar( 
             items: _createNavBarItems( widget.panels ), 
             currentIndex: _currentPanelIndex, 
             selectedItemColor: Colors.red,
-            unselectedItemColor: Colors.black,
+            unselectedItemColor: theme.colorScheme.primary,
             selectedIconTheme: const IconThemeData( color: Colors.red ),
-            unselectedIconTheme: const IconThemeData( color: Colors.black ), 
+            unselectedIconTheme: IconThemeData( color: theme.colorScheme.primary ), 
             onTap: _replacePanel,
             showUnselectedLabels: true
         );

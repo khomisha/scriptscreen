@@ -46,4 +46,8 @@ class Editor {
         var script = 'tinymce.activeEditor.setContent("$content")';
         await _webview.evaluateJavaScript( script );
     }
+
+    void setVisible( bool visible ) {
+        _webview.setWebviewWindowVisibility( visible );
+    }
 }

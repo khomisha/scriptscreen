@@ -23,6 +23,12 @@ class FormPresenter extends WidgetPresenter {
     }
 
     @override
+    void endEdit( bool ok ) {
+        readOnly = true;
+        super.endEdit( ok );
+    }
+
+    @override
     void delete( int index ) {
     }
 }

@@ -1,7 +1,6 @@
 
 // ignore_for_file: prefer_const_constructors_in_immutables, slash_for_doc_comments
 
-import 'package:flutter/material.dart';
 import 'package:scriptscreen/form_presenter.dart';
 import 'base/base_components.dart';
 import 'list_presenter.dart';
@@ -11,7 +10,7 @@ import 'list_presenter.dart';
  */
 class DataList extends BaseList< ListPresenter > {
 
-    DataList( { Key? key } ) : super( key: key );
+    DataList( { super.key } );
 
     @override
     T getForm< T extends BaseForm >( ) {
@@ -21,15 +20,15 @@ class DataList extends BaseList< ListPresenter > {
 
 class DataForm extends BaseForm< ListPresenter > {
 
-    DataForm( { Key? key } ) : super( key: key );
+    DataForm( { super.key } );
 }
 
 class ProjectForm extends BaseForm< FormPresenter > {
 
-    ProjectForm( { Key? key } ) : super( key: key );
+    ProjectForm( { super.key } );
 }
 
 class ScriptForm extends BaseForm< FormPresenter > {
 
-    ScriptForm( { Key? key } ) : super( key: key );
+    ScriptForm( { super.key } );
 }

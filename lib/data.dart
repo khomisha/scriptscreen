@@ -34,7 +34,7 @@ dynamic emptyItem( String type ) {
                 < ListItem > [],
                 < ListItem > [],
                 < ListItem > [],
-                "sun shine"
+                '<div><span style="font-size: 12pt;"></span></div>'
             );
         case PROJECT:
             return ProjectData( 
@@ -98,9 +98,9 @@ class GenericData extends AttributeMap< String, dynamic > {
 
 class RoleData extends GenericData {
 
-    RoleData( String name, String description ) : super( name, description );
+    RoleData( super.name, super.description );
 
-    RoleData.fromJson( Map< String, dynamic > map ) : super.fromJson( map );
+    RoleData.fromJson( super.map ) : super.fromJson( );
 
     @override
     RoleData copy( ) {
@@ -110,9 +110,9 @@ class RoleData extends GenericData {
 
 class LocationData extends GenericData {
 
-    LocationData( String name, String description ) : super( name, description );
+    LocationData( super.name, super.description );
 
-    LocationData.fromJson( Map< String, dynamic > map ) : super.fromJson( map );
+    LocationData.fromJson( super.map ) : super.fromJson( );
 
     @override
     LocationData copy( ) {
@@ -122,9 +122,9 @@ class LocationData extends GenericData {
 
 class DetailData extends GenericData {
 
-    DetailData( String name, String description ) : super( name, description );
+    DetailData( super.name, super.description );
 
-    DetailData.fromJson( Map< String, dynamic > map ) : super.fromJson( map );
+    DetailData.fromJson( super.map ) : super.fromJson( );
 
     @override
     DetailData copy( ) {
@@ -134,9 +134,9 @@ class DetailData extends GenericData {
 
 class ActionTimeData extends GenericData {
 
-    ActionTimeData( String name, String description ) : super( name, description );
+    ActionTimeData( super.name, super.description );
 
-    ActionTimeData.fromJson( Map< String, dynamic > map ) : super.fromJson( map );
+    ActionTimeData.fromJson( super.map ) : super.fromJson();
 
     @override
     ActionTimeData copy( ) {

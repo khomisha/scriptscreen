@@ -217,12 +217,12 @@ Logger logger = Logger(
 );
 
 void logOnErrorFlutter( FlutterErrorDetails details ) {
-    logger.e( details.exception.toString( ), details.exception, details.stack );
+    logger.e( details.exception.toString( ), error: details.exception, stackTrace: details.stack );
 }
 
 bool logOnErrorPlatform( Object error, StackTrace stack ) {
     var err = error as Exception; 
-    logger.e( err.toString( ), err, stack );
+    logger.e( err.toString( ), error: err, stackTrace: stack );
     return true;
 }
 
