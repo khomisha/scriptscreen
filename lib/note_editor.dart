@@ -301,7 +301,7 @@ class Note extends StatelessWidget {
         var presenter = context.watch< NotePresenter >( );
         var border = Border.all(
             width: 1,
-            color: componentData.data.selected ? Colors.pink : Style( ).theme.primaryColor
+            color: componentData.data.selected ? Colors.pink : Style.theme.primaryColor
         );
         var decoration = BoxDecoration(
             borderRadius: BorderRadius.circular( 20 ),
@@ -310,24 +310,24 @@ class Note extends StatelessWidget {
         );
         var title = Text( 
             componentData.data.customData.title, 
-            style: Style( ).theme.textTheme.headlineSmall, maxLines: 1, overflow: TextOverflow.ellipsis 
+            style: Style.theme.textTheme.headlineSmall, maxLines: 1, overflow: TextOverflow.ellipsis 
         );
         var divider = Divider( 
-            color: Style( ).theme.primaryColor, 
+            color: Style.theme.primaryColor, 
             thickness: 1, 
             height: 2, 
             indent: 24, endIndent: 24 
         );
         var description = Text( 
             componentData.data.customData.description, 
-            style: Style( ).listTileStyle, 
+            style: Style.listTileStyle, 
             maxLines: 2, 
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left
         );
         var count = Text( 
             ( componentData.data.customData.index ).toString( ), 
-            style: Style( ).theme.textTheme.labelSmall 
+            style: Style.theme.textTheme.labelSmall 
         );
         var editBtn = Focus(
             descendantsAreFocusable: false,
@@ -340,7 +340,7 @@ class Note extends StatelessWidget {
                         Functions.get( 'startEdit' )( componentData.id );
                     }
                 }, 
-                icon: Icon( Icons.edit_note, color: Style( ).theme.primaryColor ),
+                icon: Icon( Icons.edit_note, color: Style.theme.primaryColor ),
                 tooltip: "edit note"
             )
         );
@@ -351,7 +351,7 @@ class Note extends StatelessWidget {
                 onPressed: ( ) { 
                     Functions.get( 'delete' )( componentData.id );
                 }, 
-                icon: Icon( Icons.highlight_off, color: Style( ).theme.primaryColor ),
+                icon: Icon( Icons.highlight_off, color: Style.theme.primaryColor ),
                 tooltip: "delete note"
             )
        );

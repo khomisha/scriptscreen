@@ -3,14 +3,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:scriptscreen/app_facing.dart';
-import 'base/config.dart';
 import 'base/style.dart';
 //import 'base/util.dart';
 import 'main_panel.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main( ) {
-    Config( );
     //FlutterError.onError = logOnErrorFlutter;
     //PlatformDispatcher.instance.onError = logOnErrorPlatform;
     AppFacing( );
@@ -25,7 +23,7 @@ class App extends StatelessWidget {
     Widget build( BuildContext context ) {
         return MaterialApp(
             title: 'Script Screen',
-            theme: Style( ).theme,
+            theme: Style.theme,
             debugShowCheckedModeBanner: false,
             localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,

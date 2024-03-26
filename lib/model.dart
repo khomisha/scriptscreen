@@ -74,7 +74,10 @@ void _save( Data data ) {
     var file = File( data.attributes[ 'filename' ] );
     file.writeAsStringSync( data.attributes[ 'data' ] );
     data.attributes[ 'result' ] = SUCCESS;
-    Config( ).write( );
+    if( Config.config[ 'last_project' ] != data.attributes[ 'filename' ] ) {
+        Config.config[ 'last_project' ] = data.attributes[ 'filename' ];
+        writeConfig( );
+    }
 }
 
 /**

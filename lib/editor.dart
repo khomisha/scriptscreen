@@ -14,7 +14,7 @@ class Editor {
     late String _path;
 
     Editor._( ) {
-        _path = p.join( p.current, 'assets', Config( ).config[ 'editor_config' ] );
+        _path = p.join( p.current, 'assets', Config.config[ 'editor_config' ] );
     }
 
     factory Editor( ) {

@@ -213,7 +213,7 @@ const String STACK = "stack_trace";
 
 Logger logger = Logger( 
     printer: PrettyPrinter( printEmojis: false, printTime: true, colors: false ),
-    output: FileOutput( file: File( createFileName( "logs", Config( ).config[ 'app_name' ], "log" ) ) )
+    output: FileOutput( file: File( createFileName( "logs", Config.config[ 'app_name' ], "log" ) ) )
 );
 
 void logOnErrorFlutter( FlutterErrorDetails details ) {
@@ -235,6 +235,22 @@ void printObjectAsJson( String tag, dynamic jsonObject ) {
     debugPrint( tag );
     debugPrint( encoder.convert( jsonObject ) );
 }
+
+final Map< String, Color > colors = {
+    'red'  : Colors.red,
+    'blue' : Colors.blue,
+    'black': Colors.black,
+    'green': Colors.green,
+    'yellow': Colors.yellow,
+    'amber': Colors.amber,
+    'cyan': Colors.cyan,
+    'brown': Colors.brown,
+    'orange': Colors.orange,
+    'purple': Colors.purple,
+    'grey': Colors.grey,
+    'lime': Colors.lime,
+    'pink': Colors.pink
+};
 
 
 

@@ -2,24 +2,23 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'util.dart';
 
 class Config {    
     static final Config _instance = Config._( );
-    Map< String, dynamic > config = < String, dynamic >{ };
-    final String _fileName = path.join( 'assets', 'cfg', 'app_settings.json' );
+    static final Map< String, dynamic > config = _instance._config;
+    late Map< String, dynamic > _config;
+    static final String _fileName = path.join( 'assets', 'cfg', 'app_settings.json' );
 
     Config._( ) {
         var file = File( _fileName );
-        config = json.decode( file.readAsStringSync( ) );
-    }
-
-    factory Config( ) {
-        return _instance;
-    }
-
-    void write( ) {
-        var encoder = const JsonEncoder.withIndent( ' ' );
-        var file = File( _fileName );
-        file.writeAsStringSync( encoder.convert( config ) );
+        _config = json.decode( file.readAsStringSync( ) );
     }
 }
+
+void writeConfig( ) {
+    var encoder = const JsonEncoder.withIndent( INDENT );
+    var file = File( Config._fileName );
+    file.writeAsStringSync( encoder.convert( Config.config ) );
+}
+

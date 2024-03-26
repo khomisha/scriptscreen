@@ -36,7 +36,7 @@ abstract class BaseList< V extends WidgetPresenter > extends StatelessWidget {
             );
             var edit = SlidableAction(
                 onPressed: ( _ ) { presenter.startEdit( index ); },
-                backgroundColor: Style( ).theme.primaryColor,
+                backgroundColor: Style.theme.primaryColor,
                 foregroundColor: Colors.white,
                 icon: Icons.edit,
                 label: 'Edit'
@@ -44,15 +44,15 @@ abstract class BaseList< V extends WidgetPresenter > extends StatelessWidget {
             var decoration = BoxDecoration( 
                 border: Border.all( 
                     width: 1, 
-                    color: presenter.list[ index ].selected ? Colors.pink : Style( ).theme.primaryColor 
+                    color: presenter.list[ index ].selected ? Colors.pink : Style.theme.primaryColor 
                 ),
-                borderRadius: Style( ).borderRadius
+                borderRadius: Style.borderRadius
             );
             var key = presenter.list[ index ].customData.attributes.keys.toList( )[ 0 ];
             var tile = ListTile( 
                 title: Text( 
                     presenter.list[ index ].customData.attributes[ key ], 
-                    style: Style( ).listTileStyle 
+                    style: Style.listTileStyle 
                 ),
                 onTap: ( ) { presenter.select( index ); }
             );
@@ -74,7 +74,7 @@ abstract class BaseList< V extends WidgetPresenter > extends StatelessWidget {
             getStub( "List is Empty" );
         var btnAdd = ElevatedButton(
             onPressed: add,
-            style: Style( ).styleButton, 
+            style: Style.styleButton, 
             child: const Text( "Add" )
         );
         var row = Row( mainAxisAlignment: MainAxisAlignment.end, children: < Widget > [ btnAdd ] );
@@ -90,7 +90,7 @@ abstract class BaseList< V extends WidgetPresenter > extends StatelessWidget {
         var msvc = MultiSplitViewController( areas: [ Area( minimalSize: 150 ), Area( minimalSize: 250 ) ] );
         var multiSplit = MultiSplitView( controller: msvc, children: [ column, getForm( ) ] );
         var msvt = MultiSplitViewTheme(
-            data: MultiSplitViewThemeData( dividerPainter: Style( ).divPainter, dividerThickness: 5 ),
+            data: MultiSplitViewThemeData( dividerPainter: Style.divPainter, dividerThickness: 5 ),
             child: multiSplit
         );
         return msvt;
@@ -237,7 +237,7 @@ typedef OnSelected = Function( ListItem listItem );
 ElevatedButton getButton( void Function( ) function, String name ) {
     return ElevatedButton( 
         onPressed: ( ) { function( ); }, 
-        style: Style( ).styleButton, 
+        style: Style.styleButton, 
         child: Text( name ) 
     );
 }
@@ -321,8 +321,8 @@ class TextBox extends StatelessWidget {
         var widget = TextFormField( 
             key: fieldKey,
             controller: TextEditingController( text: value.toString( ) ),
-            decoration: Style( ).inputDecor.copyWith( labelText: pattern.label ),
-            style: Style( ).formFieldStyle,
+            decoration: Style.inputDecor.copyWith( labelText: pattern.label ),
+            style: Style.formFieldStyle,
             maxLines: null,
             readOnly: readOnly,
             validator: pattern.validator
@@ -394,9 +394,9 @@ class ChipList extends StatelessWidget {
             onSelected: ( selected ) {
                 onSelected( list[ index ] );
             },
-            side: BorderSide( color: Style( ).theme.primaryColor ),
+            side: BorderSide( color: Style.theme.primaryColor ),
             backgroundColor: Colors.white,
-            selectedColor: Style( ).theme.primaryColor,
+            selectedColor: Style.theme.primaryColor,
             showCheckmark: showCheckmark
         );
         return Padding( padding: const EdgeInsets.all( 3 ), child: filterChip );
@@ -409,7 +409,7 @@ class ChipList extends StatelessWidget {
             itemCount: list.length, 
             itemBuilder: _buildList 
         );
-        var title = Text( text, style: Style( ).listTileStyle, textAlign: TextAlign.start );
+        var title = Text( text, style: Style.listTileStyle, textAlign: TextAlign.start );
         var column = Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [ 
@@ -480,7 +480,7 @@ class SwiperPanel extends StatelessWidget {
             itemCount: widgets.length,
             pagination: SwiperPagination( 
                 builder: DotSwiperPaginationBuilder( 
-                    activeColor: Style( ).theme.primaryColorDark, color: Style( ).theme.primaryColorLight 
+                    activeColor: Style.theme.primaryColorDark, color: Style.theme.primaryColorLight 
                 )
             ),
             control: const SwiperControl( ),
