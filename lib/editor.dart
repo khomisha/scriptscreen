@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:path/path.dart' as p;
-import 'package:scriptscreen/base/config.dart';
+import 'package:base/base.dart';
 
 class Editor {
     static final Editor _instance = Editor._( );
@@ -43,6 +43,8 @@ class Editor {
     }
 
     void setContent( String content ) async {
+        //content = '<div style="text-align: center;"><em><span style="font-size: 18pt;">index;title</span></em></div><div><em>description</em></div><div><em>action_time</em></div><div><em>location</em></div><div><em>detail</em></div><div><em>role</em></div><div>&nbsp;</div>';
+        //print( content );
         var script = 'tinymce.activeEditor.setContent("$content")';
         await _webview.evaluateJavaScript( script );
     }

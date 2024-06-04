@@ -1,10 +1,10 @@
 // ignore_for_file: slash_for_doc_comments
 
 import 'package:flutter/material.dart';
-import 'package:scriptscreen/app_const.dart';
+import 'app_const.dart';
 import 'app_components.dart';
 import 'app_menu.dart';
-import 'base/panel.dart';
+import 'package:base/base.dart';
 import 'main_panel.dart';
 
 class ActionTimePanel {

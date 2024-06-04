@@ -18,6 +18,7 @@
 			"name": "",
 			"description": ""
 		}
+	],
 	"action_time": [
 		{
 			"name": "",
@@ -34,7 +35,6 @@
 		"note": [
 			{
 				"title": "",
-				"action_time": "",
 				"description": "",
 				"role": [
 					{

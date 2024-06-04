@@ -3,9 +3,8 @@
 
 import 'app_const.dart';
 import 'app_presenter.dart';
-import 'base/util.dart';
-import 'base/widget_presenter.dart';
-import 'data.dart';
+import 'package:base/base.dart';
+import 'script_data.dart';
 import 'editor.dart';
 
 class NotePresenter extends WidgetPresenter {
@@ -107,7 +106,12 @@ class NotePresenter extends WidgetPresenter {
             AppPresenter( ).save( );
         }
         var note = list[ selecting ].customData as NoteData;
-        Editor( ).setContent( note.body );
+        // debugPrint( "==================" );
+        // debugPrint( '${note.getHeaderAsHtml( )}${note.body}' );
+        // debugPrint( "==================" );
+        // Editor( ).setContent( '${note.getHeaderAsHtml( )}${note.body}' );
+        var s = note.getHeaderAsHtml( );
+        Editor( ).setContent( s);
     }
 
     /**
@@ -118,5 +122,10 @@ class NotePresenter extends WidgetPresenter {
             var note = list[ selectedIndex ].customData as NoteData;
             Editor( ).getContent( ).then( ( value ) { note.body = value.substring( 1, value.length - 1 ); } );
         }
+    }
+    
+    @override
+    void onSuccess( ) {
+        AppPresenter( ).save( );
     }
 }

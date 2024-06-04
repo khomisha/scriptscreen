@@ -1,7 +1,7 @@
 
 // ignore_for_file: slash_for_doc_comments
 
-import 'package:scriptscreen/base/widget_presenter.dart';
+import 'package:base/base.dart';
 import 'app_presenter.dart';
 
 class FormPresenter extends WidgetPresenter {
@@ -9,11 +9,6 @@ class FormPresenter extends WidgetPresenter {
     FormPresenter( String dataType) {
         super.dataType = dataType;
         AppPresenter( ).subscribe( this );
-    }
-
-    @override
-    int add( ) {
-        return 0;
     }
 
     @override
@@ -30,6 +25,11 @@ class FormPresenter extends WidgetPresenter {
 
     @override
     void delete( int index ) {
+    }
+
+    @override
+    void onSuccess( ) {
+        AppPresenter( ).save( );
     }
 }
 

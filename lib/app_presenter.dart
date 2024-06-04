@@ -3,12 +3,11 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:scriptscreen/base/config.dart';
-import 'package:scriptscreen/base/root_widget.dart';
-import 'package:scriptscreen/data.dart';
+import 'dart:io';
+import 'script_data.dart';
 import 'app_const.dart';
-import 'base/util.dart';
 import 'presenter.dart';
+import 'package:base/base.dart';
 
 class AppPresenter extends Presenter {
     static final AppPresenter _instance = AppPresenter._( );
@@ -32,16 +31,16 @@ class AppPresenter extends Presenter {
     @override
     void update( data ) {
         if( data[ 'result' ] == SUCCESS ) {
-            if( data.attributes[ 'command' ] == CREATE || data.attributes[ 'command' ] == LOAD ) {
+            if( data[ 'command' ] == CREATE || data[ 'command' ] == LOAD ) {
                 projectData = ProjectData.fromJson( jsonDecode( data.attributes[ 'data' ] ) );
-                Config.config[ 'last_project' ] = data.attributes[ 'filename' ];
+                Config.config[ 'last_project' ] = data[ 'filename' ];
                 notify( );
-            } else if( data.attributes[ 'command' ] == SAVE ) {
+            } else if( data[ 'command' ] == SAVE ) {
                 notify( );
-            } else if( data.attributes[ 'command' ] == EXIT ) {
+            } else if( data[ 'command' ] == EXIT ) {
                 rootWidget.destroy( );
             }
-        } else if( data.attributes[ 'result' ] == FAILURE ) {
+        } else if( data[ 'result' ] == FAILURE ) {
             logger.e( 
                 data.attributes[ ERR_MSG ], 
                 error: data.attributes[ ERROR ], 
@@ -55,11 +54,11 @@ class AppPresenter extends Presenter {
      * Loads data on application open
      */
     void loadData( ) {
-        var lastProject = Config.config[ 'last_project' ] as String;
-        if( lastProject.isEmpty ) {
+        var fileName = Config.config[ 'last_project' ] as String;
+        if( fileName.isEmpty ) {
             create( false );
         } else {
-            load( lastProject, false );
+            load( fileName, false );
         }
     }
 
@@ -69,10 +68,27 @@ class AppPresenter extends Presenter {
      */
     void create( bool save ) {
         rootWidget.manageSplashscreen( true );
+        Directory( getPathFromUserDir( "scripts" ) ).createSync( );
+        var path = createFileName( "scripts", NONAME, "json", version: START_VERSION );
         if( save ) {
-            send( Data.forCreate( forSave: Data.forSave( projectData, Config.config[ 'last_project' ] ) ) );
+            var encoder = const JsonEncoder.withIndent( INDENT );
+            var data4Save = Data.create( 
+                < String > [ 'command', 'data', 'filename', 'result' ], 
+                < dynamic > [ SAVE, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+            );
+            send(
+                Data.create( 
+                    < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
+                    < dynamic > [ CREATE, "", path, data4Save, NO_ACTION ] 
+                )
+            );
         } else {
-            send( Data.forCreate( ) );
+            send(
+                Data.create( 
+                    < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
+                    < dynamic > [ CREATE, "", path, null, NO_ACTION ] 
+                )
+            );
         }
     }
 
@@ -84,13 +100,24 @@ class AppPresenter extends Presenter {
     void load( String path, bool save ) {
         rootWidget.manageSplashscreen( true );
         if( save ) {
-            send( 
-                Data.forOpen( 
-                    fileName: path, forSave: Data.forSave( projectData, Config.config[ 'last_project' ] ) 
-                ) 
+            var encoder = const JsonEncoder.withIndent( INDENT );
+            var data4Save = Data.create( 
+                < String > [ 'command', 'data', 'filename', 'result' ], 
+                < dynamic > [ SAVE, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+            );
+            send(
+                Data.create( 
+                    < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
+                    < dynamic > [ LOAD, "", path, data4Save, NO_ACTION ] 
+                )
             );
         } else {
-            send( Data.forOpen( fileName: path ) );
+            send(
+                Data.create( 
+                    < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
+                    < dynamic > [ LOAD, "", path, null, NO_ACTION ] 
+                )
+            );
         }
     }
 
@@ -98,7 +125,13 @@ class AppPresenter extends Presenter {
      * Saves project before exit from application
      */
     void exit( ) {
-        send( Data.forExit( projectData, Config.config[ 'last_project' ] ) );
+        var encoder = const JsonEncoder.withIndent( INDENT );
+        send(
+            Data.create( 
+                < String > [ 'command', 'data', 'filename', 'result' ], 
+                < dynamic > [ EXIT, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+            )
+        );
     }
 
     /**
@@ -114,7 +147,13 @@ class AppPresenter extends Presenter {
                 version: projectData.version 
             );
         }
-        send( Data.forSave( projectData, Config.config[ 'last_project' ] ) );
+        var encoder = const JsonEncoder.withIndent( INDENT );
+        send(
+            Data.create( 
+                < String > [ 'command', 'data', 'filename', 'result' ], 
+                < dynamic > [ SAVE, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+            )
+        );
     }
 
     /**

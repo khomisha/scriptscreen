@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
-import 'base/base_components.dart';
-import 'base/style.dart';
-import 'base/util.dart';
-import 'base/facing.dart';
+import 'package:base/base.dart';
 import 'note_presenter.dart';
 
 const double COMPONENT_WIDTH = 400;

@@ -1,11 +1,10 @@
 
 // ignore_for_file: avoid_print, slash_for_doc_comments
 
-import 'package:scriptscreen/app_const.dart';
-import 'package:scriptscreen/app_presenter.dart';
-import 'package:scriptscreen/data.dart';
-import 'base/util.dart';
-import 'base/widget_presenter.dart';
+import 'app_const.dart';
+import 'app_presenter.dart';
+import 'script_data.dart';
+import 'package:base/base.dart';
 
 class ListPresenter extends WidgetPresenter {
 
@@ -71,5 +70,10 @@ class ListPresenter extends WidgetPresenter {
                 }
             );
         }
+    }
+
+    @override
+    void onSuccess( ) {
+        AppPresenter( ).save( );
     }
 }

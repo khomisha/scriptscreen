@@ -3,8 +3,7 @@
 
 import 'dart:isolate';
 import 'package:easy_isolate/easy_isolate.dart';
-import 'base/util.dart';
-import 'base/widget_presenter.dart';
+import 'package:base/base.dart';
 import 'model.dart';
 
 abstract class Presenter {

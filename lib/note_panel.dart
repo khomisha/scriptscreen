@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'app_const.dart';
 import 'app_menu.dart';
-import 'base/panel.dart';
+import 'package:base/base.dart';
 import 'main_panel.dart';
 
 class NotePanel {

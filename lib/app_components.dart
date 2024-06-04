@@ -1,8 +1,8 @@
 
 // ignore_for_file: prefer_const_constructors_in_immutables, slash_for_doc_comments
 
-import 'package:scriptscreen/form_presenter.dart';
-import 'base/base_components.dart';
+import 'form_presenter.dart';
+import 'package:base/base.dart';
 import 'list_presenter.dart';
 
 /**

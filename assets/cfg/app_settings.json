@@ -4,5 +4,6 @@
     "language": "en_US",
     "default_autosave": 120,
     "gui_primary_color": "green",
-    "editor_config": "editor.html"
+    "editor_config": "editor.html",
+    "note_header_template": "nonedit.html"
 }

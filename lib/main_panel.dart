@@ -2,17 +2,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scriptscreen/app_presenter.dart';
-import 'base/root_widget.dart' as base;
-import 'package:scriptscreen/detail_panel.dart';
-import 'package:scriptscreen/location_panel.dart';
-import 'package:scriptscreen/project_panel.dart';
-import 'package:scriptscreen/role_panel.dart';
-import 'package:scriptscreen/script_panel.dart';
+import 'app_presenter.dart';
+import 'detail_panel.dart';
+import 'location_panel.dart';
+import 'project_panel.dart';
+import 'role_panel.dart';
+import 'script_panel.dart';
 import 'package:window_manager/window_manager.dart';
 import 'action_time_panel.dart';
 import 'app_const.dart';
-import 'base/panel.dart';
+import 'package:base/base.dart' as base;
 import 'app_components.dart';
 import 'form_presenter.dart';
 import 'list_presenter.dart';
@@ -21,7 +20,7 @@ import 'note_panel.dart';
 import 'note_presenter.dart';
 
 class MainPanel extends StatefulWidget implements base.RootWidget {
-    late final List< Panel > panels;
+    late final List< base.Panel > panels;
     late final Function( bool ) _manageSplashscreen;
 
     MainPanel( { super.key } ) {
@@ -114,10 +113,10 @@ class _MainPanelState extends State< MainPanel > with WindowListener {
     /**
      * Creates navigation bar items using panel icon and title
      */
-    List< BottomNavigationBarItem > _createNavBarItems( List< Panel > panels ) {
+    List< BottomNavigationBarItem > _createNavBarItems( List< base.Panel > panels ) {
         var items = < BottomNavigationBarItem > [];
         for( var panel in panels ) {
-            items.add( BottomNavigationBarItem( icon: panel.icon, label: panel.title ) );
+            items.add( BottomNavigationBarItem( icon: panel.icon!, label: panel.title ) );
         }
         return items;
     }
