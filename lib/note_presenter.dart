@@ -1,11 +1,11 @@
 
 // ignore_for_file: avoid_print, slash_for_doc_comments
 
+import 'editor.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
 import 'package:base/base.dart';
 import 'script_data.dart';
-import 'editor.dart';
 
 class NotePresenter extends WidgetPresenter {
     final _filter = < String >[ ];
@@ -101,17 +101,19 @@ class NotePresenter extends WidgetPresenter {
             await Future.delayed( const Duration( seconds: 2 ) );   // ???
         }
         if( selected != null ) {
+            // saves content from selected note
             var note = list[ selected ].customData as NoteData;
             Editor( ).getContent( ).then( ( value ) { note.body = value.substring( 1, value.length - 1 ); } );
             AppPresenter( ).save( );
         }
+        // loads content to the selecting note
         var note = list[ selecting ].customData as NoteData;
         // debugPrint( "==================" );
         // debugPrint( '${note.getHeaderAsHtml( )}${note.body}' );
         // debugPrint( "==================" );
         // Editor( ).setContent( '${note.getHeaderAsHtml( )}${note.body}' );
-        var s = note.getHeaderAsHtml( );
-        Editor( ).setContent( s);
+        //var s = note.getHeaderAsHtml( );
+        Editor( ).setContent( note.body );
     }
 
     /**

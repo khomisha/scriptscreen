@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'script_data.dart';
 import 'app_const.dart';
-import 'presenter.dart';
 import 'package:base/base.dart';
 
 class AppPresenter extends Presenter {

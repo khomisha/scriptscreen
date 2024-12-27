@@ -46,7 +46,7 @@ class _DiagramEditorState extends State< NoteDiagramEditor > {
         return IndexedStack( 
             index: presenter.stackIndex, 
             children: [ 
-                SafeArea( child: Stack( children: [ Container( ), gd ] ) ),
+                SafeArea( child: Stack( children: [ Container( ), gd ] ) ), //???
                 policySet.selectedComponentId == null ? 
                     Container( ) : 
                     NoteForm( )
@@ -142,9 +142,12 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
     onComponentTap( String componentId ) {
         if( selectedComponentId != null ) {
             if( selectedComponentId != componentId ) {
+                // selects another note
                 presenter.onSelect( getItemIndex( selectedComponentId ), getItemIndex( componentId ) );
             }
+            // if tap on already selected, do nothing
         } else {
+            // there is no previous selected note
             presenter.onSelect( null, getItemIndex( componentId ) );
         }
         selectComponent( componentId );

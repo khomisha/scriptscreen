@@ -227,12 +227,11 @@ class NoteData extends AttributeMap< String, dynamic > {
         var doc = parse( _template );
         var elements = doc.querySelectorAll( KEY_TAG );
         for( var e in elements ) { 
-            var ls = e.text.split( ";" );
+            var ls = e.text.split( ";" );   //???
             var result = "";
             for( String s in ls ) {
                 if( attributes[ s ] is List ) {
-                    var list = attributes[ s ];
-                    for( ListItem item in list ) {
+                    for( ListItem item in attributes[ s ] ) {
                         result = "${item.customData.attributes[ 'name' ]} ${item.customData.attributes[ 'description' ]} ";
                     }
                 } else {

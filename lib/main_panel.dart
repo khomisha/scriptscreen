@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'app_presenter.dart';
 import 'detail_panel.dart';
 import 'location_panel.dart';
+import 'model.dart';
 import 'project_panel.dart';
 import 'role_panel.dart';
 import 'script_panel.dart';
@@ -24,6 +25,7 @@ class MainPanel extends StatefulWidget implements base.RootWidget {
     late final Function( bool ) _manageSplashscreen;
 
     MainPanel( { super.key } ) {
+        base.Functions.put( "process", process );
         AppPresenter( ).rootWidget = this;
         panels = [
             ProjectPanel( ProjectForm( ) ).panel,
