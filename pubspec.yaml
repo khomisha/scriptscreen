@@ -49,12 +49,9 @@ dependencies:
   hex: ^0.2.0
   window_manager: ^0.3.5
   path: ^1.8.3
-  desktop_webview_window: ^0.2.3
-  #path_provider: ^2.0.15
   html: ^0.15.4
   base: ^0.0.1
   webview_flutter: ^3.0.4
-  flutter_linux_webview: ^0.1.2
 
 dev_dependencies:
   flutter_test:

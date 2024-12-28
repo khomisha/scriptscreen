@@ -4,6 +4,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'package:easy_isolate/easy_isolate.dart';
+
+import 'model.dart';
 import 'script_data.dart';
 import 'app_const.dart';
 import 'package:base/base.dart';
@@ -14,7 +18,7 @@ class AppPresenter extends Presenter {
     late Timer _timer;
     late ProjectData projectData;
 
-    AppPresenter._( ) : super( ) {
+    AppPresenter._( ) : super( _isolateHandler ) {
         _timer = Timer.periodic( 
             Duration( seconds: Config.config[ 'default_autosave' ] ), 
             ( _ ) { 
@@ -25,6 +29,17 @@ class AppPresenter extends Presenter {
 
     factory AppPresenter( ) {
         return _instance;
+    }
+
+    /**
+     * Process data in isolate
+     * data the data to process in isolate and returns to the main thread
+     * mainSendPort the main thread port to get data from isolate
+     * onSendError the function to handle send error
+     */
+    static _isolateHandler( dynamic data, SendPort mainSendPort, SendErrorFunction onSendError ) async {
+        process( data );
+        mainSendPort.send( data );
     }
 
     @override
