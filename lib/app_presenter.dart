@@ -1,24 +1,23 @@
 
-// ignore_for_file: constant_identifier_names, slash_for_doc_comments
+// ignore_for_file: constant_identifier_names, slash_for_doc_comments, avoid_print
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:easy_isolate/easy_isolate.dart';
-
 import 'model.dart';
 import 'script_data.dart';
 import 'app_const.dart';
 import 'package:base/base.dart';
 
-class AppPresenter extends Presenter {
+class AppPresenter extends Publisher {
     static final AppPresenter _instance = AppPresenter._( );
-    late RootWidget rootWidget;
     late Timer _timer;
-    late ProjectData projectData;
+    late AppBroker _broker;
 
-    AppPresenter._( ) : super( _isolateHandler ) {
+    AppPresenter._( ) {
+        _broker = AppBroker( _isolateHandler );
         _timer = Timer.periodic( 
             Duration( seconds: Config.config[ 'default_autosave' ] ), 
             ( _ ) { 
@@ -42,28 +41,6 @@ class AppPresenter extends Presenter {
         mainSendPort.send( data );
     }
 
-    @override
-    void update( data ) {
-        if( data[ 'result' ] == SUCCESS ) {
-            if( data[ 'command' ] == CREATE || data[ 'command' ] == LOAD ) {
-                projectData = ProjectData.fromJson( jsonDecode( data.attributes[ 'data' ] ) );
-                Config.config[ 'last_project' ] = data[ 'filename' ];
-                notify( );
-            } else if( data[ 'command' ] == SAVE ) {
-                notify( );
-            } else if( data[ 'command' ] == EXIT ) {
-                rootWidget.destroy( );
-            }
-        } else if( data[ 'result' ] == FAILURE ) {
-            logger.e( 
-                data.attributes[ ERR_MSG ], 
-                error: data.attributes[ ERROR ], 
-                stackTrace: data.attributes[ STACK ] 
-            );
-        }
-        rootWidget.manageSplashscreen( false );
-    }
-
     /**
      * Loads data on application open
      */
@@ -81,23 +58,28 @@ class AppPresenter extends Presenter {
      * save the flag if true saves previous project 
      */
     void create( bool save ) {
-        rootWidget.manageSplashscreen( true );
+        publish( ON_SEND );
         Directory( getPathFromUserDir( "scripts" ) ).createSync( );
         var path = createFileName( "scripts", NONAME, "json", version: START_VERSION );
         if( save ) {
             var encoder = const JsonEncoder.withIndent( INDENT );
             var data4Save = Data.create( 
                 < String > [ 'command', 'data', 'filename', 'result' ], 
-                < dynamic > [ SAVE, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+                < dynamic > [ 
+                    SAVE, 
+                    encoder.convert( Notification( ).messageBoard[ ON_UPDATE ] ), 
+                    Config.config[ 'last_project' ], 
+                    NO_ACTION 
+                ] 
             );
-            send(
+            _broker.send(
                 Data.create( 
                     < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
                     < dynamic > [ CREATE, "", path, data4Save, NO_ACTION ] 
                 )
             );
         } else {
-            send(
+            _broker.send(
                 Data.create( 
                     < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
                     < dynamic > [ CREATE, "", path, null, NO_ACTION ] 
@@ -112,21 +94,26 @@ class AppPresenter extends Presenter {
      * save the flag if true saves previous project 
      */
     void load( String path, bool save ) {
-        rootWidget.manageSplashscreen( true );
+        publish( ON_SEND );
         if( save ) {
             var encoder = const JsonEncoder.withIndent( INDENT );
             var data4Save = Data.create( 
                 < String > [ 'command', 'data', 'filename', 'result' ], 
-                < dynamic > [ SAVE, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+                < dynamic > [ 
+                    SAVE, 
+                    encoder.convert( Notification( ).messageBoard[ ON_UPDATE ] ), 
+                    Config.config[ 'last_project' ], 
+                    NO_ACTION 
+                ] 
             );
-            send(
+            _broker.send(
                 Data.create( 
                     < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
                     < dynamic > [ LOAD, "", path, data4Save, NO_ACTION ] 
                 )
             );
         } else {
-            send(
+            _broker.send(
                 Data.create( 
                     < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
                     < dynamic > [ LOAD, "", path, null, NO_ACTION ] 
@@ -140,10 +127,15 @@ class AppPresenter extends Presenter {
      */
     void exit( ) {
         var encoder = const JsonEncoder.withIndent( INDENT );
-        send(
+        _broker.send(
             Data.create( 
                 < String > [ 'command', 'data', 'filename', 'result' ], 
-                < dynamic > [ EXIT, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+                < dynamic > [ 
+                    EXIT, 
+                    encoder.convert( Notification( ).messageBoard[ ON_UPDATE ] ), 
+                    Config.config[ 'last_project' ], 
+                    NO_ACTION 
+                ] 
             )
         );
     }
@@ -153,52 +145,85 @@ class AppPresenter extends Presenter {
      */
     void save( ) {
         var fileName = Config.config[ 'last_project' ] as String;
-        if( !fileName.contains( projectData.name ) || !fileName.contains( projectData.version ) ) {
+        var name = Notification( ).messageBoard[ ON_UPDATE ].name;
+        var version = Notification( ).messageBoard[ ON_UPDATE ].version;
+        if( !fileName.contains( name ) || !fileName.contains( version ) ) {
             Config.config[ 'last_project' ] = createFileName( 
                 "scripts", 
-                projectData.name, 
+                 name, 
                 "json", 
-                version: projectData.version 
+                version: version 
             );
         }
         var encoder = const JsonEncoder.withIndent( INDENT );
-        send(
+        _broker.send(
             Data.create( 
                 < String > [ 'command', 'data', 'filename', 'result' ], 
-                < dynamic > [ SAVE, encoder.convert( projectData ), Config.config[ 'last_project' ], NO_ACTION ] 
+                < dynamic > [ 
+                    SAVE, 
+                    encoder.convert( Notification( ).messageBoard[ ON_UPDATE ] ), 
+                    Config.config[ 'last_project' ], 
+                    NO_ACTION 
+                ] 
             )
         );
     }
 
-    /**
-     * Returns data of the specified type
-     * type the list type [ROLE], [DETAIL], [LOCATION], [NOTE], [SCRIPT], [PROJECT]
-     */
-    @override
-    List< ListItem > getData( String type ) {
-        switch( type ) {
-            case ROLE:
-                return projectData.roles;
-            case DETAIL:
-                return projectData.details;
-            case LOCATION:
-                return projectData.locations;
-            case ACTION_TIME:
-                return projectData.actionTimes;
-            case NOTE:
-                return projectData.script.notes;
-            case SCRIPT:
-                return < ListItem > [ ListItem( projectData.script ) ];
-            case PROJECT:
-                return < ListItem > [ ListItem( projectData ) ];
-            default:
-                throw UnsupportedError( "Wrong data btype $type" );
-        }
-    }
-
-    @override
     void dispose( ) {
         _timer.cancel( );
-        super.dispose( );
+        _broker.dispose( );
+    }
+}
+
+class AppBroker extends Broker {
+
+    AppBroker( super.handler );
+
+    @override
+    void update( data ) {
+        if( data[ 'result' ] == SUCCESS ) {
+            if( data[ 'command' ] == CREATE || data[ 'command' ] == LOAD ) {
+                Config.config[ 'last_project' ] = data[ 'filename' ];
+                var projectData = ProjectData.fromJson( jsonDecode( data.attributes[ 'data' ] ) );
+                publish( ON_UPDATE, data: projectData );
+            } else if( data[ 'command' ] == SAVE ) {
+                publish( ON_UPDATE, data: ProjectData.fromJson( jsonDecode( data.attributes[ 'data' ] ) ) );
+            } else if( data[ 'command' ] == EXIT ) {
+                publish( ON_EXIT );
+            }
+        } else if( data[ 'result' ] == FAILURE ) {
+            logger.e( 
+                data.attributes[ ERR_MSG ], 
+                error: data.attributes[ ERROR ], 
+                stackTrace: data.attributes[ STACK ] 
+            );
+        }
+        publish( ON_END_UPDATE );
+    }
+}
+
+/**
+ * Returns data of the specified type
+ * type the list type [ROLE], [DETAIL], [LOCATION], [NOTE], [SCRIPT], [PROJECT]
+ */
+List< ListItem > getData( String type ) {
+    var projectData = Notification( ).messageBoard[ ON_UPDATE ] as ProjectData;
+    switch( type ) {
+        case ROLE:
+            return projectData.roles;
+        case DETAIL:
+            return projectData.details;
+        case LOCATION:
+            return projectData.locations;
+        case ACTION_TIME:
+            return projectData.actionTimes;
+        case NOTE:
+            return projectData.script.notes;
+        case SCRIPT:
+            return < ListItem > [ ListItem( projectData.script ) ];
+        case PROJECT:
+            return < ListItem > [ ListItem( projectData ) ];
+        default:
+            throw UnsupportedError( "Wrong data btype $type" );
     }
 }

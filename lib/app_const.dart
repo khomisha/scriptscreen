@@ -29,3 +29,9 @@ const String CREATE = "create";
 const String LOAD = "load";
 const String SAVE = "save";
 const String EXIT = "exit";
+
+// events
+const String ON_UPDATE = "on_update";
+const String ON_EXIT = "on_exit";
+const String ON_SEND = "on_send";
+const String ON_END_UPDATE = "on_end_update";

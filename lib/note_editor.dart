@@ -456,7 +456,7 @@ class NoteForm extends BaseForm< NotePresenter > {
                     agent.presenter.update( attributeName, listItem, true );
                 }
                 field = Field.chipListField(
-                    value: AppPresenter( ).getData( attributeName ), 
+                    value: getData( attributeName ), 
                     pattern: pattern,
                     isSelected: isSelected,
                     onSelected: onSelected

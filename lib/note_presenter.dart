@@ -19,7 +19,8 @@ class NotePresenter extends WidgetPresenter {
 
     NotePresenter( ) {
         super.dataType = NOTE;
-        AppPresenter( ).subscribe( this );
+        Notification( ).subscribe( ON_UPDATE, this );
+        list = getData( NOTE );
     }
 
     @override
@@ -129,5 +130,12 @@ class NotePresenter extends WidgetPresenter {
     @override
     void onSuccess( ) {
         AppPresenter( ).save( );
+    }
+
+    @override
+    void receive( String event, { data } ) {
+        if( event == ON_UPDATE && data != null ) {
+            list = data as List< ListItem >;
+        }
     }
 }

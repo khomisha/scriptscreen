@@ -10,7 +10,8 @@ class ListPresenter extends WidgetPresenter {
 
     ListPresenter( type ) {
         super.dataType = type;
-        AppPresenter( ).subscribe( this );
+        Notification( ).subscribe( ON_UPDATE, this );
+        list = getData( type );
     }
 
     @override
@@ -61,7 +62,7 @@ class ListPresenter extends WidgetPresenter {
      */
     void deleteReference( int index ) {
         var deletingItem = list[ index ].customData;
-        var noteItems = AppPresenter( ).getData( NOTE );
+        var noteItems = Notification( ).messageBoard[ ON_UPDATE ].projectData.script.notes;
         for( var noteItem in noteItems ) {
             var note = noteItem.customData as NoteData;
             note.attributes[ dataType ].removeWhere( 
@@ -75,5 +76,12 @@ class ListPresenter extends WidgetPresenter {
     @override
     void onSuccess( ) {
         AppPresenter( ).save( );
+    }
+    
+    @override
+    void receive( String event, { data } ) {
+        if( event == ON_UPDATE && data != null ) {
+            list = data as List< ListItem >;
+        }
     }
 }

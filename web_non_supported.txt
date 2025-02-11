@@ -3,4 +3,6 @@
   desktop_webview_window: ^0.2.3
   webview_flutter: ^3.0.4
   flutter_linux_webview: ^0.1.2
+  dart:isolate
+  dart:io
 

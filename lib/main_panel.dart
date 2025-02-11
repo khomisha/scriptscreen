@@ -1,5 +1,6 @@
 // ignore_for_file: slash_for_doc_comments
 
+import 'package:base/base.dart' as base;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_presenter.dart';
@@ -12,7 +13,6 @@ import 'script_panel.dart';
 import 'package:window_manager/window_manager.dart';
 import 'action_time_panel.dart';
 import 'app_const.dart';
-import 'package:base/base.dart' as base;
 import 'app_components.dart';
 import 'form_presenter.dart';
 import 'list_presenter.dart';
@@ -20,13 +20,13 @@ import 'note_editor.dart';
 import 'note_panel.dart';
 import 'note_presenter.dart';
 
-class MainPanel extends StatefulWidget implements base.RootWidget {
+class MainPanel extends StatefulWidget implements base.Subscriber {
     late final List< base.Panel > panels;
     late final Function( bool ) _manageSplashscreen;
 
     MainPanel( { super.key } ) {
         base.Functions.put( "process", process );
-        AppPresenter( ).rootWidget = this;
+        base.Notification( ).subscribe( "$ON_EXIT,$ON_SEND,$ON_END_UPDATE", this );
         panels = [
             ProjectPanel( ProjectForm( ) ).panel,
             ScriptPanel( ScriptForm( ) ).panel,
@@ -41,15 +41,27 @@ class MainPanel extends StatefulWidget implements base.RootWidget {
     @override
     State< MainPanel > createState( ) => _MainPanelState( );
 
-    @override
-    void destroy( ) {
-        debugPrint( "destroy" );
-        windowManager.destroy( );
-    }
-
-    @override
     void manageSplashscreen( bool loading ) {
         _manageSplashscreen( loading );
+    }
+    
+    @override
+    void receive( String event, { data } ) {
+        switch( event ) {
+            case ON_EXIT:
+                debugPrint( "destroy" );
+                base.Notification( ).unsubscribeAll( );
+                windowManager.destroy( );
+                break;
+            case ON_SEND:
+                manageSplashscreen( true );
+                break;
+            case ON_END_UPDATE:
+                manageSplashscreen( false );
+                break;
+            default:
+                throw UnsupportedError( "No such event $event" );
+        }
     }
 }
 
