@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/home/mk/workspace/dart/scriptscreen/assets/tinymce/js/tinymce/tinymce.min.js"></script>
+<script>
+ tinymce.init({
+  selector: 'textarea#mytextarea',
+  height: 500,
+  plugins: [
+    'advlist', 'anchor', 'autolink', 'lists', 'link', 'image', 'colorpicker', 'imagetools', 'charmap', 'preview',
+    'anchor', 'searchreplace', 'visualblocks', 'code', 'textcolor', 'charmap', 'fullscreen',
+    'insertdatetime', 'noneditable', 'paste', 'media', 'table', 'help', 'wordcount'
+  ],
+  toolbar: 'undo redo | blocks | ' +
+  'bold italic underline superscript subscript | alignleft aligncenter | forecolor backcolor | ' +
+  'alignright alignjustify | bullist numlist outdent indent | link image table media | ' +
+  'removeformat charmap code | help',
+  init_instance_callback: function(editor) {
+     editor.execCommand('mceFullScreen');
+  },
+  content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px }',
+  promotion: false
+});</script>
+</head>
+
+<body>
+    <textarea id="mytextarea"></textarea>
+</body>
+</html>
+
+
+
+
+
