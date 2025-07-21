@@ -47,9 +47,7 @@ class _DiagramEditorState extends State< NoteDiagramEditor > {
             index: presenter.stackIndex, 
             children: [ 
                 SafeArea( child: Stack( children: [ Container( ), gd ] ) ), //???
-                policySet.selectedComponentId == null ? 
-                    Container( ) : 
-                    NoteForm( )
+                policySet.selectedComponentId == null ? Container( ) : NoteForm( )
             ]
         );
    }
@@ -456,7 +454,7 @@ class NoteForm extends BaseForm< NotePresenter > {
                     agent.presenter.update( attributeName, listItem, true );
                 }
                 field = Field.chipListField(
-                    value: getData( attributeName ), 
+                    value: AppPresenter( ).getData( attributeName ), 
                     pattern: pattern,
                     isSelected: isSelected,
                     onSelected: onSelected

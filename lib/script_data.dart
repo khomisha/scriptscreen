@@ -1,11 +1,10 @@
 
 // ignore_for_file: constant_identifier_names, slash_for_doc_comments
 
-import 'dart:io';
 import 'app_const.dart';
 import 'package:base/base.dart';
-import 'package:html/parser.dart';
-import 'package:path/path.dart' as p;
+// import 'package:html/parser.dart';
+// import 'package:path/path.dart' as p;
 
 /**
  * Returns empty item of the specified application data type
@@ -28,18 +27,20 @@ dynamic emptyItem( String type ) {
                 < ListItem > []
             );
         case NOTE:
+            var name = currentDatetime( pattern: "yyMMddHHmmssSSS" );
             return NoteData( 
                 "", "",
                 < ListItem > [], 
                 < ListItem > [],
                 < ListItem > [],
                 < ListItem > [],
-                '<div><span style="font-size: 12pt;"></span></div>'
+                '$name.html'
             );
         case PROJECT:
             return ProjectData( 
                 NONAME, 
                 "1.0",
+                "",
                 < ListItem > [], 
                 < ListItem > [], 
                 < ListItem > [],
@@ -147,8 +148,10 @@ class ActionTimeData extends GenericData {
 const String KEY_TAG = "em";
 
 class NoteData extends AttributeMap< String, dynamic > {
-    static final _file = File( p.join( p.current, 'assets', "templates", Config.config[ 'note_header_template' ] ) );
-    static final _template = _file.readAsStringSync( );
+    // static final _file = GenericFile( 
+    //     p.join( GenericFile.assetsDir, "templates", config[ 'note_header_template' ] ) 
+    // );
+    // static final _template = _file.readString( );
 
     NoteData( 
         String title,
@@ -179,7 +182,7 @@ class NoteData extends AttributeMap< String, dynamic > {
         details = list.map( ( e ) => ListItem( DetailData.fromJson( e ) ) ).toList( );
         list = map[ ACTION_TIME ] as List< dynamic >;
         actionTimes = list.map( ( e ) => ListItem( ActionTimeData.fromJson( e ) ) ).toList( );
-        body = fromHex( map[ 'body' ] );
+        body = map[ 'body' ];
     }
 
     int get index => attributes[ 'index' ] ?? 1;
@@ -208,7 +211,7 @@ class NoteData extends AttributeMap< String, dynamic > {
             LOCATION: locations.map( ( e ) { var data = e.customData as LocationData; return data.toJson( ); } ).toList( ),
             DETAIL: details.map( ( e ) { var data = e.customData as DetailData; return data.toJson( ); } ).toList( ),
             ACTION_TIME: actionTimes.map( ( e ) { var data = e.customData as ActionTimeData; return data.toJson( ); } ).toList( ),
-            'body': toHex( body )
+            'body': body
         };
         return map;
     }
@@ -223,25 +226,25 @@ class NoteData extends AttributeMap< String, dynamic > {
         return NoteData( title, description, roles, locations, details, actionTimes, body );
     }
 
-    String getHeaderAsHtml( ) {
-        var doc = parse( _template );
-        var elements = doc.querySelectorAll( KEY_TAG );
-        for( var e in elements ) { 
-            var ls = e.text.split( ";" );   //???
-            var result = "";
-            for( String s in ls ) {
-                if( attributes[ s ] is List ) {
-                    for( ListItem item in attributes[ s ] ) {
-                        result = "${item.customData.attributes[ 'name' ]} ${item.customData.attributes[ 'description' ]} ";
-                    }
-                } else {
-                    result = "${attributes[ s ]} ";
-                }
-            }
-            e.text = result;
-        }
-        return doc.toString( );
-    }
+    // String getHeaderAsHtml( ) {
+    //     var doc = parse( _template );
+    //     var elements = doc.querySelectorAll( KEY_TAG );
+    //     for( var e in elements ) { 
+    //         var ls = e.text.split( ";" );   //???
+    //         var result = "";
+    //         for( String s in ls ) {
+    //             if( attributes[ s ] is List ) {
+    //                 for( ListItem item in attributes[ s ] ) {
+    //                     result = "${item.customData.attributes[ 'name' ]} ${item.customData.attributes[ 'description' ]} ";
+    //                 }
+    //             } else {
+    //                 result = "${attributes[ s ]} ";
+    //             }
+    //         }
+    //         e.text = result;
+    //     }
+    //     return doc.toString( );
+    // }
 }
 
 class ScriptData extends AttributeMap< String, dynamic > {
@@ -320,6 +323,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
     ProjectData(
         String name, 
         String version,
+        String dir,
         List< ListItem > roles, 
         List< ListItem > locations, 
         List< ListItem > details,
@@ -328,6 +332,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
     ) {
         attributes[ 'name' ] = name;
         attributes[ 'version' ] = version;
+        attributes[ 'dir' ] = dir;
         attributes[ ROLE ] = roles;
         attributes[ LOCATION ] = locations;
         attributes[ DETAIL ] = details;
@@ -338,6 +343,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
     ProjectData.fromJson( Map< String, dynamic > map ) {
         name = map[ 'name' ];
         version = map[ 'version' ];
+        dir = map[ 'dir' ];
         var list = map[ ROLE ] as List< dynamic >;
         roles = list.map( ( e ) => ListItem( RoleData.fromJson( e ) ) ).toList( );
         list = map[ LOCATION ] as List< dynamic >;
@@ -351,6 +357,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
 
     String get name => attributes[ 'name' ] ?? NONAME;
     String get version => attributes[ 'version' ] ?? "1.0";
+    String get dir => attributes[ 'dir' ] ?? createEntityName( "scripts", name, version: version, addon: "r" );
     List< ListItem > get roles => attributes[ ROLE ] ?? < ListItem > [];
     List< ListItem > get locations => attributes[ LOCATION ] ?? < ListItem > [];
     List< ListItem > get details => attributes[ DETAIL ] ?? < ListItem > [];
@@ -359,6 +366,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
 
     set name( String value ) => attributes[ 'name' ] = value;
     set version( String value ) => attributes[ 'version' ] = value;
+    set dir( String value ) => attributes[ 'dir' ] = value;
     set roles( List< ListItem > value ) => attributes[ ROLE ] = value;
     set locations( List< ListItem > value ) => attributes[ LOCATION ] = value;
     set details( List< ListItem > value ) => attributes[ DETAIL ] = value;
@@ -369,6 +377,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
         var map = < String, dynamic > {
             'name': name,
             'version': version,
+            'dir': dir,
             ROLE: roles.map( ( e ) { var data = e.customData as RoleData; return data.toJson( ); } ).toList( ),
             LOCATION: locations.map( ( e ) { var data = e.customData as LocationData; return data.toJson( ); } ).toList( ),
             DETAIL: details.map( ( e ) { var data = e.customData as DetailData; return data.toJson( ); } ).toList( ),
@@ -385,6 +394,6 @@ class ProjectData extends AttributeMap< String, dynamic > {
 
     @override
     ProjectData copy( ) {
-        return ProjectData( name, version, roles, locations, details, actionTimes, script );
+        return ProjectData( name, version, dir, roles, locations, details, actionTimes, script );
     }
 }

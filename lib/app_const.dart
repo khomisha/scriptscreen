@@ -5,6 +5,7 @@
  * Application constants and typedefs
  */
 
+// data types
 const String ROLE = "role";
 const String DETAIL = "detail";
 const String LOCATION = "location";
@@ -25,13 +26,15 @@ typedef ChangeFilter = void Function( String name );
 typedef GetFilter = List< String > Function( );
 
 // command types
-const String CREATE = "create";
-const String LOAD = "load";
-const String SAVE = "save";
-const String EXIT = "exit";
+const String CMD_CREATE = "cmd_create";
+const String CMD_LOAD = "cmd_load";
+const String CMD_SAVE = "cmd_save";
+const String CMD_EXIT = "cmd_exit";
 
 // events
-const String ON_UPDATE = "on_update";
-const String ON_EXIT = "on_exit";
-const String ON_SEND = "on_send";
-const String ON_END_UPDATE = "on_end_update";
+const String EXIT = "exit";
+const String SEND = "send";
+const String END_UPDATE = "end_update";
+const String SAVE_CONTENT = "save_content";
+
+const String EMPTY_CONTENT = '<div><span style="font-size: 12pt;"></span></div>';

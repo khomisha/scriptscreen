@@ -1,6 +1,7 @@
 
 // ignore_for_file: avoid_print, slash_for_doc_comments
 
+import 'package:path/path.dart';
 import 'editor.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
@@ -17,22 +18,27 @@ class NotePresenter extends WidgetPresenter {
         notifyListeners( );
     }
 
-    NotePresenter( ) {
-        super.dataType = NOTE;
-        Notification( ).subscribe( ON_UPDATE, this );
-        list = getData( NOTE );
+    NotePresenter( ) : super( NOTE ) {
+        eventBroker.subscribe( this, UPDATE );
+        eventBroker.subscribe( this, SAVE_CONTENT );
+        list = AppPresenter( ).getData( dataType );
     }
 
     @override
     int add( ) {
-        list.add( ListItem( emptyItem( NOTE ) ) );
+        var note = emptyItem( dataType ) as NoteData;
+        list.add( ListItem( note ) );
+        var file = GenericFile( _getFileName( note ) );
+        file.writeString( EMPTY_CONTENT );
         return list.length - 1;
     }
 
     @override
     void delete( int index ) {
         if( list[ index ].selected ) {
-            Editor( ).setContent( "" );
+            editor.clear( );
+            var file = GenericFile( _getFileName( list[ index ].customData as NoteData ) );
+            file.delete( );
         }
         super.delete( index );
     }
@@ -97,34 +103,20 @@ class NotePresenter extends WidgetPresenter {
      * selecting the selecting note index 
      */
     Future< void > onSelect( int? selected, int selecting ) async {
-        if( !Editor( ).created ) {
-            Editor( ).create( );
-            await Future.delayed( const Duration( seconds: 2 ) );   // ???
-        }
         if( selected != null ) {
             // saves content from selected note
             var note = list[ selected ].customData as NoteData;
-            Editor( ).getContent( ).then( ( value ) { note.body = value.substring( 1, value.length - 1 ); } );
-            AppPresenter( ).save( );
+            editor.save( _getFileName( note ) );
+            editor.clear( );
         }
         // loads content to the selecting note
         var note = list[ selecting ].customData as NoteData;
         // debugPrint( "==================" );
         // debugPrint( '${note.getHeaderAsHtml( )}${note.body}' );
         // debugPrint( "==================" );
-        // Editor( ).setContent( '${note.getHeaderAsHtml( )}${note.body}' );
+        // editor.setContent( '${note.getHeaderAsHtml( )}${note.body}' );
         //var s = note.getHeaderAsHtml( );
-        Editor( ).setContent( note.body );
-    }
-
-    /**
-     * Refreshes selected (if any) note content
-     */
-    void refreshNoteData( ) {
-        if( selectedIndex > -1 ) {
-            var note = list[ selectedIndex ].customData as NoteData;
-            Editor( ).getContent( ).then( ( value ) { note.body = value.substring( 1, value.length - 1 ); } );
-        }
+        editor.load( _getFileName( note ) );
     }
     
     @override
@@ -133,9 +125,19 @@ class NotePresenter extends WidgetPresenter {
     }
 
     @override
-    void receive( String event, { data } ) {
-        if( event == ON_UPDATE && data != null ) {
-            list = data as List< ListItem >;
+    void onEvent( Event event ) {
+        super.onEvent(event);
+        if( event.type == SAVE_CONTENT && selectedIndex > -1 ) {
+            var note = list[ selectedIndex ].customData as NoteData;
+            editor.save( _getFileName( note ) );
         }
+    }
+
+    /**
+     * Returns file name for specified note
+     */
+    String _getFileName( NoteData note ) {
+        var dir = ( AppPresenter( ).getData( PROJECT ) as ProjectData ).dir;
+        return join( dir, note.body );
     }
 }

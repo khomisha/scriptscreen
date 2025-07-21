@@ -1,6 +1,7 @@
 // ignore_for_file: slash_for_doc_comments
 
 import 'package:base/base.dart' as base;
+import 'package:base/www.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_presenter.dart';
@@ -10,7 +11,6 @@ import 'model.dart';
 import 'project_panel.dart';
 import 'role_panel.dart';
 import 'script_panel.dart';
-import 'package:window_manager/window_manager.dart';
 import 'action_time_panel.dart';
 import 'app_const.dart';
 import 'app_components.dart';
@@ -22,57 +22,67 @@ import 'note_presenter.dart';
 
 class MainPanel extends StatefulWidget implements base.Subscriber {
     late final List< base.Panel > panels;
-    late final Function( bool ) _manageSplashscreen;
+    late final Function( base.Event ) _onEvent;
+    late final base.Supervisor sv;
 
     MainPanel( { super.key } ) {
         base.Functions.put( "process", process );
-        base.Notification( ).subscribe( "$ON_EXIT,$ON_SEND,$ON_END_UPDATE", this );
-        panels = [
-            ProjectPanel( ProjectForm( ) ).panel,
-            ScriptPanel( ScriptForm( ) ).panel,
-            NotePanel( const NoteDiagramEditor( ) ).panel,
-            RolePanel( DataList( ) ).panel,
-            LocationPanel( DataList( ) ).panel,
-            DetailPanel( DataList( ) ).panel,
-            ActionTimePanel( DataList( ) ).panel,
-        ];        
+        base.eventBroker
+            ..subscribe( this, EXIT )
+            ..subscribe( this, SEND )
+            ..subscribe( this, END_UPDATE );
     }
 
     @override
     State< MainPanel > createState( ) => _MainPanelState( );
 
-    void manageSplashscreen( bool loading ) {
-        _manageSplashscreen( loading );
-    }
-    
     @override
-    void receive( String event, { data } ) {
-        switch( event ) {
-            case ON_EXIT:
+    void onEvent( base.Event event ) {
+        logger.info( 'MainPanel: onEvent: ${event.type}' );
+        _onEvent( event );
+    }
+}
+
+class _MainPanelState extends State< MainPanel > implements base.Pane {
+	var _currentPanelIndex = 0;
+    var _loading = false;
+    bool makeItOnce = true;
+
+    void _manageSplashscreen( bool loading ) {
+        setState( ( ) { _loading = loading; } );
+    }
+	
+    void _onEvent( base.Event event ) {
+        switch( event.type ) {
+            case EXIT:
                 debugPrint( "destroy" );
-                base.Notification( ).unsubscribeAll( );
-                windowManager.destroy( );
+                base.eventBroker.dispose( );
+                widget.sv.destroy( );
                 break;
-            case ON_SEND:
-                manageSplashscreen( true );
+            case SEND:
+                _manageSplashscreen( true );
                 break;
-            case ON_END_UPDATE:
-                manageSplashscreen( false );
+            case END_UPDATE:
+                _manageSplashscreen( false );
+                if( makeItOnce ) {
+                    makeItOnce = false;
+                    logger.info( "MainPanel: init panels" );
+                    widget.panels = [
+                        ProjectPanel( ProjectForm( ) ).panel,
+                        ScriptPanel( ScriptForm( ) ).panel,
+                        NotePanel( const NoteDiagramEditor( ) ).panel,
+                        RolePanel( DataList( ) ).panel,
+                        LocationPanel( DataList( ) ).panel,
+                        DetailPanel( DataList( ) ).panel,
+                        ActionTimePanel( DataList( ) ).panel,
+                    ];        
+                }
                 break;
             default:
                 throw UnsupportedError( "No such event $event" );
         }
     }
-}
 
-class _MainPanelState extends State< MainPanel > with WindowListener {
-	var _currentPanelIndex = 0;
-    var _loading = false;
-
-    void manageSplashscreen( bool loading ) {
-        setState( ( ) { _loading = loading; } );
-    }
-	
 	@override
 	Widget build( BuildContext context ) {
         if( _loading ) {
@@ -98,21 +108,22 @@ class _MainPanelState extends State< MainPanel > with WindowListener {
     
     @override
     void initState( ) {
+        logger.info( "MainPanel: initState" );
         super.initState( );
-        windowManager.addListener( this );
-        widget._manageSplashscreen = manageSplashscreen;
+        widget.sv = base.Supervisor( this );
+        widget._onEvent = _onEvent;
         AppPresenter( ).loadData( );
     }
 
     @override
     void dispose( ) {
+        eventBroker.dispose( );
         AppPresenter( ).dispose( );
-        windowManager.removeListener( this );
         super.dispose( );
     }
 
     @override
-    void onWindowClose( ) {
+    void onClose( ) {
         debugPrint( "window close" );
         dispose( );
     }

@@ -7,10 +7,10 @@ import 'package:base/base.dart';
 import 'main_panel.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main( ) {
-    //FlutterError.onError = logOnErrorFlutter;
-    //PlatformDispatcher.instance.onError = logOnErrorPlatform;
+void main( ) async {
     AppFacing( );
+    await loadConfig( );
+    initLogger( );
     runApp( const App( ) );
 }
 

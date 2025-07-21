@@ -1,30 +1,30 @@
 
 // ignore_for_file: slash_for_doc_comments, constant_identifier_names
 
-import 'dart:io';
 import 'package:base/base.dart';
 import 'app_const.dart';
 import 'package:path/path.dart' as path;
 
 void process( dynamic data ) {
-    var command = data[ 'command' ] as String;
     if( data is Data ) {
+        var command = data[ 'command' ] as String;
         try {
             switch( command ) {
-                case CREATE:
+                case CMD_CREATE:
                     _create( data );
                     break;
-                case LOAD:
+                case CMD_LOAD:
                     _load( data );
                     break;
-                case SAVE:
+                case CMD_SAVE:
                     _save( data );
                     break;
-                case EXIT:
+                case CMD_EXIT:
                     _exit( data );
                     break;
                 default:
-                    data[ 'warning' ] = "No such method $command";
+                    data[ 'result' ] = FAILURE;
+                    data[ ERR_MSG ] = "No such method $command";
             }
         }
         on Exception catch( e, stack ) {
@@ -44,10 +44,11 @@ void process( dynamic data ) {
  */
 void _create( Data data ) {
     if( data[ 'for_save' ] != null ) {
-        _save( data[ 'for_save' ].data[ 'data' ] );
+        _save( data[ 'for_save' ] );
     }
-    var file = File( path.join( 'assets', 'cfg', 'empty.json' ) );
-    data[ 'data' ] = file.readAsStringSync( );
+    var file = GenericFile( path.join( GenericFile.assetsDir, 'cfg', 'empty.json' ) );
+    GenericFile.mkDir( data[ 'dirname' ] );
+    data[ 'data' ] = file.readString( );
     data[ 'result' ] = SUCCESS;
 }
 
@@ -57,10 +58,10 @@ void _create( Data data ) {
  */
 void _load( Data data ) {
     if( data[ 'for_save' ] != null ) {
-        _save( data[ 'for_save' ].data[ 'data' ] );
+        _save( data[ 'for_save' ] );
     }
-    var file = File( data[ 'filename' ] );
-    data[ 'data' ] = file.readAsStringSync( );
+    var file = GenericFile( data[ 'filename' ] );
+    data[ 'data' ] = file.readString( );
     data[ 'result' ] = SUCCESS;
 }
 
@@ -69,13 +70,9 @@ void _load( Data data ) {
  * data the [Data] object to save
  */
 void _save( Data data ) {
-    var file = File( data[ 'filename' ] );
-    file.writeAsStringSync( data[ 'data' ] );
+    var file = GenericFile( data[ 'filename' ] );
+    file.writeString( data[ 'data' ] );
     data[ 'result' ] = SUCCESS;
-    if( Config.config[ 'last_project' ] != data[ 'filename' ] ) {
-        Config.config[ 'last_project' ] = data[ 'filename' ];
-        writeConfig( );
-    }
 }
 
 /**

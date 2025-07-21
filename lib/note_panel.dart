@@ -10,6 +10,8 @@ class NotePanel {
 
     NotePanel( Widget widget ) {
         List< PopupMenuEntry > menuItems = [
+            showEditor,
+            const PopupMenuDivider( ),
             exitApp
         ];
         panel = Panel( 
