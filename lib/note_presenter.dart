@@ -105,8 +105,8 @@ class NotePresenter extends WidgetPresenter {
     Future< void > onSelect( int? selected, int selecting ) async {
         if( selected != null ) {
             // saves content from selected note
-            var note = list[ selected ].customData as NoteData;
-            editor.save( _getFileName( note ) );
+            //var note = list[ selected ].customData as NoteData;
+            //editor.save( _getFileName( note ) );
             editor.clear( );
         }
         // loads content to the selecting note
@@ -137,7 +137,7 @@ class NotePresenter extends WidgetPresenter {
      * Returns file name for specified note
      */
     String _getFileName( NoteData note ) {
-        var dir = ( AppPresenter( ).getData( PROJECT ) as ProjectData ).dir;
+        var dir = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).dir;
         return join( dir, note.body );
     }
 }

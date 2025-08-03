@@ -4,6 +4,7 @@
 const { app, BrowserWindow, ipcMain } = require( 'electron' )
 const path = require( 'node:path' )
 const fs = require( 'fs/promises' );
+const fss = require('fs')
 
 // app.commandLine.appendSwitch( 'enable-logging' )
 // app.commandLine.appendSwitch( 'log-level', '0' )
@@ -59,7 +60,7 @@ const createWindow = ( ) => {
     )
 
     mainWindow.setMenuBarVisibility( false );
-    browser.setMenuBarVisibility( false );
+    //browser.setMenuBarVisibility( false );
     
     mainWindow.on( "closed", 
         ( ) => {
@@ -74,6 +75,7 @@ const createWindow = ( ) => {
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools( );
+    browser.webContents.openDevTools( );
 
     browser.loadFile( 'editor.html' );
 }
@@ -104,17 +106,18 @@ let readStream = null;
 ipcMain.handle( 
     'load-content', 
     async ( _, fileName ) => {
-        const stats = fs.statSync( fileName );
-        const fileSize = stats.size;
-        const CHUNK_SIZE = fileSize > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
         try {
+            const stats = await fs.stat( fileName );
+            const fileSize = stats.size;
+            const CHUNK_SIZE = fileSize > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
              browser.webContents.send( 'begin-loading' );
             // Create read stream
-            readStream = fs.createReadStream( fileName, { encoding: 'utf8', highWaterMark: CHUNK_SIZE } );
+            readStream = fss.createReadStream( fileName, { encoding: 'utf8', highWaterMark: CHUNK_SIZE } );
             // Stream chunks to renderer
             for await ( const chunk of readStream ) {
                 browser.webContents.send( 'load-chunk', chunk );
             }
+            console.log( 'send load-complete' );
             browser.webContents.send( 'load-complete' );
             return "success";
         } 
@@ -130,7 +133,7 @@ ipcMain.handle(
     async ( _, fileName ) => {
         try {
             // Create write stream
-            saveStream = fs.createWriteStream( fileName );
+            saveStream = fss.createWriteStream( fileName );
             // Start the process by requesting first chunk
             browser.webContents.send( 'request-chunk' );
             return "success";
@@ -199,7 +202,7 @@ ipcMain.on(
 ipcMain.on( 
     'exists', 
     ( event, path ) => {
-        event.returnValue = fs.existsSync( path );
+        event.returnValue = fss.existsSync( path );
     }
 );
 

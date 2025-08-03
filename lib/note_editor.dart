@@ -304,7 +304,7 @@ class Note extends StatelessWidget {
         var decoration = BoxDecoration(
             borderRadius: BorderRadius.circular( 20 ),
             border: border,
-            color: Colors.white.withOpacity( 1.0 )
+            color: Colors.white.withValues( alpha: 255.0 )
         );
         var title = Text( 
             componentData.data.customData.title, 

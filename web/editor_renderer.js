@@ -78,10 +78,11 @@ let progress = 0;
 // Handle loading events
 window.contentAPI.onBeginLoading(
 	( ) => {
+		console.log( 'onBeginLoading' );
 		progress = 0;
 		tinymce.activeEditor.setProgressState( true );
 		tinymce.activeEditor.setContent(''); // Clear editor
-		tinymce.activeEditor.setMode( 'readonly' ); // Prevent editing during load
+		tinymce.EditorMode.set( 'readonly' ); // Prevent editing during load
 	}
 );
 
@@ -91,7 +92,7 @@ window.contentAPI.onLoadChunk(
 			// Insert chunk at current cursor position
 			tinymce.activeEditor.insertContent( chunk );
 			progress += chunk.length;
-			tinymce.activeEditor.setProgressState( true, Math.min( 100, progress / 1000000 * 100 ) );
+			//tinymce.activeEditor.setProgressState( true, Math.min( 100, progress / 1000000 * 100 ) );
 		} 
 		catch( err ) {
 			console.error( 'Error inserting chunk:', err );
@@ -99,10 +100,11 @@ window.contentAPI.onLoadChunk(
 	}
 );
 
-window.loadAPI.onLoadComplete(
+window.contentAPI.onLoadComplete(
 	( ) => {
+		console.log( 'onLoadComplete' );
 		tinymce.activeEditor.setProgressState( false );
-		tinymce.activeEditor.setMode( 'design' ); // Enable editing
+		tinymce.EditorMode.set( 'design' ); // Enable editing
 	}
 );
 

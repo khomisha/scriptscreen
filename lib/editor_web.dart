@@ -9,10 +9,11 @@ class EditorImpl implements Editor {
     @override
     void save( String fileName ) async {
         try {
+            logger.info( fileName );
             await appElectronAPI.save( fileName.toJS ).toDart;
         }
         on JSError catch ( e ) {
-            logger.severe( e.message );
+            logger.severe( '$fileName ${e.message}' );
         }
     }
 
@@ -22,7 +23,7 @@ class EditorImpl implements Editor {
             await appElectronAPI.load( fileName.toJS ).toDart;
         }
         on JSError catch ( e ) {
-            logger.severe( e.message );
+            logger.severe( '$fileName ${e.message}' );
         }
     }
 

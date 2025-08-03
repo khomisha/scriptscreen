@@ -55,7 +55,7 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
     void _onEvent( base.Event event ) {
         switch( event.type ) {
             case EXIT:
-                debugPrint( "destroy" );
+                logger.info( "destroy" );
                 base.eventBroker.dispose( );
                 widget.sv.destroy( );
                 break;
@@ -124,7 +124,7 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
 
     @override
     void onClose( ) {
-        debugPrint( "window close" );
+        logger.info( "================== application close ===========================" );
         dispose( );
     }
 

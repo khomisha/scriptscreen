@@ -19,7 +19,7 @@ class AppPresenter {
             Duration( seconds: config[ 'default_autosave' ] ), 
             ( _ ) { 
                 //save( );
-                eventBroker.dispatch( Event( SAVE_CONTENT ) );
+                //eventBroker.dispatch( Event( SAVE_CONTENT ) );
             } 
         );
     }
