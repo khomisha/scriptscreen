@@ -60,7 +60,7 @@ const createWindow = ( ) => {
     )
 
     mainWindow.setMenuBarVisibility( false );
-    //browser.setMenuBarVisibility( false );
+    browser.setMenuBarVisibility( false );
     
     mainWindow.on( "closed", 
         ( ) => {
@@ -75,7 +75,7 @@ const createWindow = ( ) => {
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools( );
-    browser.webContents.openDevTools( );
+    //browser.webContents.openDevTools( );
 
     browser.loadFile( 'editor.html' );
 }

@@ -21,7 +21,6 @@ import 'note_panel.dart';
 import 'note_presenter.dart';
 
 class MainPanel extends StatefulWidget implements base.Subscriber {
-    late final List< base.Panel > panels;
     late final Function( base.Event ) _onEvent;
     late final base.Supervisor sv;
 
@@ -44,39 +43,38 @@ class MainPanel extends StatefulWidget implements base.Subscriber {
 }
 
 class _MainPanelState extends State< MainPanel > implements base.Pane {
+    List< base.Panel > _panels = [ ];
 	var _currentPanelIndex = 0;
-    var _loading = false;
+    var _loading = true;
     bool makeItOnce = true;
 
-    void _manageSplashscreen( bool loading ) {
-        setState( ( ) { _loading = loading; } );
-    }
-	
     void _onEvent( base.Event event ) {
         switch( event.type ) {
             case EXIT:
-                logger.info( "destroy" );
                 base.eventBroker.dispose( );
                 widget.sv.destroy( );
                 break;
             case SEND:
-                _manageSplashscreen( true );
+                setState( ( ) => _loading = true );
                 break;
             case END_UPDATE:
-                _manageSplashscreen( false );
-                if( makeItOnce ) {
-                    makeItOnce = false;
-                    logger.info( "MainPanel: init panels" );
-                    widget.panels = [
-                        ProjectPanel( ProjectForm( ) ).panel,
-                        ScriptPanel( ScriptForm( ) ).panel,
-                        NotePanel( const NoteDiagramEditor( ) ).panel,
-                        RolePanel( DataList( ) ).panel,
-                        LocationPanel( DataList( ) ).panel,
-                        DetailPanel( DataList( ) ).panel,
-                        ActionTimePanel( DataList( ) ).panel,
-                    ];        
-                }
+                setState( 
+                    ( ) {
+                        if( makeItOnce ) {
+                            makeItOnce = false;
+                            _panels = [
+                                ProjectPanel( ProjectForm( ) ).panel,
+                                ScriptPanel( ScriptForm( ) ).panel,
+                                NotePanel( const NoteDiagramEditor( ) ).panel,
+                                RolePanel( DataList( ) ).panel,
+                                LocationPanel( DataList( ) ).panel,
+                                DetailPanel( DataList( ) ).panel,
+                                ActionTimePanel( DataList( ) ).panel,
+                            ];        
+                        }
+                        _loading = false;    
+                    }
+                );
                 break;
             default:
                 throw UnsupportedError( "No such event $event" );
@@ -90,7 +88,7 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
         }
         final ThemeData theme = Theme.of( context );
         var navBar = BottomNavigationBar( 
-            items: _createNavBarItems( widget.panels ), 
+            items: _createNavBarItems( ), 
             currentIndex: _currentPanelIndex, 
             selectedItemColor: Colors.red,
             unselectedItemColor: theme.colorScheme.primary,
@@ -101,14 +99,14 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
         );
         var stack = IndexedStack(
             index: _currentPanelIndex,
-            children: widget.panels,
+            children: _panels,
         );
         return Scaffold( body: stack, bottomNavigationBar: navBar );
 	}
     
     @override
     void initState( ) {
-        logger.info( "MainPanel: initState" );
+        logger.info( "****************** application start ***************************" );
         super.initState( );
         widget.sv = base.Supervisor( this );
         widget._onEvent = _onEvent;
@@ -138,9 +136,9 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
     /**
      * Creates navigation bar items using panel icon and title
      */
-    List< BottomNavigationBarItem > _createNavBarItems( List< base.Panel > panels ) {
+    List< BottomNavigationBarItem > _createNavBarItems( ) {
         var items = < BottomNavigationBarItem > [];
-        for( var panel in panels ) {
+        for( var panel in _panels ) {
             items.add( BottomNavigationBarItem( icon: panel.icon!, label: panel.title ) );
         }
         return items;
