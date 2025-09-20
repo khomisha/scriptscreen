@@ -33,7 +33,7 @@ class EditorImpl implements Editor {
     }
 
     @override
-    void save( String fileName ) async {
+    Future< void > save( String fileName ) async {
         try {
             var content = await _webview.evaluateJavaScript( 'tinymce.activeEditor.getContent()' ) ?? "";
             final file = GenericFile( fileName );

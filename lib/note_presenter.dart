@@ -1,7 +1,6 @@
 
 // ignore_for_file: avoid_print, slash_for_doc_comments
 
-import 'package:path/path.dart';
 import 'editor.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
@@ -28,7 +27,7 @@ class NotePresenter extends WidgetPresenter {
     int add( ) {
         var note = emptyItem( dataType ) as NoteData;
         list.add( ListItem( note ) );
-        var file = GenericFile( _getFileName( note ) );
+        var file = GenericFile( getBodyFileName( note ) );
         file.writeString( EMPTY_CONTENT );
         return list.length - 1;
     }
@@ -37,7 +36,7 @@ class NotePresenter extends WidgetPresenter {
     void delete( int index ) {
         if( list[ index ].selected ) {
             editor.clear( );
-            var file = GenericFile( _getFileName( list[ index ].customData as NoteData ) );
+            var file = GenericFile( getBodyFileName( list[ index ].customData as NoteData ) );
             file.delete( );
         }
         super.delete( index );
@@ -105,9 +104,9 @@ class NotePresenter extends WidgetPresenter {
     Future< void > onSelect( int? selected, int selecting ) async {
         if( selected != null ) {
             // saves content from selected note
-            //var note = list[ selected ].customData as NoteData;
-            //editor.save( _getFileName( note ) );
-            editor.clear( );
+            var note = list[ selected ].customData as NoteData;
+            await editor.save( getBodyFileName( note ) );
+            //editor.clear( );
         }
         // loads content to the selecting note
         var note = list[ selecting ].customData as NoteData;
@@ -116,7 +115,7 @@ class NotePresenter extends WidgetPresenter {
         // debugPrint( "==================" );
         // editor.setContent( '${note.getHeaderAsHtml( )}${note.body}' );
         //var s = note.getHeaderAsHtml( );
-        editor.load( _getFileName( note ) );
+        editor.load( getBodyFileName( note ) );
     }
     
     @override
@@ -126,18 +125,10 @@ class NotePresenter extends WidgetPresenter {
 
     @override
     void onEvent( Event event ) {
-        super.onEvent(event);
+        super.onEvent( event );
         if( event.type == SAVE_CONTENT && selectedIndex > -1 ) {
             var note = list[ selectedIndex ].customData as NoteData;
-            editor.save( _getFileName( note ) );
+            editor.save( getBodyFileName( note ) );
         }
-    }
-
-    /**
-     * Returns file name for specified note
-     */
-    String _getFileName( NoteData note ) {
-        var dir = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).dir;
-        return join( dir, note.body );
     }
 }

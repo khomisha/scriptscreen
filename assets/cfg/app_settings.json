@@ -5,6 +5,6 @@
     "default_autosave": 120,
     "gui_primary_color": "green",
     "editor_config": "editor.html",
-    "note_header_template": "nonedit.html",
+    "note_header_template": "header.html",
     "log_level": "ALL"
 }

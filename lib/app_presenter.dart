@@ -7,6 +7,7 @@ import 'script_data.dart';
 import 'app_const.dart';
 import 'package:base/base.dart';
 import 'broker_init_web.dart' if (dart.library.io) 'broker_init_io.dart';
+import 'package:path/path.dart';
 
 class AppPresenter {
     static final AppPresenter _instance = AppPresenter._( );
@@ -209,4 +210,13 @@ class AppBroker extends Broker  with Initing {
         eventBroker.dispatch( Event( END_UPDATE ) );
     }
 }
+
+/**
+ * Returns file name for specified note
+ */
+String getBodyFileName( NoteData note ) {
+    var dir = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).dir;
+    return join( dir, note.body );
+}
+
 

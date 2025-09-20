@@ -4,7 +4,8 @@
 const { app, BrowserWindow, ipcMain } = require( 'electron' )
 const path = require( 'node:path' )
 const fs = require( 'fs/promises' );
-const fss = require('fs')
+const fss = require( 'fs' )
+const { PDFDocument } = require( 'pdf-lib' );
 
 // app.commandLine.appendSwitch( 'enable-logging' )
 // app.commandLine.appendSwitch( 'log-level', '0' )
@@ -75,7 +76,7 @@ const createWindow = ( ) => {
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools( );
-    //browser.webContents.openDevTools( );
+    browser.webContents.openDevTools( );
 
     browser.loadFile( 'editor.html' );
 }
@@ -178,7 +179,8 @@ ipcMain.handle(
 	'clear-content', 
 	async ( _, arg ) => {
 		try {
-			return await browser.webContents.executeJavaScript( 'tinymce.activeEditor.resetContent()' );
+            await browser.webContents.executeJavaScript( 'tinymce.activeEditor.resetContent()' );
+			return "success";
 		} catch( err ) {
             throw new Error( `Clear content failed: ${err.message}\n${err.stack}` );
 		}
@@ -211,7 +213,7 @@ ipcMain.handle(
     async ( _, path ) => {
 		try {
 			return await fs.mkdir( path, { recursive: true } );
-		} catch( error ) {
+		} catch( err ) {
 			throw new Error( `Make dir failed: ${err.message}\n${err.stack}` );
 		}
     }
@@ -223,7 +225,7 @@ ipcMain.handle(
 		try {
 			await fs.rm( path );
             return "success";
-		} catch( error ) {
+		} catch( err ) {
 			throw new Error( `Make dir failed: ${err.message}\n${err.stack}` );
 		}
     }
@@ -265,19 +267,6 @@ ipcMain.handle(
 );
 
 ipcMain.handle( 
-    'set-content', 
-    async ( _, content ) => {
-		try {
-            var script = 'tinymce.activeEditor.setContent(' + content + ')';
-            await browser.webContents.executeJavaScript( script );
-            return "success"
-		} catch( err ) {
-            throw new Error( `Set content failed: ${err.message}\n${err.stack}` );
-		}
-    }
-);
-
-ipcMain.handle( 
     'copy-dir', 
     async ( _, src, dest ) => {
 		try {
@@ -285,6 +274,47 @@ ipcMain.handle(
 		} catch( err ) {
             throw new Error( `Copy dir failed: ${err.message}\n${err.stack}` );
 		}
+    }
+);
+
+ipcMain.handle( 
+    'convert-html-to-pdf', 
+    async ( _, headers, htmlFiles, pdfPath ) => {
+        const win = new BrowserWindow( { show: false, webPreferences: { offscreen: true } } );
+        try {
+            const pdfDocs = [];
+            const options = { pageSize: 'A4', printBackground: true };
+            var index = 0;
+            for( const file of htmlFiles ) {
+                await win.loadFile( file );
+                var header = headers[ index ];
+                await win.webContents.executeJavaScript(`
+                    const header = document.createElement("div");
+                    header.innerHTML = ${JSON.stringify(header)};
+                    document.body.insertBefore(header, document.body.firstChild);
+                `);
+                const pdfBuffer = await win.webContents.printToPDF( options );
+                pdfDocs.push( pdfBuffer );
+                index++;
+            }
+
+            // Merge all PDFs using pdf-lib
+            const mergedPdf = await PDFDocument.create( );
+            for( const pdfBytes of pdfDocs ) {
+                const doc = await PDFDocument.load( pdfBytes );
+                const copiedPages = await mergedPdf.copyPages( doc, doc.getPageIndices( ) );
+                copiedPages.forEach( ( p ) => mergedPdf.addPage( p ) );
+            }
+            const mergedBytes = await mergedPdf.save( );
+            await fs.writeFile( pdfPath, mergedBytes );
+            console.log( "Merged PDF saved at:", pdfPath );
+            return "success";
+        } catch( err ) {
+            throw new Error( `Convertion failed: ${err.message}\n${err.stack}` );
+        }
+        finally {
+            win.destroy( );
+        }
     }
 );
 

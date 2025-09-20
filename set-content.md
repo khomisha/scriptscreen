@@ -4670,3 +4670,39 @@ window.loadAPI.onLoadChunk(({ chunk }) => {
    - Straightforward to add compression
 
 This implementation provides a clean separation between content streaming (handled by Electron) and application state (managed by Flutter), resulting in a more maintainable and efficient architecture for loading large files into TinyMCE.
+
+### Pdf converter
+
+1. **Using Electron's Built-in Printer**
+
+```javascript
+// In main process
+ipcMain.handle('convert-html-to-pdf', async (_, { htmlFiles, outputPath }) => {
+  const win = new BrowserWindow({ show: false });
+  const pdfBuffers = [];
+  
+  try {
+    for (const file of htmlFiles) {
+      await win.loadFile(file);
+      await new Promise(resolve => win.webContents.once('did-finish-load', resolve));
+      
+      const pdf = await win.webContents.printToPDF({
+        printBackground: true,
+        pageSize: 'A4',
+        marginsType: 0
+      });
+      
+      pdfBuffers.push(pdf);
+    }
+    
+    // Merge PDFs (same as before)
+    const mergedPdf = await mergePdfs(pdfBuffers);
+    await fs.writeFile(outputPath, mergedPdf);
+    return "success";
+  } catch (err) {
+    console.error('Conversion error:', err);
+  } finally {
+    win.destroy();
+  }
+});
+```

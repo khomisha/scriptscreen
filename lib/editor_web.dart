@@ -7,7 +7,7 @@ import 'editor.dart';
 class EditorImpl implements Editor {
 
     @override
-    void save( String fileName ) async {
+    Future< void > save( String fileName ) async {
         try {
             logger.info( fileName );
             await appElectronAPI.save( fileName.toJS ).toDart;

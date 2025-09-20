@@ -48,6 +48,7 @@ dependencies:
   base:
     path: ../base
   desktop_webview_window: ^0.2.3
+  flutter_html_to_pdf: ^0.7.0
 
 dev_dependencies:
   flutter_test:

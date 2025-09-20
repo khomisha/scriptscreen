@@ -13,7 +13,7 @@ abstract class Editor {
      * Save content from editor running in separate browser window
      * fileName the text full file name to save
      */
-    void save( String fileName );
+    Future< void > save( String fileName );
 
     /**
      * Put content to the editor running in separate browser window

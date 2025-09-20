@@ -148,11 +148,6 @@ class ActionTimeData extends GenericData {
 const String KEY_TAG = "em";
 
 class NoteData extends AttributeMap< String, dynamic > {
-    // static final _file = GenericFile( 
-    //     p.join( GenericFile.assetsDir, "templates", config[ 'note_header_template' ] ) 
-    // );
-    // static final _template = _file.readString( );
-
     NoteData( 
         String title,
         String description,

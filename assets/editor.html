@@ -9,19 +9,19 @@
         selector: 'textarea#mytextarea',
         height: 500,
         plugins: [
-          'advlist', 'lists',
-          'searchreplace', 'visualblocks', 'charmap', 'fullscreen',
+          'advlist', 'lists', 'anchor', 'autolink', 'link', 'image', 'colorpicker', 'imagetools',
+          'searchreplace', 'visualblocks', 'charmap', 'fullscreen', 'media', 'table', 'preview',
           'insertdatetime', 'help', 'wordcount', 'code'
         ],
-        toolbar: 'undo redo | fontfamily fontsize |' +
-          'bold italic underline | alignleft aligncenter alignright alignjustify |' +
-          'bullist numlist outdent indent | charmap code | searchreplace | help',
+        toolbar: 'undo redo | fontfamily fontsize |  blocks |' +
+          'bold italic underline superscript subscript | alignleft aligncenter alignright alignjustify | forecolor backcolor |' +
+          'bullist numlist outdent indent | link image table media | removeformat charmap code | searchreplace | help',
         init_instance_callback: function(editor) {
           editor.execCommand('mceFullScreen');
         },
-        content_style: 'body { font-family:Courier New,Arial,sans-serif; font-size:14pt }',
+        content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
         promotion: false,
-        menubar: false,
+        menubar: true,
         forced_root_block : 'div',
         contextmenu: false,
         // example <div class="nonedit">You cannot edit this</div>
