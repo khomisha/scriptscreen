@@ -21,7 +21,7 @@ class ActionTimePanel {
             title: "Action Times", 
             childWidget: createProvider( ACTION_TIME, list ), 
             icon: const Icon( Icons.schedule ),
-            menu: createMenu( menuItems )
+            actions: [ createMenu( menuItems ) ]
         );
     }
 }

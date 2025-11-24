@@ -20,7 +20,7 @@ class LocationPanel {
             title: "Locations", 
             childWidget: createProvider( LOCATION, list ), 
             icon: const Icon( Icons.room ),
-            menu: createMenu( menuItems )
+            actions: [ createMenu( menuItems ) ]
         );
     }
 }

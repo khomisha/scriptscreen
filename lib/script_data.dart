@@ -40,6 +40,7 @@ dynamic emptyItem( String type ) {
             return ProjectData( 
                 NONAME, 
                 "1.0",
+                "ru",
                 "",
                 < ListItem > [], 
                 < ListItem > [], 
@@ -318,6 +319,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
     ProjectData(
         String name, 
         String version,
+        String lang,
         String dir,
         List< ListItem > roles, 
         List< ListItem > locations, 
@@ -327,6 +329,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
     ) {
         attributes[ 'name' ] = name;
         attributes[ 'version' ] = version;
+        attributes[ 'lang' ] = lang;
         attributes[ 'dir' ] = dir;
         attributes[ ROLE ] = roles;
         attributes[ LOCATION ] = locations;
@@ -338,6 +341,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
     ProjectData.fromJson( Map< String, dynamic > map ) {
         name = map[ 'name' ];
         version = map[ 'version' ];
+        lang = map[ 'lang' ];
         dir = map[ 'dir' ];
         var list = map[ ROLE ] as List< dynamic >;
         roles = list.map( ( e ) => ListItem( RoleData.fromJson( e ) ) ).toList( );
@@ -352,6 +356,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
 
     String get name => attributes[ 'name' ] ?? NONAME;
     String get version => attributes[ 'version' ] ?? "1.0";
+    String get lang => attributes[ 'lang' ] ?? "ru";
     String get dir => attributes[ 'dir' ] ?? createEntityName( "scripts", name, version: version, addon: "r" );
     List< ListItem > get roles => attributes[ ROLE ] ?? < ListItem > [];
     List< ListItem > get locations => attributes[ LOCATION ] ?? < ListItem > [];
@@ -361,6 +366,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
 
     set name( String value ) => attributes[ 'name' ] = value;
     set version( String value ) => attributes[ 'version' ] = value;
+    set lang( String value ) => attributes[ 'lang' ] = value;
     set dir( String value ) => attributes[ 'dir' ] = value;
     set roles( List< ListItem > value ) => attributes[ ROLE ] = value;
     set locations( List< ListItem > value ) => attributes[ LOCATION ] = value;
@@ -372,6 +378,7 @@ class ProjectData extends AttributeMap< String, dynamic > {
         var map = < String, dynamic > {
             'name': name,
             'version': version,
+            'lang': lang,
             'dir': dir,
             ROLE: roles.map( ( e ) { var data = e.customData as RoleData; return data.toJson( ); } ).toList( ),
             LOCATION: locations.map( ( e ) { var data = e.customData as LocationData; return data.toJson( ); } ).toList( ),
@@ -389,6 +396,6 @@ class ProjectData extends AttributeMap< String, dynamic > {
 
     @override
     ProjectData copy( ) {
-        return ProjectData( name, version, dir, roles, locations, details, actionTimes, script );
+        return ProjectData( name, version, lang, dir, roles, locations, details, actionTimes, script );
     }
 }

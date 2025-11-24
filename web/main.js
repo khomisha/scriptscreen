@@ -6,6 +6,7 @@ const path = require( 'node:path' )
 const fs = require( 'fs/promises' );
 const fss = require( 'fs' )
 const { PDFDocument } = require( 'pdf-lib' );
+const WhisperCLI = require('./simple-whisper');
 
 // app.commandLine.appendSwitch( 'enable-logging' )
 // app.commandLine.appendSwitch( 'log-level', '0' )
@@ -27,6 +28,7 @@ const WRITE_ONLY = 3;
 const WRITE_ONLY_APPEND = 4;
 
 let browser = null;
+let whisper = null;
 
 const createWindow = ( ) => {
     // Create the main window.
@@ -111,7 +113,7 @@ ipcMain.handle(
             const stats = await fs.stat( fileName );
             const fileSize = stats.size;
             const CHUNK_SIZE = fileSize > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
-             browser.webContents.send( 'begin-loading' );
+            browser.webContents.send( 'begin-loading' );
             // Create read stream
             readStream = fss.createReadStream( fileName, { encoding: 'utf8', highWaterMark: CHUNK_SIZE } );
             // Stream chunks to renderer
@@ -123,7 +125,7 @@ ipcMain.handle(
             return "success";
         } 
         catch( err ) {
-            throw new Error( `Save content init failed: ${err.message}\n${err.stack}` );
+            throw new Error( `Load content failed: ${err.message}\n${err.stack}` );
         }
     }
 );
@@ -318,6 +320,45 @@ ipcMain.handle(
     }
 );
 
+ipcMain.handle(
+    'transcribe-audio', 
+    async ( _, audioPath, model, lang ) => {
+        try {
+            const start = Date.now( );
+            
+            const whisper = getWhisper( );
+            const result = await whisper.transcribe( audioPath, model, lang );
+            
+            const duration = ( Date.now( ) - start ) / 1000;
+            console.log( `Transcription completed successfully in ${duration}s` );
+
+            // ✅ Send to editor in chunks (reuse same logic as file loader)
+            const text = result || '';
+            //const CHUNK_SIZE = 64 * 1024;
+            const CHUNK_SIZE = text.length > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
+            browser.webContents.send( 'begin-loading' );
+
+            for( let i = 0; i < text.length; i += CHUNK_SIZE ) {
+                chunk = text.slice( i, i + CHUNK_SIZE );
+                browser.webContents.send( 'load-chunk', chunk );
+            }
+            browser.webContents.send( 'load-complete' );
+
+            return "success";
+        } 
+        catch( err ) {
+            throw new Error( `Transcription failed: ${err.message}\n${err.stack}` );
+        }
+    }
+);
+
+function getWhisper( ) {
+    if( !whisper ) {
+        whisper = new WhisperCLI( );
+    }
+    return whisper;
+}
+
 async function process( data ) {
     var map = new Map( Object.entries( data ) );
     const command = map.get( 'command' );
@@ -426,3 +467,15 @@ app.on( 'window-all-closed', ( ) => { if( process.platform !== 'darwin' ) app.qu
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+app.on(
+    'before-quit', 
+    ( ) => {
+        console.log( 'Cleaning up resources...' );
+        if( whisper ) {
+            whisper.stop( );
+            whisper = null;
+        }
+    }
+);
+

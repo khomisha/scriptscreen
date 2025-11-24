@@ -21,7 +21,7 @@ class RolePanel {
             title: "Roles", 
             childWidget: createProvider( ROLE, list ), 
             icon: const Icon( Icons.theater_comedy ),
-            menu: createMenu( menuItems ) 
+            actions: [ createMenu( menuItems ) ] 
         );
     }
 }

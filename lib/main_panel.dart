@@ -43,10 +43,11 @@ class MainPanel extends StatefulWidget implements base.Subscriber {
 }
 
 class _MainPanelState extends State< MainPanel > implements base.Pane {
-    List< base.Panel > _panels = [ ];
+    List< base.Panel > _panels = [];
 	var _currentPanelIndex = 0;
     var _loading = true;
     bool makeItOnce = true;
+    final nb = const NotificationButton( );
 
     void _onEvent( base.Event event ) {
         switch( event.type ) {
@@ -86,28 +87,40 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
         if( _loading ) {
             return const Center( child: CircularProgressIndicator( ) );
         }
-        final ThemeData theme = Theme.of( context );
         var navBar = BottomNavigationBar( 
             items: _createNavBarItems( ), 
             currentIndex: _currentPanelIndex, 
-            selectedItemColor: Colors.red,
-            unselectedItemColor: theme.colorScheme.primary,
-            selectedIconTheme: const IconThemeData( color: Colors.red ),
-            unselectedIconTheme: IconThemeData( color: theme.colorScheme.primary ), 
+            unselectedIconTheme: IconThemeData( color: Style.theme.colorScheme.primary ),
+            selectedIconTheme: IconThemeData( color: Style.theme.colorScheme.inversePrimary ), 
             onTap: _replacePanel,
-            showUnselectedLabels: true
+            showUnselectedLabels: true,
+            selectedItemColor: Style.theme.colorScheme.inversePrimary,
+            unselectedItemColor: Style.theme.colorScheme.primary,
+            selectedLabelStyle: TextStyle( color: Style.theme.colorScheme.inversePrimary ),
+            unselectedLabelStyle: TextStyle( color: Style.theme.colorScheme.primary )
         );
         var stack = IndexedStack(
             index: _currentPanelIndex,
             children: _panels,
         );
-        return Scaffold( body: stack, bottomNavigationBar: navBar );
+        var panel = _panels[ _currentPanelIndex ];
+        var appBar = AppBar( title: Text( panel.title ), actions: < Widget >[ nb ] + ( panel.actions?? [] ) );
+        return Scaffold( appBar: appBar, body: stack, bottomNavigationBar: navBar );
 	}
     
     @override
     void initState( ) {
-        logger.info( "****************** application start ***************************" );
         super.initState( );
+        notification.stream.listen( 
+            ( record ) { 
+                WidgetsBinding.instance.addPostFrameCallback(
+                    ( _ ) {
+                        showToast( context, record );
+                    }
+                );
+            }
+        );
+        logger.info( "*** application start ***" );
         widget.sv = base.Supervisor( this );
         widget._onEvent = _onEvent;
         AppPresenter( ).loadData( );
@@ -116,13 +129,14 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
     @override
     void dispose( ) {
         eventBroker.dispose( );
+        notification.dispose( );
         AppPresenter( ).dispose( );
         super.dispose( );
     }
 
     @override
     void onClose( ) {
-        logger.info( "================== application close ===========================" );
+        logger.info( "=== application close ===" );
         dispose( );
     }
 

@@ -8,13 +8,14 @@ import 'package:path/path.dart';
 import 'editor.dart';
 import 'app_const.dart';
 import 'script_data.dart';
-import 'export_web.dart' if( dart.library.io ) 'export_io.dart';
+import 'service_web.dart' if( dart.library.io ) 'service_io.dart';
 
 PopupMenuEntry createProject = const PopupMenuItem( onTap: create, child: Text( "New Project" ) );
-PopupMenuEntry openProject = const PopupMenuItem( onTap: open, child: Text( "Open Project" ) );
+PopupMenuEntry openProject = const PopupMenuItem( onTap: open, child: Text( "Open Project..." ) );
 PopupMenuEntry exportProject = const PopupMenuItem( onTap: export, child: Text( "Export Project" ) );
 PopupMenuEntry exitApp = const PopupMenuItem( onTap: exit, child: Text( "Exit" ) );
 PopupMenuEntry showEditor = ToggleMenuItem( editor.setVisible, const < String >[ "Show Editor", "Hide Editor" ] );
+PopupMenuEntry transcriptAudio = const PopupMenuItem( onTap: transcript, child: Text( "Transcript Audio File..." ) );
 
 void create( ) async {
     AppPresenter( ).create( true );
@@ -43,6 +44,14 @@ void export( ) async {
         htmlFiles.add( getBodyFileName( note ) );
     }
     export2pdf( headers, htmlFiles, pdfPath );
+}
+
+void transcript( ) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles( );
+    if( result != null ) { 
+        final lang = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).lang;
+        transcribe( result.files.single.path as String, "medium", lang );
+    }
 }
 
 void exit( ) async {

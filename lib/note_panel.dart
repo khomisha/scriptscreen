@@ -10,6 +10,7 @@ class NotePanel {
 
     NotePanel( Widget widget ) {
         List< PopupMenuEntry > menuItems = [
+            transcriptAudio,
             showEditor,
             const PopupMenuDivider( ),
             exitApp
@@ -18,7 +19,7 @@ class NotePanel {
             title: "Notes", 
             childWidget: createProvider( NOTE, widget ), 
             icon: const Icon( Icons.dashboard ),
-            menu: createMenu( menuItems )
+            actions: [ createMenu( menuItems ) ]
         );
     }
 }

@@ -215,7 +215,7 @@ class AppBroker extends Broker  with Initing {
  * Returns file name for specified note
  */
 String getBodyFileName( NoteData note ) {
-    var dir = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).dir;
+    final dir = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).dir;
     return join( dir, note.body );
 }
 

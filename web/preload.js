@@ -22,5 +22,6 @@ contextBridge.exposeInMainWorld(
 		save: ( fileName ) => ipcRenderer.invoke( 'save-content', fileName ),
 		clear: ( ) => ipcRenderer.invoke( 'clear-content' ),
 		convert2PDF: ( headers, htmlFiles, pdfPath ) => ipcRenderer.invoke( 'convert-html-to-pdf', headers, htmlFiles, pdfPath ),
+		transcribe: ( path, model, lang ) => ipcRenderer.invoke( 'transcribe-audio', path, model, lang ),
 	}
 );

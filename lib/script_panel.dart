@@ -20,7 +20,7 @@ class ScriptPanel {
             title: "Script Summary", 
             childWidget: createProvider( SCRIPT, form ), 
             icon: const Icon( Icons.summarize ),
-            menu: createMenu( menuItems )
+            actions: [ createMenu( menuItems ) ]
         );
     }
 }

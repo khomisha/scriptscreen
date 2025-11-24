@@ -22,7 +22,7 @@ class ProjectPanel {
             title: "Project", 
             childWidget: createProvider( PROJECT, form ), 
             icon: const Icon( Icons.work_outline ),
-            menu: createMenu( menuItems )
+            actions: [ createMenu( menuItems ) ]
         );
     }
 }

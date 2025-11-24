@@ -21,7 +21,7 @@ class DetailPanel {
             title: "Details", 
             childWidget: createProvider( DETAIL, list ), 
             icon: const Icon( Icons.collections_bookmark ),
-            menu: createMenu( menuItems )
+            actions: [ createMenu( menuItems ) ]
         );
     }
 }
