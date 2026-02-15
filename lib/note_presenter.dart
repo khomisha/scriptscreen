@@ -1,6 +1,7 @@
 
 // ignore_for_file: avoid_print, slash_for_doc_comments
 
+import 'package:flutter/material.dart';
 import 'editor.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
@@ -16,6 +17,9 @@ class NotePresenter extends WidgetPresenter {
         _stackIndex = value;
         notifyListeners( );
     }
+    
+    // Add a specific event notifier
+    final refreshNotifier = ChangeNotifier( );
 
     NotePresenter( ) : super( NOTE ) {
         eventBroker.subscribe( this, UPDATE );
@@ -110,11 +114,6 @@ class NotePresenter extends WidgetPresenter {
         }
         // loads content to the selecting note
         var note = list[ selecting ].customData as NoteData;
-        // debugPrint( "==================" );
-        // debugPrint( '${note.getHeaderAsHtml( )}${note.body}' );
-        // debugPrint( "==================" );
-        // editor.setContent( '${note.getHeaderAsHtml( )}${note.body}' );
-        //var s = note.getHeaderAsHtml( );
         editor.load( getBodyFileName( note ) );
     }
     
@@ -125,7 +124,12 @@ class NotePresenter extends WidgetPresenter {
 
     @override
     void onEvent( Event event ) {
-        super.onEvent( event );
+        if( event.type == UPDATE ) {
+            list = AppPresenter( ).getData( dataType );
+            if( event.data ) {
+                refreshNotifier.notifyListeners( );
+            }
+        }
         if( event.type == SAVE_CONTENT && selectedIndex > -1 ) {
             var note = list[ selectedIndex ].customData as NoteData;
             editor.save( getBodyFileName( note ) );

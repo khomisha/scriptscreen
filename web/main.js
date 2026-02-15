@@ -1,7 +1,7 @@
 // main.js
 
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain } = require( 'electron' )
+const { app, BrowserWindow, ipcMain, dialog } = require( 'electron' )
 const path = require( 'node:path' )
 const fs = require( 'fs/promises' );
 const fss = require( 'fs' )
@@ -45,42 +45,43 @@ const createWindow = ( ) => {
     )
 
     // Create the secondary window
-    browser = new BrowserWindow(
-        {
-            width: 800,
-            height: 600,
-            x: 100,
-            y: 100,
-            show: false,
-            closable: false,
-            webPreferences: { 
-                nodeIntegration: true, 
-                contextIsolation: true,
-                preload: path.join( __dirname, 'editor_preload.js' ) 
-            },
-            //titleBarStyle: 'hidden'
+    mainWindow.once( 
+        'ready-to-show', 
+        ( ) => {
+            // Create the secondary window AFTER main is ready
+            browser = new BrowserWindow(
+                {
+                    width: 800,
+                    height: 600,
+                    x: 100,
+                    y: 100,
+                    show: false,
+                    closable: false,
+                    webPreferences: { 
+                        nodeIntegration: true, 
+                        contextIsolation: true,
+                        preload: path.join( __dirname, 'editor_preload.js' )
+                    }
+                }
+            );
+
+            browser.setMenuBarVisibility( false );
+            browser.on( "close", ( event ) => { event.preventDefault( ) } );
+            browser.loadFile( 'editor.html' );
+            browser.webContents.openDevTools( );
         }
-    )
+    );
 
     mainWindow.setMenuBarVisibility( false );
-    browser.setMenuBarVisibility( false );
-    
     mainWindow.on( "closed", 
         ( ) => {
             browser.destroy( );
         }
     );
-
-    browser.on( "close", ( event ) => { event.preventDefault( ) } );
-
     // and load the index.html of the app.
     mainWindow.loadFile( 'index.html' );
-
     // Open the DevTools.
     mainWindow.webContents.openDevTools( );
-    browser.webContents.openDevTools( );
-
-    browser.loadFile( 'editor.html' );
 }
 
 ipcMain.handle( 
@@ -214,7 +215,8 @@ ipcMain.handle(
     'mkdir', 
     async ( _, path ) => {
 		try {
-			return await fs.mkdir( path, { recursive: true } );
+            await fs.mkdir( path, { recursive: true } );
+			return "success";
 		} catch( err ) {
 			throw new Error( `Make dir failed: ${err.message}\n${err.stack}` );
 		}
@@ -272,7 +274,8 @@ ipcMain.handle(
     'copy-dir', 
     async ( _, src, dest ) => {
 		try {
-            return await fs.cp( src, dest, {recursive: true} );
+            await fs.cp( src, dest, {recursive: true} );
+            return "success"
 		} catch( err ) {
             throw new Error( `Copy dir failed: ${err.message}\n${err.stack}` );
 		}
@@ -352,6 +355,27 @@ ipcMain.handle(
     }
 );
 
+ipcMain.handle(
+    'pickup-file',
+    async ( _, dialogOptions = {} ) => {
+        const {
+            title = 'Select file',
+            filters = [],
+            properties = [ 'openFile' ],
+        } = dialogOptions;
+
+        const { canceled, filePaths } = await dialog.showOpenDialog(
+            { title, filters, properties }
+        );
+
+        if( canceled || !filePaths || filePaths.length === 0 ) {
+            return null;
+        }
+
+        return filePaths[ 0 ];
+    }
+);
+
 function getWhisper( ) {
     if( !whisper ) {
         whisper = new WhisperCLI( );
@@ -371,7 +395,7 @@ async function process( data ) {
                 await _load( map );
                 break;
             case CMD_SAVE:
-                _save( map );
+                await _save( map );
                 break;
             case CMD_EXIT:
                 _exit( map );
@@ -380,14 +404,11 @@ async function process( data ) {
                 map.set( 'result', FAILURE );
                 map.set( ERR_MSG, `No such method ${command}` );
         }
-    } catch( e ) {
+        return Object.fromEntries( map.entries( ) );
+    } catch( err ) {
         // Error handling
-        map.set( 'result', FAILURE );
-        map.set( ERR_MSG, `${command} ${e.message}` );
-        map.set( ERROR, e );
-        map.set( STACK, e.STACK );
+        throw new Error( `${command} failed: ${err.message}\n${err.stack}` );
     }
-    return Object.fromEntries( map.entries( ) );
 };
 
 // Async sleep helper
@@ -402,11 +423,14 @@ function sleep( ms ) {
 async function _create( map ) {
     var data4Save =  map.get( 'for_save' );
     if( data4Save != null ) {
-        _save( data4Save );
+        var forSave = new Map( Object.entries( data4Save ) );
+        _save( forSave );
     }
+    await fs.mkdir( map.get( 'dirname' ), { recursive: true } );
     var fileName = path.join( app.getAppPath( ), 'assets', 'assets', 'cfg', 'empty.json' );
     var data = await fs.readFile( fileName, 'utf-8' );
-    map.set( 'data', data ); 
+    map.set( 'data', data );
+    await fs.writeFile( map.get( 'filename' ), map.get( 'data' ), 'utf-8' );
     map.set( 'result', SUCCESS ); 
 }
 
@@ -417,7 +441,8 @@ async function _create( map ) {
 async function _load( map ) {
     var data4Save =  map.get( 'for_save' );
     if( data4Save != null ) {
-        _save( data4Save );
+        var forSave = new Map( Object.entries( data4Save ) );
+        _save( forSave );
     }
     var data = await fs.readFile( map.get( 'filename' ), 'utf-8' );
     map.set( 'data', data ); 

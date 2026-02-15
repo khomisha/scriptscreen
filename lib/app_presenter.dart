@@ -19,8 +19,8 @@ class AppPresenter {
         _timer = Timer.periodic( 
             Duration( seconds: config[ 'default_autosave' ] ), 
             ( _ ) { 
-                //save( );
-                //eventBroker.dispatch( Event( SAVE_CONTENT ) );
+                save( );
+                eventBroker.dispatch( Event( SAVE_CONTENT ) );
             } 
         );
     }
@@ -32,7 +32,8 @@ class AppPresenter {
      */
     void loadData( ) {
         final fileName = config[ 'last_project' ] as String;
-        if( fileName.isEmpty ) {
+        if( fileName.isEmpty || !GenericFile.isExist( fileName ) ) {
+            logger.warning( 'Project $fileName does not exist. Create new.' );
             create( false );
         } else {
             load( fileName, false );
@@ -62,8 +63,8 @@ class AppPresenter {
         }
         _broker.send(
             Data.create( 
-                < String > [ 'command', 'data', 'filename', 'dirname', 'for_save', 'result' ], 
-                < dynamic > [ CMD_CREATE, "", fileName, dirName, data4Save, NO_ACTION ] 
+                < String > [ 'command', 'data', 'filename', 'dirname', 'for_save', 'save', 'result' ], 
+                < dynamic > [ CMD_CREATE, "", fileName, dirName, data4Save?.attributes, save, NO_ACTION ] 
             )
         );
     }
@@ -88,11 +89,10 @@ class AppPresenter {
                 ] 
             );
         }            
-        logger.info( "AppPresenter: send CMD_LOAD" );
         _broker.send(
             Data.create( 
-                < String > [ 'command', 'data', 'filename', 'for_save', 'result' ], 
-                < dynamic > [ CMD_LOAD, "", path, data4Save, NO_ACTION ] 
+                < String > [ 'command', 'data', 'filename', 'for_save', 'save', 'result' ], 
+                < dynamic > [ CMD_LOAD, "", path, data4Save?.attributes, save, NO_ACTION ] 
             )
         );
     }
@@ -119,10 +119,11 @@ class AppPresenter {
      * Saves current project
      */
     void save( ) {
-        var fileName = config[ 'last_project' ] as String;
-        var name = _broker.projectData.name;
-        var version = _broker.projectData.version;
-        if( !fileName.contains( name ) || !fileName.contains( version ) ) {
+        final fileName = config[ 'last_project' ] as String;
+        final name = _broker.projectData.name;
+        final version = _broker.projectData.version;
+        final updateConfig = !fileName.contains( name ) || !fileName.contains( version );
+        if( updateConfig ) {
             config[ 'last_project' ] = createEntityName( 
                 "scripts", 
                 name, 
@@ -136,11 +137,12 @@ class AppPresenter {
         var encoder = const JsonEncoder.withIndent( INDENT );
         _broker.send(
             Data.create( 
-                < String > [ 'command', 'data', 'filename', 'result' ], 
+                < String > [ 'command', 'data', 'filename', 'update_config', 'result' ], 
                 < dynamic > [ 
                     CMD_SAVE, 
                     encoder.convert( _broker.projectData ), 
                     config[ 'last_project' ], 
+                    updateConfig,
                     NO_ACTION 
                 ] 
             )
@@ -178,7 +180,7 @@ class AppPresenter {
     }
 }
 
-class AppBroker extends Broker  with Initing {
+class AppBroker extends Broker with Initing {
     late ProjectData projectData;
 
     AppBroker._( ) {
@@ -191,21 +193,24 @@ class AppBroker extends Broker  with Initing {
             if( data[ 'command' ] == CMD_CREATE ) {
                 projectData = ProjectData.fromJson( jsonDecode( data[ 'data' ] ) );
                 projectData.dir = data[ 'dirname' ];
-                eventBroker.dispatch( Event( UPDATE, projectData ) );
+                eventBroker.dispatch( Event( UPDATE, data[ 'save' ] ) );
+                updateConfig( );
             } else if ( data[ 'command' ] == CMD_LOAD ) {
                 projectData = ProjectData.fromJson( jsonDecode( data[ 'data' ] ) );
-                eventBroker.dispatch( Event( UPDATE, projectData ) );
+                eventBroker.dispatch( Event( UPDATE, data[ 'save' ] ) );
             } else if( data[ 'command' ] == CMD_SAVE ) {
-                eventBroker.dispatch( Event( UPDATE, projectData ) );
+                logger.info( 'save completed' );
+                eventBroker.dispatch( Event( UPDATE, false ) );
+                if( data[ 'update_config' ] ) {
+                    updateConfig( );
+                }
             } else if( data[ 'command' ] == CMD_EXIT ) {
                 eventBroker.dispatch( Event( EXIT ) );
             }
-            if( config[ 'last_project' ] != data[ 'filename' ] ) {
-                config[ 'last_project' ] = data[ 'filename' ];
-                updateConfig( );
-            }
         } else if( data[ 'result' ] == FAILURE ) {
             logger.severe( data[ ERR_MSG ], data[ ERROR ] ?? "", data[ STACK ] ?? "" );
+        } else if( data[ 'result' ] == NO_ACTION ) {
+            logger.warning( Message( 'NO_ACTION returns??? ${data[ "command" ]}', '${data[ "data" ]}') );
         }
         eventBroker.dispatch( Event( END_UPDATE ) );
     }

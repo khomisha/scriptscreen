@@ -1,6 +1,5 @@
 
 // ignore_for_file: slash_for_doc_comments
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'app_presenter.dart';
 import 'package:base/base.dart';
@@ -22,11 +21,13 @@ void create( ) async {
 }
 
 void open( ) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles( 
-        initialDirectory: join( GenericFile.userDir, "scripts" ) 
+    final path = await GenericFile.pickFile(
+        title: 'Project files',
+        filterName: 'Project',
+        extensions: [ 'json' ],
     );
-    if( result != null ) { 
-        AppPresenter( ).load( result.files.single.path as String, true );
+    if( path != null ) { 
+        AppPresenter( ).load( path, true );
     }
 }
 
@@ -47,10 +48,14 @@ void export( ) async {
 }
 
 void transcript( ) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles( );
-    if( result != null ) { 
+    final path = await GenericFile.pickFile(
+        title: 'Select audio file',
+        filterName: 'Audio',
+        extensions: ['mp3', 'wav', 'm4a'],
+    );
+    if( path != null ) { 
         final lang = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).lang;
-        transcribe( result.files.single.path as String, "medium", lang );
+        transcribe( path, "medium", lang );
     }
 }
 

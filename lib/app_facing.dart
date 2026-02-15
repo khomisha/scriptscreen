@@ -107,9 +107,12 @@ class AppFacing {
         'date': FieldPattern( 
             label: "Date",
             validator: ( value ) {
-                var dt = parse2Datetime( "d.M.y", value! );
-                if( dt == null ) {
-                    return 'Value cannot parse to datetime: $value';
+                if( value == null || value.isEmpty ) {
+                    return 'Value cannot be empty';
+                }
+                var validChars = RegExp( r'^[a-zA-Z0-9_\-=\.]+$' );
+                if( !validChars.hasMatch( value ) ) {
+                    return 'Invalid name $value';
                 }
                 return null;
             },

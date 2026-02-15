@@ -4,6 +4,7 @@ import 'app_const.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
 import 'main_panel.dart';
+import 'note_presenter.dart';
 
 class NotePanel {
     late Panel panel;
@@ -17,7 +18,10 @@ class NotePanel {
         ];
         panel = Panel( 
             title: "Notes", 
-            childWidget: createProvider( NOTE, widget ), 
+            childWidget: createProvider< NotePresenter >(
+                PresenterRegistry( ).getPresenter( NOTE, ( ) => NotePresenter( ) ),
+                widget
+            ), 
             icon: const Icon( Icons.dashboard ),
             actions: [ createMenu( menuItems ) ]
         );

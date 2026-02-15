@@ -2,6 +2,7 @@
 
 import 'package:diagram_editor/diagram_editor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
@@ -24,11 +25,26 @@ class NoteDiagramEditor extends StatefulWidget {
 class _DiagramEditorState extends State< NoteDiagramEditor > {
     EditorPolicySet policySet = EditorPolicySet( );
     late DiagramEditorContext diagramEditorContext;
+    NotePresenter? _presenter;
 
     @override
     void initState( ) {
         diagramEditorContext = DiagramEditorContext( policySet: policySet );
         super.initState( );
+    }
+
+    @override
+    void didChangeDependencies( ) {
+        super.didChangeDependencies( );
+        // Listen ONLY to refresh events
+        _presenter = context.read< NotePresenter >( );
+        _presenter!.refreshNotifier.addListener( _handleRefresh );
+    }
+  
+    void _handleRefresh( ) {
+        if( mounted ) {
+            policySet.refresh( );
+        }
     }
 
     @override
@@ -50,7 +66,16 @@ class _DiagramEditorState extends State< NoteDiagramEditor > {
                 policySet.selectedComponentId == null ? Container( ) : NoteForm( )
             ]
         );
-   }
+    }
+
+    @override
+    void dispose( ) {
+        // Remove listener using saved reference
+        if( _presenter != null ) {
+            _presenter!.refreshNotifier.removeListener( _handleRefresh );
+        }
+        super.dispose( );
+    }
 }
 
 class EditorPolicySet extends PolicySet with CanvasControlPolicy {
@@ -127,13 +152,15 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
             getComponent( selectedComponentId ).data.selected = false;
             selectedComponentId = null;
         }
-        var itemIndex = presenter.add( );
-        var componentData = createComponent( 
-            canvasReader.state.fromCanvasCoordinates( details.localPosition ), 
-            presenter.get( itemIndex )
-        );
-        componentData.data.customData.index = itemIndex + 1;
-        canvasWriter.model.addComponent( componentData );
+        if( HardwareKeyboard.instance.isShiftPressed ) {
+            var itemIndex = presenter.add( );
+            var componentData = createComponent( 
+                canvasReader.state.fromCanvasCoordinates( details.localPosition ), 
+                presenter.get( itemIndex )
+            );
+            componentData.data.customData.index = itemIndex + 1;
+            canvasWriter.model.addComponent( componentData );
+        }
     }
 
     @override
@@ -308,7 +335,7 @@ class Note extends StatelessWidget {
         );
         var title = Text( 
             componentData.data.customData.title, 
-            style: Style.theme.textTheme.headlineSmall, maxLines: 1, overflow: TextOverflow.ellipsis 
+            style: Style.theme.textTheme.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis 
         );
         var divider = Divider( 
             color: Style.theme.primaryColor, 

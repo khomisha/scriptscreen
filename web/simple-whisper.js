@@ -2,7 +2,7 @@
 // pip install -U whisper-ctranslate2
 
 const { execFile } = require( 'child_process' );
-const fs = require( 'fs' );
+const fs = require( 'node:fs' );
 const path = require( 'path' );
 const os = require( 'os' );
 
@@ -27,14 +27,14 @@ class WhisperCLI {
 
                 console.log( `Starting Whisper transcription: ${audioPath}` );
                 console.log( `Model: ${model}, Language: ${language}` );
-                console.log( `Output: ${outputPath}.txt` );
+                console.log( `Output: ${outputPath}.srt` );
 
                 const args = [
                     audioPath,
                     '--model', model,
                     '--language', language,
                     '--output_dir', tempDir,
-                    '--output_format', 'txt',
+                    '--output_format', 'srt',
                     '--device', 'cpu',
                     '--threads', '6',
                     //'--model_dir', '~/.cache/huggingface/'
@@ -67,7 +67,7 @@ class WhisperCLI {
                         }
 
                         // Read the result file
-                        const resultFile = outputPath + '.txt';
+                        const resultFile = outputPath + '.srt';
                         fs.readFile(
                             resultFile, 
                             'utf8', 

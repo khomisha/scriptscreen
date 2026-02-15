@@ -4,6 +4,7 @@ import 'app_const.dart';
 import 'app_components.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
+import 'list_presenter.dart';
 import 'main_panel.dart';
 
 class LocationPanel {
@@ -18,7 +19,10 @@ class LocationPanel {
         ];
         panel = Panel( 
             title: "Locations", 
-            childWidget: createProvider( LOCATION, list ), 
+            childWidget: createProvider< ListPresenter >(
+                PresenterRegistry( ).getPresenter( LOCATION, ( ) => ListPresenter( LOCATION ) ),
+                list
+            ), 
             icon: const Icon( Icons.room ),
             actions: [ createMenu( menuItems ) ]
         );

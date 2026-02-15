@@ -2,7 +2,7 @@
     "app_name": "scriptscreen",
     "last_project": "/home/mk/scripts/three_pigs_2.0_2024326131626.json",
     "language": "en_US",
-    "default_autosave": 120,
+    "default_autosave": 300,
     "gui_primary_color": "green",
     "editor_config": "editor.html",
     "note_header_template": "header.html",

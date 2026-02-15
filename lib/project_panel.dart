@@ -4,6 +4,7 @@ import 'app_components.dart';
 import 'app_const.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
+import 'form_presenter.dart';
 import 'main_panel.dart';
 
 class ProjectPanel {
@@ -20,7 +21,10 @@ class ProjectPanel {
         ];
         panel = Panel( 
             title: "Project", 
-            childWidget: createProvider( PROJECT, form ), 
+            childWidget: createProvider< FormPresenter >(
+                PresenterRegistry( ).getPresenter( PROJECT, ( ) => FormPresenter( PROJECT ) ),
+                form
+            ), 
             icon: const Icon( Icons.work_outline ),
             actions: [ createMenu( menuItems ) ]
         );

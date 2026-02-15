@@ -5,6 +5,7 @@ import 'app_const.dart';
 import 'app_components.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
+import 'list_presenter.dart';
 import 'main_panel.dart';
 
 class ActionTimePanel {
@@ -19,7 +20,10 @@ class ActionTimePanel {
         ];
         panel = Panel( 
             title: "Action Times", 
-            childWidget: createProvider( ACTION_TIME, list ), 
+            childWidget: createProvider< ListPresenter >(
+                PresenterRegistry( ).getPresenter( ACTION_TIME, ( ) => ListPresenter( ACTION_TIME ) ),
+                list
+            ), 
             icon: const Icon( Icons.schedule ),
             actions: [ createMenu( menuItems ) ]
         );

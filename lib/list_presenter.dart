@@ -76,4 +76,11 @@ class ListPresenter extends WidgetPresenter {
     void onSuccess( ) {
         AppPresenter( ).save( );
     }
+
+    @override
+    void onEvent( Event event ) {
+        if( event.type == UPDATE ) {
+            list = AppPresenter( ).getData( dataType );
+        }
+    }
 }

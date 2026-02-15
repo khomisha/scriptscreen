@@ -29,7 +29,7 @@ class EditorImpl implements Editor {
 
     @override
     void setVisible( bool visible ) {
-        appElectronAPI.changeVisibility( ).toDart;
+        changeVisibility( );
     }
     
     @override

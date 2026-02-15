@@ -14,11 +14,11 @@ import 'script_panel.dart';
 import 'action_time_panel.dart';
 import 'app_const.dart';
 import 'app_components.dart';
-import 'form_presenter.dart';
-import 'list_presenter.dart';
+//import 'form_presenter.dart';
+//import 'list_presenter.dart';
 import 'note_editor.dart';
 import 'note_panel.dart';
-import 'note_presenter.dart';
+//import 'note_presenter.dart';
 
 class MainPanel extends StatefulWidget implements base.Subscriber {
     late final Function( base.Event ) _onEvent;
@@ -47,7 +47,7 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
 	var _currentPanelIndex = 0;
     var _loading = true;
     bool makeItOnce = true;
-    final nb = const NotificationButton( );
+    var nb = const NotificationButton( );
 
     void _onEvent( base.Event event ) {
         switch( event.type ) {
@@ -131,6 +131,7 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
         eventBroker.dispose( );
         notification.dispose( );
         AppPresenter( ).dispose( );
+        PresenterRegistry( ).disposeAll( );
         super.dispose( );
     }
 
@@ -164,12 +165,7 @@ class _MainPanelState extends State< MainPanel > implements base.Pane {
  * type the widget presenter type
  * widget the widget to create provider
  */
-Widget createProvider( String type, Widget widget ) {
-    if( type == NOTE ) {
-        return ChangeNotifierProvider( create: ( _ ) => NotePresenter( ), child: widget );
-    } else if( type == SCRIPT || type == PROJECT ) {
-        return ChangeNotifierProvider( create: ( _ ) => FormPresenter( type ), child: widget );
-    } else {
-        return ChangeNotifierProvider( create: ( _ ) => ListPresenter( type ), child: widget );
-    }
+Widget createProvider< T extends WidgetPresenter >( T presenter, Widget child ) {
+    return ChangeNotifierProvider< T >.value( value: presenter, child: child );
 }
+

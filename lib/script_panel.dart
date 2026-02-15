@@ -4,6 +4,7 @@ import 'app_components.dart';
 import 'app_const.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
+import 'form_presenter.dart';
 import 'main_panel.dart';
 
 class ScriptPanel {
@@ -18,7 +19,10 @@ class ScriptPanel {
         ];
         panel = Panel( 
             title: "Script Summary", 
-            childWidget: createProvider( SCRIPT, form ), 
+            childWidget: createProvider< FormPresenter >(
+                PresenterRegistry( ).getPresenter( SCRIPT, ( ) => FormPresenter( SCRIPT ) ),
+                form
+            ), 
             icon: const Icon( Icons.summarize ),
             actions: [ createMenu( menuItems ) ]
         );

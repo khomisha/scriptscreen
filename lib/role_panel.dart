@@ -5,6 +5,7 @@ import 'app_const.dart';
 import 'app_components.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
+import 'list_presenter.dart';
 import 'main_panel.dart';
 
 class RolePanel {
@@ -19,7 +20,10 @@ class RolePanel {
         ];
         panel = Panel( 
             title: "Roles", 
-            childWidget: createProvider( ROLE, list ), 
+            childWidget: createProvider< ListPresenter >(
+                PresenterRegistry( ).getPresenter( ROLE, ( ) => ListPresenter( ROLE ) ),
+                list
+            ), 
             icon: const Icon( Icons.theater_comedy ),
             actions: [ createMenu( menuItems ) ] 
         );
