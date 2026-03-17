@@ -78,7 +78,9 @@ window.contentAPI.onChunkRequest(
 			// First request
 			if( !tinymce.activeEditor.isDirty( ) ) {
 				// nothing to save
+				console.log( 'nothing to save' );
 				window.contentAPI.sendChunk( null );
+				tinymce.activeEditor.setDirty( false );
 				return;
 			}
 
@@ -95,6 +97,7 @@ window.contentAPI.onChunkRequest(
 				window.contentAPI.sendChunk( null );
 				contentGenerator = null;
 			} else {
+				console.log( 'send chunk to save' );
 				window.contentAPI.sendChunk( next.value );
 			}
 		}
@@ -124,15 +127,15 @@ function* createBinaryStream( content ) {
 	}
 }
 
-let progress = 0;
 // Handle loading events
 window.contentAPI.onBeginLoading(
 	( ) => {
-		progress = 0;
-		tinymce.activeEditor.setProgressState( true );
-		//tinymce.activeEditor.setContent(''); // Clear editor
-		tinymce.activeEditor.resetContent( );
-		tinymce.EditorMode.set( 'readonly' ); // Prevent editing during load
+		try {
+			tinymce.activeEditor.setProgressState( true );
+		}
+        catch( err ) {
+            console.error( "Error begin loading:", err );
+        }
 	}
 );
 
@@ -140,6 +143,7 @@ let buffer = "";
 window.contentAPI.onLoadChunk(
 	( chunk ) => {
 		try {
+			const editor = tinymce.activeEditor;
 			buffer += chunk;
 
 			while( true ) {
@@ -149,7 +153,7 @@ window.contentAPI.onLoadChunk(
 				// No '<img' at all -> insert everything as text and clear buffer
 				if( imgStart === -1 ) {
 					if( buffer.length > 0 ) {
-						tinymce.activeEditor.insertContent( buffer );
+						editor.insertContent( buffer );
 						buffer = "";
 					}
 					break;
@@ -158,7 +162,7 @@ window.contentAPI.onLoadChunk(
 				// If there's text before the image start, insert that first
 				if( imgStart > 0 ) {
 					const textPart = buffer.slice( 0, imgStart );
-					tinymce.activeEditor.insertContent( textPart );
+					editor.insertContent( textPart );
 					buffer = buffer.slice( imgStart ); // keep the '<img...' part in buffer
 					// continue to attempt extracting the image tag
 				}
@@ -177,7 +181,7 @@ window.contentAPI.onLoadChunk(
 				// if (!/src\s*=\s*["']data:image/i.test(imgTag)) { /* handle non-data images if needed */ }
 
 				// Insert whole <img> at once
-				tinymce.activeEditor.insertContent( imgTag );
+				editor.insertContent( imgTag );
 
 				// Remove the inserted tag from buffer and continue (there may be more content)
 				buffer = buffer.slice( imgEnd + 1 );
@@ -191,8 +195,13 @@ window.contentAPI.onLoadChunk(
 
 window.contentAPI.onLoadComplete(
 	( ) => {
-		tinymce.activeEditor.setProgressState( false );
-		tinymce.EditorMode.set( 'design' ); // Enable editing
+		try {
+			tinymce.activeEditor.setProgressState( false );
+			tinymce.activeEditor.setDirty( false );
+		}
+		catch( err ) {
+			console.error( "Error on load complete:", err );
+		}
 	}
 );
 

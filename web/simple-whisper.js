@@ -11,7 +11,7 @@ class WhisperCLI {
         this.isProcessing = false;
     }
 
-    async transcribe( audioPath, model = 'small', language = 'ru') {
+    async transcribe( audioPath, model = 'small', language = 'ru', format = 'txt' ) {
         if( this.isProcessing ) {
             throw new Error( 'Another transcription is in progress' );
         }
@@ -27,14 +27,14 @@ class WhisperCLI {
 
                 console.log( `Starting Whisper transcription: ${audioPath}` );
                 console.log( `Model: ${model}, Language: ${language}` );
-                console.log( `Output: ${outputPath}.srt` );
+                console.log( `Output: ${outputPath}.${format}` );
 
                 const args = [
                     audioPath,
                     '--model', model,
                     '--language', language,
                     '--output_dir', tempDir,
-                    '--output_format', 'srt',
+                    '--output_format', format,
                     '--device', 'cpu',
                     '--threads', '6',
                     //'--model_dir', '~/.cache/huggingface/'
@@ -67,7 +67,7 @@ class WhisperCLI {
                         }
 
                         // Read the result file
-                        const resultFile = outputPath + '.srt';
+                        const resultFile = outputPath + '.' + format;
                         fs.readFile(
                             resultFile, 
                             'utf8', 
@@ -81,7 +81,12 @@ class WhisperCLI {
                                 }
 
                                 resolve(
-                                    { success: true, text: text.trim( ), model: model, language: language }
+                                    { 
+                                        success: true, 
+                                        text: this.escapeHTML( text ), 
+                                        model: model, 
+                                        language: language 
+                                    }
                                 );
                             }
                         );
@@ -131,6 +136,12 @@ class WhisperCLI {
             this.process.kill( 'SIGTERM' );
             this.process = null;
         }
+    }
+
+    escapeHTML( str ) {
+        return str
+            .replace( /\n\n/g, '\n' )
+            .replace( /\n/g, '<div>&nbsp;</div>' );
     }
 }
 

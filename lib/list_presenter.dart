@@ -46,10 +46,10 @@ class ListPresenter extends WidgetPresenter {
     @override
     void select( int index ) {
         if( selectedIndex == index ) {
-            list[ index ].selected = !list[ index ].selected;
+            list[ index ].inverse( );
         } else {
-            list[ selectedIndex ].selected = false;
-            list[ index ].selected = true;
+            list[ selectedIndex ].setState( ListItemState.unselected.index );
+            list[ index ].setState( ListItemState.unselected.index );
         }
         selectedIndex = index;
         notifyListeners( );

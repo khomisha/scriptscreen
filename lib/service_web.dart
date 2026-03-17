@@ -30,7 +30,8 @@ void export2pdf( List< String > headers,  List< String > htmlFiles, String pdfPa
 void transcribe( String path, String model, String lang ) async {
     try {
         logger.info( "Transciption started" );
-        await appElectronAPI.transcribe( path.toJS, model.toJS, lang.toJS ).toDart;
+        String fmt = config[ 'transcribe_fmt' ];
+        await appElectronAPI.transcribe( path.toJS, model.toJS, lang.toJS, fmt.toJS ).toDart;
         logger.info( "Transciption completed" );
     }
     on JSError catch ( e ) {

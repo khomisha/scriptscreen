@@ -136,8 +136,8 @@ ipcMain.handle(
     'save-content', 
     async ( _, fileName ) => {
         try {
-            // Create write stream
-            saveStream = fss.createWriteStream( fileName );
+            // Just store the filename, don't create stream yet
+            saveStream = { fileName, stream: null };
             // Start the process by requesting first chunk
             browser.webContents.send( 'request-chunk' );
             return "success";
@@ -157,16 +157,23 @@ ipcMain.on(
 
             // End of stream signal
             if( chunk === null ) {
-                saveStream.end( );
+                if( saveStream.stream ) {
+                    saveStream.stream.end( );
+                }
                 saveStream = null;
                 console.log( 'Save completed successfully' );
                 return;
             }
 
+            // First chunk? Create the stream now
+            if( !saveStream.stream ) {
+                saveStream.stream = fss.createWriteStream( saveStream.fileName );
+            }
+
             // Write chunk to file
-            if( !saveStream.write( chunk ) ) {
+            if( !saveStream.stream.write( chunk ) ) {
                 // Pause if buffer is full
-                saveStream.once( 'drain', ( ) => browser.webContents.send( 'request-chunk' ) );
+                saveStream.stream.once( 'drain', ( ) => browser.webContents.send( 'request-chunk' ) );
             } else {
                 // Immediately request next chunk
                 browser.webContents.send( 'request-chunk' );
@@ -183,6 +190,7 @@ ipcMain.handle(
 	async ( _, arg ) => {
 		try {
             await browser.webContents.executeJavaScript( 'tinymce.activeEditor.resetContent()' );
+            // 'tinymce.activeEditor.setContent("")'
 			return "success";
 		} catch( err ) {
             throw new Error( `Clear content failed: ${err.message}\n${err.stack}` );
@@ -325,18 +333,18 @@ ipcMain.handle(
 
 ipcMain.handle(
     'transcribe-audio', 
-    async ( _, audioPath, model, lang ) => {
+    async ( _, audioPath, model, lang, format ) => {
         try {
             const start = Date.now( );
             
             const whisper = getWhisper( );
-            const result = await whisper.transcribe( audioPath, model, lang );
+            const result = await whisper.transcribe( audioPath, model, lang, format );
             
             const duration = ( Date.now( ) - start ) / 1000;
             console.log( `Transcription completed successfully in ${duration}s` );
 
             // ✅ Send to editor in chunks (reuse same logic as file loader)
-            const text = result || '';
+            const text = result.text || '';
             //const CHUNK_SIZE = 64 * 1024;
             const CHUNK_SIZE = text.length > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
             browser.webContents.send( 'begin-loading' );

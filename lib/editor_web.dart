@@ -9,7 +9,6 @@ class EditorImpl implements Editor {
     @override
     Future< void > save( String fileName ) async {
         try {
-            logger.info( fileName );
             await appElectronAPI.save( fileName.toJS ).toDart;
         }
         on JSError catch ( e ) {
@@ -33,7 +32,7 @@ class EditorImpl implements Editor {
     }
     
     @override
-    void clear( ) {
-        appElectronAPI.clear( ).toDart;
+    Future< void > clear( ) async {
+        await appElectronAPI.clear( ).toDart;
     }
 }

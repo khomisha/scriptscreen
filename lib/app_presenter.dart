@@ -198,8 +198,11 @@ class AppBroker extends Broker with Initing {
             } else if ( data[ 'command' ] == CMD_LOAD ) {
                 projectData = ProjectData.fromJson( jsonDecode( data[ 'data' ] ) );
                 eventBroker.dispatch( Event( UPDATE, data[ 'save' ] ) );
+                if( data[ 'save' ] ) {
+                    config[ 'last_project' ] = data[ 'filename' ];
+                    updateConfig( );
+                }
             } else if( data[ 'command' ] == CMD_SAVE ) {
-                logger.info( 'save completed' );
                 eventBroker.dispatch( Event( UPDATE, false ) );
                 if( data[ 'update_config' ] ) {
                     updateConfig( );

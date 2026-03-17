@@ -24,7 +24,7 @@ abstract class Editor {
     /**
      * Clears the editor content
      */
-    void clear( );
+    Future< void > clear( );
 
     /**
      * Set visible editor browser window 

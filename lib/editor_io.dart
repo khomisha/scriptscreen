@@ -63,7 +63,7 @@ class EditorImpl implements Editor {
     }
     
     @override
-    void clear( ) async {
+    Future< void > clear( ) async {
         await _webview.evaluateJavaScript( 'tinymce.activeEditor.resetContent("$EMPTY_CONTENT")' );
     }
 }

@@ -83,6 +83,15 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
     late NotePresenter presenter;
     late Offset lastFocalPoint;
 
+    // ---------------------------------------------------------------------------
+    // Component transition table
+    //
+    //              → unselected       → selected
+    // unselected     NoCommand          SelectCommand
+    // selected       DeselectCommand    NoCommand  ← same-note re-click (rule 7)
+    // ---------------------------------------------------------------------------
+    late final Transition transition;
+
     @override
     initializeDiagramEditor( ) {
         Functions.put( 'delete', delete );
@@ -91,6 +100,12 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
         Functions.put( 'changeFilter', changeFilter );
         Functions.put( 'getFilter', getFilter );
         addComponents( );
+        transition = Transition.withTable(
+            [
+                [ NoCommand( ), SelectCommand( this ) ],   // unselected
+                [ DeselectCommand( this ), NoCommand( ) ] // selected
+            ]
+        );
     }
 
     @override
@@ -112,8 +127,8 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      * Deletes the specified component and based on custom data
      */
     void delete( String componentId ) {
-        selectComponent( componentId );
         presenter.delete( getItemIndex( componentId ) );
+        selectedComponentId = null;
         refresh( );
     }
 
@@ -121,7 +136,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      * Starts editing the specified component 
      */
     void startEdit( String componentId ) {
-        selectComponent( componentId );
         presenter.startEdit( getItemIndex( componentId ) );
     }
 
@@ -130,7 +144,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      * ok the end editing approving flag
      */
     void endEdit( bool ok ) {
-        selectComponent( selectedComponentId! );
         presenter.endEdit( ok );
         if( ok ) {
             refresh( );
@@ -147,35 +160,33 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
     }
 
     @override
-    onCanvasTapUp( TapUpDetails details ) {
+    onCanvasTapUp( TapUpDetails details ) async {
         if( selectedComponentId != null ) {
-            getComponent( selectedComponentId ).data.selected = false;
-            selectedComponentId = null;
+            await transition.doTransition( 
+                ListItemState.unselected.index, 
+                getComponent( selectedComponentId ).data 
+            );            
         }
         if( HardwareKeyboard.instance.isShiftPressed ) {
             var itemIndex = presenter.add( );
-            var componentData = createComponent( 
+            _addComponent( 
                 canvasReader.state.fromCanvasCoordinates( details.localPosition ), 
-                presenter.get( itemIndex )
+                itemIndex 
             );
-            componentData.data.customData.index = itemIndex + 1;
-            canvasWriter.model.addComponent( componentData );
         }
     }
 
     @override
-    onComponentTap( String componentId ) {
+    onComponentTap( String componentId ) async  {
         if( selectedComponentId != null ) {
-            if( selectedComponentId != componentId ) {
-                // selects another note
-                presenter.onSelect( getItemIndex( selectedComponentId ), getItemIndex( componentId ) );
+            final selectedComponent = getComponent( selectedComponentId );
+            await transition.doTransition( ListItemState.unselected.index, selectedComponent.data );
+            if( selectedComponentId == componentId ) {
+                return;
             }
-            // if tap on already selected, do nothing
-        } else {
-            // there is no previous selected note
-            presenter.onSelect( null, getItemIndex( componentId ) );
         }
-        selectComponent( componentId );
+        final component = getComponent( componentId );
+        await transition.doTransition( ListItemState.selected.index, component.data );
     }
 
     @override
@@ -188,30 +199,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
         Offset positionDelta = details.localFocalPoint - lastFocalPoint;
         canvasWriter.model.moveComponent( componentId, positionDelta );
         lastFocalPoint = details.localFocalPoint;
-    }
-
-    /**
-     * Selects component with specified id
-     */
-    void selectComponent( String componentId ) {
-        var component = getComponent( componentId );
-        if( selectedComponentId == null ) {
-            component.data.selected = true;
-            selectedComponentId = componentId;
-        } else {
-            if( selectedComponentId == componentId ) {
-                component.data.selected = !component.data.selected;
-                selectedComponentId = component.data.selected ? componentId : null;
-            } else {
-                var selectedComponent = getComponent( selectedComponentId );
-                selectedComponent.data.selected = false;
-                selectedComponent.updateComponent( );
-                component.data.selected = true;
-                selectedComponentId = componentId;
-            }
-        }
-        presenter.selectedIndex = selectedComponentId == null ? -1 : getItemIndex( selectedComponentId );
-        component.updateComponent( );
     }
 
     /**
@@ -257,18 +244,28 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
                 offset = Offset( 0.0, row * HEIGHT_OFFSET );
                 row++;
             }
-            var componentData = createComponent( offset, list[ itemIndex ] );
-            componentData.data.customData.index = itemIndex + 1;
-            if( componentData.data.selected ) {
-                selectedComponentId = componentData.id;
-            }
-            canvasWriter.model.addComponent( componentData );
+            _addComponent( offset, itemIndex );
             offset = offset.translate( WIDTH_OFFSET, 0.0 );
         }
     }
 
-    Widget resizeCorner( ComponentData componentData ) {
-        var rightCorner = componentData.position + componentData.size.bottomRight( Offset.zero );
+    /**
+     * Adds component to the canvas.
+     * offset the position offset in the canvas
+     * itemIndex the index in the custom data list bounded to the component
+     */
+    void _addComponent( Offset offset, int itemIndex ) {
+        var component = createComponent( offset, presenter.list[ itemIndex ] );
+        presenter.list[ itemIndex ].id = component.id;
+        component.data.customData.index = itemIndex + 1;
+        if( component.data.selected ) {
+            selectedComponentId = component.id;
+        }
+        canvasWriter.model.addComponent( component );
+    }
+
+    Widget resizeCorner( ComponentData component ) {
+        var rightCorner = component.position + component.size.bottomRight( Offset.zero );
         Offset bottomRightCorner = canvasReader.state.toCanvasCoordinates( rightCorner );
         var mouseRegion = Container(
             width: 24,
@@ -291,12 +288,52 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
             child: GestureDetector(
                 onPanUpdate: ( dragDetails ) {
                     canvasWriter.model.resizeComponent(
-                        componentData.id, dragDetails.delta / canvasReader.state.scale
+                        component.id, dragDetails.delta / canvasReader.state.scale
                     );
                 },
                 child: MouseRegion( cursor: SystemMouseCursors.resizeDownRight, child: mouseRegion, )
             )
         );
+    }
+}
+
+class SelectCommand extends TransitionCommand {
+    EditorPolicySet policy;
+
+    SelectCommand( this.policy );
+
+    @override
+    Future< void > executeBefore( HasState target ) async {
+        await policy.presenter.onSelect( target as ListItem );
+    }
+
+    @override
+    Future< void > executeAfter( HasState target ) async {
+        final componentId = ( target as ListItem ).id;
+        var component = policy.getComponent( componentId );
+        policy.selectedComponentId = componentId;
+        policy.presenter.selectedIndex = policy.getItemIndex( componentId );
+        component.updateComponent( );
+    }
+}
+
+class DeselectCommand extends TransitionCommand {
+    EditorPolicySet policy;
+
+    DeselectCommand( this.policy );
+
+    @override
+    Future< void > executeBefore( HasState target ) async {
+        await policy.presenter.onDeselect( target as ListItem );
+    }
+
+    @override
+    Future< void > executeAfter( HasState target ) async {
+        final componentId = ( target as ListItem ).id;
+        var component = policy.getComponent( componentId );
+        policy.selectedComponentId = null;
+        policy.presenter.selectedIndex = -1;
+        component.updateComponent( );
     }
 }
 
@@ -354,29 +391,27 @@ class Note extends StatelessWidget {
             ( componentData.data.customData.index ).toString( ), 
             style: Style.theme.textTheme.labelSmall 
         );
-        var editBtn = Focus(
-            descendantsAreFocusable: false,
-            canRequestFocus: false,
-            child: IconButton( 
-                onPressed: ( ) { 
-                    if( componentData.data.selected ) {
-                        presenter.startEdit( presenter.selectedIndex );
-                    } else {
-                        Functions.get( 'startEdit' )( componentData.id );
-                    }
-                }, 
-                icon: Icon( Icons.edit_note, color: Style.theme.primaryColor ),
+        var editBtn = IconButton( 
+                onPressed: componentData.data.selected ? 
+                    ( ) { Functions.get( 'startEdit' )( componentData.id ); } :
+                    null, 
+                icon: Icon( 
+                    Icons.edit_note, 
+                    color: componentData.data.selected ? Style.theme.primaryColor : null
+                ),
                 tooltip: "edit note"
-            )
-        );
+            );
         var deleteBtn = Focus(
             descendantsAreFocusable: false,
             canRequestFocus: false,
             child: IconButton( 
-                onPressed: ( ) { 
-                    Functions.get( 'delete' )( componentData.id );
-                }, 
-                icon: Icon( Icons.highlight_off, color: Style.theme.primaryColor ),
+                onPressed: componentData.data.selected ? 
+                    ( ) { Functions.get( 'delete' )( componentData.id ); } :
+                    null, 
+                icon: Icon( 
+                    Icons.highlight_off, 
+                    color: componentData.data.selected ? Style.theme.primaryColor : null
+                ),
                 tooltip: "delete note"
             )
        );

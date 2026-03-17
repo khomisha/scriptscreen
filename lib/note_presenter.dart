@@ -38,11 +38,9 @@ class NotePresenter extends WidgetPresenter {
 
     @override
     void delete( int index ) {
-        if( list[ index ].selected ) {
-            editor.clear( );
-            var file = GenericFile( getBodyFileName( list[ index ].customData as NoteData ) );
-            file.delete( );
-        }
+        editor.clear( );
+        var file = GenericFile( getBodyFileName( list[ index ].customData as NoteData ) );
+        file.delete( );
         super.delete( index );
     }
 
@@ -100,21 +98,22 @@ class NotePresenter extends WidgetPresenter {
     }
 
     /**
-     * On select saves selected note (if any) content and loads selecting 
-     * note content to the text editor.
-     * selected the selected note index
-     * selecting the selecting note index 
+     * On select loads selecting note content to the text editor.
+     * selecting the selecting list item
      */
-    Future< void > onSelect( int? selected, int selecting ) async {
-        if( selected != null ) {
-            // saves content from selected note
-            var note = list[ selected ].customData as NoteData;
-            await editor.save( getBodyFileName( note ) );
-            //editor.clear( );
-        }
-        // loads content to the selecting note
-        var note = list[ selecting ].customData as NoteData;
+    Future< void > onSelect( ListItem item ) async {
+        var note = item.customData as NoteData;
         editor.load( getBodyFileName( note ) );
+    }
+
+    /**
+     * On deselect saves selected note and clean editor content
+     * item the selected list item
+     */
+    Future< void > onDeselect( ListItem item ) async {
+        var note = item.customData as NoteData;
+        await editor.save( getBodyFileName( note ) );
+        await editor.clear( );
     }
     
     @override
