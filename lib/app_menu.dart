@@ -14,7 +14,6 @@ PopupMenuEntry openProject = const PopupMenuItem( onTap: open, child: Text( "Ope
 PopupMenuEntry exportProject = const PopupMenuItem( onTap: export, child: Text( "Export Project" ) );
 PopupMenuEntry exitApp = const PopupMenuItem( onTap: exit, child: Text( "Exit" ) );
 PopupMenuEntry showEditor = ToggleMenuItem( editor.setVisible, const < String >[ "Show Editor", "Hide Editor" ] );
-PopupMenuEntry transcriptAudio = const PopupMenuItem( onTap: transcript, child: Text( "Transcript Audio File..." ) );
 
 void create( ) async {
     AppPresenter( ).create( true );

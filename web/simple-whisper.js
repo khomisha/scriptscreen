@@ -140,8 +140,9 @@ class WhisperCLI {
 
     escapeHTML( str ) {
         return str
+            .replace( /\r\n/g, '\n')
             .replace( /\n\n/g, '\n' )
-            .replace( /\n/g, '<div>&nbsp;</div>' );
+            .replace( /\n/g, '<br>' );
     }
 }
 

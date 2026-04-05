@@ -122,16 +122,17 @@ class NotePresenter extends WidgetPresenter {
     }
 
     @override
-    void onEvent( Event event ) {
+    void onEvent( Event event ) async {
         if( event.type == UPDATE ) {
             list = AppPresenter( ).getData( dataType );
             if( event.data ) {
                 refreshNotifier.notifyListeners( );
+                editor.clear( );
             }
         }
         if( event.type == SAVE_CONTENT && selectedIndex > -1 ) {
             var note = list[ selectedIndex ].customData as NoteData;
-            editor.save( getBodyFileName( note ) );
+            await editor.save( getBodyFileName( note ) );
         }
     }
 }

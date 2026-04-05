@@ -13,9 +13,11 @@ tinymce.init({
 	init_instance_callback: function( editor ) {
 		editor.execCommand( 'mceFullScreen' );
 	},
-	content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
+	//content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
+	content_style: 'body, body * { font-family: "Courier New", Arial, sans-serif !important; font-size: 12pt !important; }',
 	promotion: false,
 	menubar: true,
+    forced_root_block : 'div',
 	contextmenu: false,
 	// 2
 	//Use a local file picker in the Insert Image dialog
@@ -194,10 +196,10 @@ window.contentAPI.onLoadChunk(
 );
 
 window.contentAPI.onLoadComplete(
-	( ) => {
+	( dirty ) => {
 		try {
 			tinymce.activeEditor.setProgressState( false );
-			tinymce.activeEditor.setDirty( false );
+			//tinymce.activeEditor.setDirty( dirty );
 		}
 		catch( err ) {
 			console.error( "Error on load complete:", err );

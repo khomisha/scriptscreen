@@ -756,3 +756,336 @@ class _DiagramEditorState extends State<NoteDiagramEditor> {
 **Summary**: 
 - Use `build()` with `context.watch()` for **regular UI updates**
 - Use `didChangeDependencies()` with `addListener()` for **special event handling** that shouldn't trigger full rebuilds
+
+### selectedIndex and selectedComponentId sync
+
+The problem is that `selectedIndex` (in `NotePresenter`) and `selectedComponentId` (in `EditorPolicySet`) become out of sync when the list of notes is updated externally (e.g., via the `UPDATE` event). The `list` setter in `WidgetPresenter` resets `selectedIndex` to `0` or `-1`, but `selectedComponentId` remains unchanged, leading to inconsistency.
+
+## 🔍 Where the mismatch happens
+
+- In `NotePresenter.onEvent`, when an `UPDATE` event arrives, you call `list = AppPresenter().getData(dataType)`.  
+- The `list` setter in `WidgetPresenter` sets `selectedIndex = _list.isEmpty ? -1 : 0`.  
+- Then you call `refreshNotifier.notifyListeners()`, which triggers `policySet.refresh()`.  
+- `refresh()` → `deleteAllComponents()` → `addComponents()`.  
+- In `addComponents()`, when adding components, `component.data.selected = (component.id == selectedComponentId)`.  
+- But `selectedComponentId` still holds the old component ID, while `selectedIndex` is now `0` (or `-1`). The two no longer correspond.
+
+## ✅ Fix: Sync selection after list update
+
+After updating the list, you must update `selectedComponentId` to match the new `selectedIndex`. The simplest way is to expose a method in `EditorPolicySet` that recalculates `selectedComponentId` based on the presenter's `selectedIndex`.
+
+### 1. Add a `syncSelectionFromPresenter` method to `EditorPolicySet`
+
+```dart
+void syncSelectionFromPresenter() {
+  if (presenter.selectedIndex >= 0 && presenter.selectedIndex < presenter.list.length) {
+    // Find the component whose custom data index matches presenter.selectedIndex+1
+    final targetIndex = presenter.selectedIndex + 1;
+    final components = canvasReader.model.getAllComponents();
+    final match = components.values.firstWhere(
+      (comp) => comp.data.customData.index == targetIndex,
+      orElse: () => null,
+    );
+    selectedComponentId = match?.id;
+  } else {
+    selectedComponentId = null;
+  }
+}
+```
+
+### 2. Call this method after `addComponents()` in `refresh()`
+
+```dart
+void refresh() {
+  deleteAllComponents();
+  addComponents();
+  syncSelectionFromPresenter();  // <-- add this
+}
+```
+
+### 3. Also call it after any external update that changes the list
+
+In `NotePresenter.onEvent`, after setting `list`, call the policy's sync method. You'll need a reference to `EditorPolicySet` from the presenter. You can pass it via the constructor or use a global registry. A quick way is to add a static reference in `EditorPolicySet`:
+
+```dart
+static EditorPolicySet? instance;
+
+EditorPolicySet() {
+  instance = this;
+}
+```
+
+Then in `NotePresenter`:
+
+```dart
+if (event.type == UPDATE) {
+  list = AppPresenter().getData(dataType);
+  if (event.data) {
+    refreshNotifier.notifyListeners();
+    editor.clear();
+    EditorPolicySet.instance?.syncSelectionFromPresenter(); // sync after update
+  }
+}
+```
+
+Now `selectedComponentId` will always reflect the presenter's `selectedIndex`, ensuring they stay in sync. This will also make the selection state consistent when enabling/disabling popup menu items based on `selectedIndex`.
+
+You're right: on startup, if the notes list is not empty, `selectedIndex` is set to `0` (first item) in the `list` setter of `WidgetPresenter`. However, the corresponding component on the canvas is **not** selected because:
+
+- `ComponentData.selected` is never set to `true` when creating components.
+- No transition (`SelectCommand`) is triggered during initial loading.
+
+Therefore, you need to **synchronize the selection** after the canvas is built.
+
+## ✅ Fix: Synchronize selection after adding components
+
+Add a method in `EditorPolicySet` that finds the component matching `presenter.selectedIndex` and marks it as selected.
+
+### 1. Add `syncSelectionFromPresenter()` and `setSelectedComponent()`
+
+```dart
+void syncSelectionFromPresenter() {
+  int targetIndex = presenter.selectedIndex;
+  if (targetIndex >= 0 && targetIndex < presenter.list.length) {
+    // Find component with customData.index == targetIndex + 1
+    final components = canvasReader.model.getAllComponents();
+    final match = components.values.firstWhere(
+      (comp) => comp.data.customData.index == targetIndex + 1,
+      orElse: () => null,
+    );
+    if (match != null && match.id != selectedComponentId) {
+      setSelectedComponent(match.id);
+    } else if (match == null && selectedComponentId != null) {
+      setSelectedComponent(null);
+    }
+  } else if (selectedComponentId != null) {
+    setSelectedComponent(null);
+  }
+}
+
+void setSelectedComponent(String? componentId) {
+  // Deselect current
+  if (selectedComponentId != null) {
+    final oldComp = getComponent(selectedComponentId!);
+    oldComp.data.selected = false;
+    oldComp.updateComponent();
+  }
+  // Select new
+  selectedComponentId = componentId;
+  if (componentId != null) {
+    final newComp = getComponent(componentId);
+    newComp.data.selected = true;
+    newComp.updateComponent();
+    // Also update presenter's selectedIndex to match
+    presenter.selectedIndex = newComp.data.customData.index - 1;
+  } else {
+    presenter.selectedIndex = -1;
+  }
+  // Force canvas repaint
+  canvasReader.state.update();
+}
+```
+
+### 2. Call `syncSelectionFromPresenter()` after components are added
+
+In `refresh()`:
+
+```dart
+void refresh() {
+  deleteAllComponents();
+  addComponents();
+  syncSelectionFromPresenter();
+}
+```
+
+Also call it at the end of `initializeDiagramEditor()` after `addComponents()`:
+
+```dart
+@override
+initializeDiagramEditor() {
+  // ... existing code ...
+  addComponents();
+  syncSelectionFromPresenter();  // <-- add this
+}
+```
+
+### 3. Ensure `presenter.selectedIndex` is correctly set initially
+
+In `WidgetPresenter`, the `list` setter already sets `selectedIndex` to `0` if list is not empty. That's fine. Then `syncSelectionFromPresenter()` will pick it up.
+
+## Why this works
+
+- **Startup**: After building components, `syncSelectionFromPresenter()` finds the component matching `selectedIndex` and marks it as selected, updating both the visual border and `selectedComponentId`.
+- **External updates** (e.g., `UPDATE` event): After refreshing the list, you call `syncSelectionFromPresenter()` again (as previously suggested) to keep selection in sync.
+- **User taps**: The transition commands already handle selection correctly.
+
+Now, when the app starts with a non‑empty note list, the first note will be visually selected on the canvas, and the editor will load its content (since `onSelect` is called by the transition).
+
+### simplify selection management
+
+You're absolutely right—the current selection management is overly complex with three overlapping sources of truth:
+
+- `presenter.selectedIndex` (in `WidgetPresenter`)
+- `ListItem.selected` (via `_state` enum)
+- `selectedComponentId` (in `EditorPolicySet`)
+
+This leads to synchronization bugs and extra loops. Let's simplify to **a single source of truth**: `presenter.selectedIndex`.
+
+## ✅ Single Source of Truth
+
+- **Only `presenter.selectedIndex`** indicates which item is selected (`-1` = none).
+- `ListItem` no longer needs a `selected` field or `_state`.
+- `EditorPolicySet` no longer needs `selectedComponentId`.
+- All UI (border colors, button enable states, etc.) derives from comparing the item's index with `presenter.selectedIndex`.
+
+## ✅ Required Code Changes
+
+### 1. Remove `ListItem.selected` and related fields
+
+**`list_item.dart`** (where `ListItem` is defined):
+```dart
+class ListItem implements Comparable {
+  String id = "";
+  dynamic customData;
+
+  ListItem(this.customData);
+
+  @override
+  int compareTo(other) => customData.compareTo(other.customData);
+
+  @override
+  String toString() => customData.toString();
+
+  // Remove _state, selected getter, setState, inverse()
+}
+```
+
+### 2. Update `WidgetPresenter` – keep `selectedIndex` only
+
+No changes needed here; it already has `selectedIndex`.
+
+### 3. Update `ListPresenter`
+
+Modify `select()` to only update `selectedIndex` (and optionally trigger a refresh). Remove any calls to `list[index].setState` or `inverse()`.
+
+```dart
+@override
+void select(int index) {
+  selectedIndex = index;
+  notifyListeners(); // rebuild the list
+}
+```
+
+Also, in `add()` you already set `selectedIndex = list.length - 1` – that's fine. Remove `adding = true` if you don't need it for other purposes.
+
+### 4. Update `BaseList` (in `base_components.dart`)
+
+Change the `decoration` border color to use `presenter.selectedIndex` instead of `list[index].selected`:
+
+```dart
+var decoration = BoxDecoration(
+  border: Border.all(
+    width: 1,
+    color: index == presenter.selectedIndex ? Colors.pink : Style.theme.primaryColor,
+  ),
+  borderRadius: Style.borderRadius,
+);
+```
+
+Also remove the `enabled` condition on `Slidable` that depends on `list[index].selected`. If you still want to enable swipe actions only for the selected item, use `index == presenter.selectedIndex`.
+
+### 5. Update `Note` widget (in `note_editor.dart`)
+
+Instead of reading `componentData.data.selected`, compare the item's index with `presenter.selectedIndex`:
+
+```dart
+final itemIndex = componentData.data.customData.index - 1;
+final isSelected = (itemIndex == presenter.selectedIndex);
+
+var border = Border.all(
+  width: 1,
+  color: isSelected ? Colors.pink : Style.theme.primaryColor,
+);
+```
+
+Then use `isSelected` to enable/disable edit/delete buttons.
+
+### 6. Update `EditorPolicySet`
+
+- Remove `selectedComponentId` field.
+- In `_addComponent`, do **not** set any selection flag.
+- In `refresh()`, simply delete and rebuild; selection will be derived from `presenter.selectedIndex` during rendering.
+- Remove `syncSelectionFromPresenter` entirely.
+
+### 7. Update `SelectCommand` and `DeselectCommand`
+
+**SelectCommand**:
+```dart
+@override
+Future<void> executeBefore(HasState target) async {
+  await policy.presenter.onSelect(target as ListItem);
+}
+
+@override
+Future<void> executeAfter(HasState target) async {
+  final component = target as ListItem;
+  final newIndex = component.customData.index - 1;
+  policy.presenter.selectedIndex = newIndex;
+  policy.refresh(); // rebuilds canvas with new selection
+}
+```
+
+**DeselectCommand**:
+```dart
+@override
+Future<void> executeBefore(HasState target) async {
+  await policy.presenter.onDeselect(target as ListItem);
+}
+
+@override
+Future<void> executeAfter(HasState target) async {
+  policy.presenter.selectedIndex = -1;
+  policy.refresh();
+}
+```
+
+### 8. Initial selection after canvas build
+
+In `initializeDiagramEditor`, after calling `addComponents()`, trigger the selection transition for the initially selected index (if any) to load the editor content:
+
+```dart
+@override
+initializeDiagramEditor() {
+  // ... existing initialization ...
+  addComponents();
+  if (presenter.selectedIndex != -1) {
+    // Find the component that matches the selected index
+    final components = canvasReader.model.getAllComponents();
+    final match = components.values.firstWhere(
+      (comp) => comp.data.customData.index == presenter.selectedIndex + 1,
+      orElse: () => null,
+    );
+    if (match != null) {
+      transition.doTransition(ListItemState.selected.index, match.data);
+    }
+  }
+}
+```
+
+### 9. Remove `ListItemState` enum
+
+Since `ListItem` no longer has state, you can delete `ListItemState` and replace references with simple integers (e.g., `0` for unselected, `1` for selected) only where needed (e.g., in transition tables). But you might also remove the `HasState` interface from `ListItem`.
+
+### 10. Update `NotePresenter.onEvent` (if you still have it)
+
+Remove any manual `syncSelectionFromPresenter` calls. The `refreshNotifier` already triggers `policySet.refresh()`, which rebuilds everything with the current `selectedIndex`.
+
+## ✅ Summary of Benefits
+
+- **Single source of truth** – `presenter.selectedIndex`.
+- **No more duplication** – no `selectedComponentId`, no `ListItem.selected`.
+- **Simpler transitions** – just update the index and refresh.
+- **Less code** – no extra loops or sync methods.
+- **Easier to maintain** – selection logic lives in one place.
+
+After these changes, your selection will be reliable, and the menu items (e.g., "Transcript Audio File") can be enabled/disabled by checking `presenter.selectedIndex != -1` directly in the `itemBuilder` of the `PopupMenuButton` (as you originally wanted).

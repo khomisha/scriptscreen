@@ -103,7 +103,7 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
         transition = Transition.withTable(
             [
                 [ NoCommand( ), SelectCommand( this ) ],   // unselected
-                [ DeselectCommand( this ), NoCommand( ) ] // selected
+                [ DeselectCommand( this ), NoCommand( ) ]  // selected
             ]
         );
     }

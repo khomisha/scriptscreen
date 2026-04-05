@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'app_const.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
@@ -10,12 +11,6 @@ class NotePanel {
     late Panel panel;
 
     NotePanel( Widget widget ) {
-        List< PopupMenuEntry > menuItems = [
-            transcriptAudio,
-            showEditor,
-            const PopupMenuDivider( ),
-            exitApp
-        ];
         panel = Panel( 
             title: "Notes", 
             childWidget: createProvider< NotePresenter >(
@@ -23,7 +18,28 @@ class NotePanel {
                 widget
             ), 
             icon: const Icon( Icons.dashboard ),
-            actions: [ createMenu( menuItems ) ]
+            actions: [ _createMenu( ) ]
         );
+    }
+
+    Widget _createMenu( ) {
+        var pmb = PopupMenuButton( 
+            icon: const Icon( Icons.menu ), 
+            itemBuilder: ( context ) {
+                final presenter = Provider.of< NotePresenter >( context, listen: false );
+                final bool selected = presenter.selectedIndex != -1;
+                return[ 
+                    PopupMenuItem(
+                        enabled: selected,
+                        onTap: transcript,
+                        child: const Text( 'Transcript Audio File...' )
+                    ),                    
+                    showEditor,
+                    const PopupMenuDivider( ),
+                    exitApp
+                ];
+            } 
+        );
+        return pmb;
     }
 }

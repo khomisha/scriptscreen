@@ -208,6 +208,7 @@ class AppBroker extends Broker with Initing {
                     updateConfig( );
                 }
             } else if( data[ 'command' ] == CMD_EXIT ) {
+                eventBroker.dispatch( Event( SAVE_CONTENT ) );
                 eventBroker.dispatch( Event( EXIT ) );
             }
         } else if( data[ 'result' ] == FAILURE ) {

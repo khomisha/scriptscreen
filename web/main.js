@@ -27,6 +27,28 @@ const APPEND = 2;
 const WRITE_ONLY = 3;
 const WRITE_ONLY_APPEND = 4;
 
+function parseArgs( argv ) {
+    const parsed = {};
+    for( let i = 0; i < argv.length; i++ ) {
+        const arg = argv[ i ];
+        if( arg.startsWith( '--' ) ) {
+            const key = arg.slice( 2 );
+            const next = argv[ i + 1 ];
+            if( next && !next.startsWith( '-' ) ) {
+                parsed[ key ] = next;
+                i++;
+            } else {
+                parsed[ key ] = true;
+            }
+        }
+    }
+    return parsed;
+}
+const args = parseArgs( process.argv.slice( 2 ) );
+if( args.dev ) {
+    console.log( 'Running in development mode' );
+}
+
 let browser = null;
 let whisper = null;
 
@@ -68,7 +90,9 @@ const createWindow = ( ) => {
             browser.setMenuBarVisibility( false );
             browser.on( "close", ( event ) => { event.preventDefault( ) } );
             browser.loadFile( 'editor.html' );
-            browser.webContents.openDevTools( );
+            if( args.dev ) {
+                browser.webContents.openDevTools( );
+            }
         }
     );
 
@@ -81,7 +105,9 @@ const createWindow = ( ) => {
     // and load the index.html of the app.
     mainWindow.loadFile( 'index.html' );
     // Open the DevTools.
-    mainWindow.webContents.openDevTools( );
+    if( args.dev ) {
+        mainWindow.webContents.openDevTools( );
+    }
 }
 
 ipcMain.handle( 
@@ -99,9 +125,9 @@ ipcMain.handle(
 	'process', 
 	async ( _, data ) => {
 		try {
-            return await process( data );   
+            return await processCmd( data );   
 		} catch( err ) {
-            throw new Error( `Process data failed: ${err.message}\n${err.stack}` );
+            throw new Error( `Process command failed: ${err.message}\n${err.stack}` );
 		}
 	}
 );
@@ -122,7 +148,7 @@ ipcMain.handle(
                 browser.webContents.send( 'load-chunk', chunk );
             }
             console.log( 'send load-complete' );
-            browser.webContents.send( 'load-complete' );
+            browser.webContents.send( 'load-complete', false );
             return "success";
         } 
         catch( err ) {
@@ -189,7 +215,7 @@ ipcMain.handle(
 	'clear-content', 
 	async ( _, arg ) => {
 		try {
-            await browser.webContents.executeJavaScript( 'tinymce.activeEditor.resetContent()' );
+            await browser.webContents.executeJavaScript( 'tinymce.activeEditor.setContent("")' );
             // 'tinymce.activeEditor.setContent("")'
 			return "success";
 		} catch( err ) {
@@ -345,7 +371,6 @@ ipcMain.handle(
 
             // ✅ Send to editor in chunks (reuse same logic as file loader)
             const text = result.text || '';
-            //const CHUNK_SIZE = 64 * 1024;
             const CHUNK_SIZE = text.length > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
             browser.webContents.send( 'begin-loading' );
 
@@ -353,7 +378,7 @@ ipcMain.handle(
                 chunk = text.slice( i, i + CHUNK_SIZE );
                 browser.webContents.send( 'load-chunk', chunk );
             }
-            browser.webContents.send( 'load-complete' );
+            browser.webContents.send( 'load-complete', true );
 
             return "success";
         } 
@@ -391,7 +416,7 @@ function getWhisper( ) {
     return whisper;
 }
 
-async function process( data ) {
+async function processCmd( data ) {
     var map = new Map( Object.entries( data ) );
     const command = map.get( 'command' );
     try {
@@ -496,7 +521,7 @@ app.whenReady( ).then(
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on( 'window-all-closed', ( ) => { if( process.platform !== 'darwin' ) app.quit( ) } )
+app.on( 'window-all-closed', ( ) => { if( processCmd.platform !== 'darwin' ) app.quit( ) } )
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
