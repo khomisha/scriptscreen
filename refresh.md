@@ -1089,3 +1089,198 @@ Remove any manual `syncSelectionFromPresenter` calls. The `refreshNotifier` alre
 - **Easier to maintain** – selection logic lives in one place.
 
 After these changes, your selection will be reliable, and the menu items (e.g., "Transcript Audio File") can be enabled/disabled by checking `presenter.selectedIndex != -1` directly in the `itemBuilder` of the `PopupMenuButton` (as you originally wanted).
+
+###
+
+You are correct. The transition pattern requires the target object (`ListItem`) to have state. Removing `ListItem.selected` would break the transition system. The real issue is **duplicate state** (`selectedIndex` in presenter and `_state` in `ListItem`). We should keep the state in `ListItem` and derive `presenter.selectedIndex` from it.
+
+## ✅ Correct simplification: Single source of truth – `ListItem._state`
+
+- `ListItem` holds the selection state via `_state`.
+- `presenter.selectedIndex` is **computed** from the list (or removed entirely).
+- The transition system works unchanged because `ListItem.getState()` returns its own state.
+
+### 1. Keep `ListItem` as is (with state)
+
+No changes needed – it already has `getState()` and `setState()`.
+
+### 2. Remove `presenter.selectedIndex` – compute when needed
+
+In `WidgetPresenter` and `NotePresenter`, remove the `selectedIndex` field. Instead, add a getter that finds the selected item:
+
+```dart
+int get selectedIndex {
+  for (int i = 0; i < list.length; i++) {
+    if (list[i].selected) return i;
+  }
+  return -1;
+}
+```
+
+If you need to set selection, call `list[newIndex].setState(ListItemState.selected.index)` and also set the previously selected item to `unselected`. Then notify listeners.
+
+### 3. Update `ListPresenter.select`
+
+```dart
+@override
+void select(int index) {
+  // Deselect current
+  if (selectedIndex != -1) {
+    list[selectedIndex].setState(ListItemState.unselected.index);
+  }
+  // Select new
+  list[index].setState(ListItemState.selected.index);
+  notifyListeners();
+}
+```
+
+### 4. Update `BaseList` to use `list[index].selected`
+
+```dart
+color: list[index].selected ? Colors.pink : Style.theme.primaryColor,
+```
+
+### 5. Update `Note` widget to use `componentData.data.selected`
+
+That already works because `componentData.data` is the `ListItem`, and `selected` getter uses its state.
+
+### 6. Update `EditorPolicySet`
+
+In `_addComponent`, you can set the component's visual selection based on `presenter.selectedIndex` (the computed getter) or directly from `list[itemIndex].selected`. The latter is simpler:
+
+```dart
+component.data.selected = presenter.list[itemIndex].selected;
+```
+
+Then in `refresh()`, after rebuilding, you don't need any extra sync because each component's `selected` flag is set from the `ListItem`'s state.
+
+### 7. Transition commands remain unchanged
+
+`SelectCommand` and `DeselectCommand` already work with `target.getState()` and `target.setState()`. They don't need `presenter.selectedIndex` at all.
+
+### 8. Remove `presenter.selectedIndex` setter usage
+
+In `SelectCommand.executeAfter`, instead of setting `policy.presenter.selectedIndex`, you can do nothing because the `ListItem` already has its state set via `onSelect` (or within the command). Actually, the `onSelect` method might not set the state; you should set the `ListItem` state inside `SelectCommand.executeBefore` or `executeAfter`. For example:
+
+```dart
+@override
+Future<void> executeBefore(HasState target) async {
+  // Deselect previous? That's handled by the transition table logic.
+  // But we also need to update the presenter's list state? No, the target is the ListItem.
+  await policy.presenter.onSelect(target as ListItem);
+}
+```
+
+But `onSelect` currently loads the editor content and does not change the `ListItem` state. The state change is done by `target.setState()` inside the transition? Wait, `doTransition` calls `tc.executeBefore`, then `target.setState(newState)`, then `tc.executeAfter`. So the state is set automatically. Perfect. So you don't need to set `presenter.selectedIndex` at all. Just remove it.
+
+### 9. Remove `selectedComponentId` from `EditorPolicySet`
+
+Selection is now solely in `ListItem`. To know which component is selected on the canvas, you can iterate components or simply use the fact that each component's `data.selected` reflects the `ListItem.selected` state. When you need to find the selected component (e.g., for the form), you can scan:
+
+```dart
+ComponentData? getSelectedComponent() {
+  final components = canvasReader.model.getAllComponents();
+  return components.values.firstWhere(
+    (comp) => comp.data.selected,
+    orElse: () => null,
+  );
+}
+```
+
+But you might not need it – the form already uses `presenter.selectedIndex` (computed) to get the selected item's data.
+
+## ✅ Summary of changes
+
+1. **Keep `ListItem` with its state** – do not remove.
+2. **Remove `presenter.selectedIndex` field** – replace with a computed getter.
+3. **Update `ListPresenter.select`** to modify `ListItem` states directly.
+4. **Remove `selectedComponentId`** – use `ListItem.selected` via component's `data.selected`.
+5. **Transition commands** remain unchanged – they work with `target.getState()`.
+6. **`BaseList` and `Note` widgets** use `list[index].selected` or `componentData.data.selected`.
+7. **No extra sync methods** – the state is already in the `ListItem`.
+
+This eliminates duplication without breaking the transition pattern.
+
+###
+
+You're right: a loop every time `selectedIndex` is accessed is inefficient, especially if called frequently (e.g., in every `build`). However, for typical note list sizes (dozens of items), the performance impact is negligible. Still, we can avoid the loop by keeping `selectedIndex` as a **cached field** that is updated only when selection changes.
+
+## ✅ Optimal solution: Keep `selectedIndex` field, but update it consistently
+
+- **Source of truth**: `ListItem._state` (via `selected` getter).
+- **Cache**: `selectedIndex` field in `WidgetPresenter` (or `NotePresenter`).
+- **Update cache** whenever `ListItem` selection changes.
+
+### 1. Keep `selectedIndex` field (no loop)
+
+```dart
+int selectedIndex = -1;
+```
+
+### 2. Update cache when selection changes
+
+In `ListPresenter.select` (or wherever selection is modified):
+
+```dart
+@override
+void select(int index) {
+  if (selectedIndex != -1) {
+    list[selectedIndex].setState(ListItemState.unselected.index);
+  }
+  list[index].setState(ListItemState.selected.index);
+  selectedIndex = index;
+  notifyListeners();
+}
+```
+
+In `SelectCommand.executeAfter` (when user taps a component):
+
+```dart
+@override
+Future<void> executeAfter(HasState target) async {
+  final component = target as ListItem;
+  final newIndex = component.customData.index - 1;
+  policy.presenter.selectedIndex = newIndex;
+  policy.refresh(); // rebuild canvas
+}
+```
+
+In `DeselectCommand.executeAfter`:
+
+```dart
+@override
+Future<void> executeAfter(HasState target) async {
+  policy.presenter.selectedIndex = -1;
+  policy.refresh();
+}
+```
+
+When the list is reloaded (e.g., via `UPDATE` event), you must recompute `selectedIndex` from the `ListItem` states because the old selected index may no longer be valid. In `NotePresenter.onEvent`:
+
+```dart
+if (event.type == UPDATE) {
+  list = AppPresenter().getData(dataType);
+  // Find which item is selected now (if any)
+  selectedIndex = list.indexWhere((item) => item.selected);
+  refreshNotifier.notifyListeners();
+}
+```
+
+### 3. Remove `selectedComponentId` from `EditorPolicySet`
+
+Selection is now derived from `presenter.selectedIndex`. In `_addComponent`:
+
+```dart
+component.data.selected = (itemIndex == presenter.selectedIndex);
+```
+
+Then `refresh()` simply rebuilds components, and selection is set correctly.
+
+### 4. Benefits
+
+- **O(1) access** to `selectedIndex` – no loop.
+- **Single source of truth**: `ListItem.selected` (via `_state`).
+- **Cache stays in sync** because all selection changes go through `select()` or transition commands.
+- **No redundant state** like `selectedComponentId`.
+
+This balances performance and simplicity. The loop is avoided while keeping the transition pattern intact.
