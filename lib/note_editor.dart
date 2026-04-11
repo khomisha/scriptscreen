@@ -63,7 +63,7 @@ class _DiagramEditorState extends State< NoteDiagramEditor > {
             index: presenter.stackIndex, 
             children: [ 
                 SafeArea( child: Stack( children: [ Container( ), gd ] ) ), //???
-                policySet.selectedComponentId == null ? Container( ) : NoteForm( )
+                presenter.selectedIndex == -1 ? Container( ) : NoteForm( )
             ]
         );
     }
@@ -79,7 +79,6 @@ class _DiagramEditorState extends State< NoteDiagramEditor > {
 }
 
 class EditorPolicySet extends PolicySet with CanvasControlPolicy {
-    String? selectedComponentId;
     late NotePresenter presenter;
     late Offset lastFocalPoint;
 
@@ -93,7 +92,7 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
     late final Transition transition;
 
     @override
-    initializeDiagramEditor( ) {
+    initializeDiagramEditor( ) async {
         Functions.put( 'delete', delete );
         Functions.put( 'startEdit', startEdit );
         Functions.put( 'endEdit', endEdit );
@@ -106,6 +105,12 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
                 [ DeselectCommand( this ), NoCommand( ) ]  // selected
             ]
         );
+        // if( presenter.selectedIndex != -1 ) {
+        //     await transition.doTransition( 
+        //         ListItemState.selected.index, 
+        //         presenter.list[ presenter.selectedIndex ] 
+        //     );            
+        // }
     }
 
     @override
@@ -128,7 +133,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      */
     void delete( String componentId ) {
         presenter.delete( getItemIndex( componentId ) );
-        selectedComponentId = null;
         refresh( );
     }
 
@@ -161,10 +165,10 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
 
     @override
     onCanvasTapUp( TapUpDetails details ) async {
-        if( selectedComponentId != null ) {
+        if( presenter.selectedIndex != -1 ) {
             await transition.doTransition( 
                 ListItemState.unselected.index, 
-                getComponent( selectedComponentId ).data 
+                presenter.list[ presenter.selectedIndex ]
             );            
         }
         if( HardwareKeyboard.instance.isShiftPressed ) {
@@ -178,15 +182,18 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
 
     @override
     onComponentTap( String componentId ) async  {
-        if( selectedComponentId != null ) {
-            final selectedComponent = getComponent( selectedComponentId );
-            await transition.doTransition( ListItemState.unselected.index, selectedComponent.data );
-            if( selectedComponentId == componentId ) {
+        final componentIndex = getItemIndex( componentId );
+        if( presenter.selectedIndex != -1 ) {
+            await transition.doTransition( 
+                ListItemState.unselected.index,
+                presenter.list[ presenter.selectedIndex ] 
+            );
+            if( presenter.selectedIndex == componentIndex ) {
+                presenter.selectedIndex = -1;
                 return;
             }
         }
-        final component = getComponent( componentId );
-        await transition.doTransition( ListItemState.selected.index, component.data );
+        await transition.doTransition( ListItemState.selected.index, presenter.list[ componentIndex ] );
     }
 
     @override
@@ -205,7 +212,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      * Deletes all components from canvas
      */
     void deleteAllComponents( ) {
-        selectedComponentId = null;
         canvasWriter.model.removeAllComponents( );
     }
 
@@ -238,8 +244,7 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
     void addComponents( ) {
         late Offset offset;
         var row = 0;
-        var list = presenter.list;
-        for( var itemIndex = 0; itemIndex < list.length; itemIndex++ ) {
+        for( var itemIndex = 0; itemIndex < presenter.list.length; itemIndex++ ) {
             if( itemIndex % 4 == 0 ) {
                 offset = Offset( 0.0, row * HEIGHT_OFFSET );
                 row++;
@@ -258,9 +263,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
         var component = createComponent( offset, presenter.list[ itemIndex ] );
         presenter.list[ itemIndex ].id = component.id;
         component.data.customData.index = itemIndex + 1;
-        if( component.data.selected ) {
-            selectedComponentId = component.id;
-        }
         canvasWriter.model.addComponent( component );
     }
 
@@ -311,7 +313,6 @@ class SelectCommand extends TransitionCommand {
     Future< void > executeAfter( HasState target ) async {
         final componentId = ( target as ListItem ).id;
         var component = policy.getComponent( componentId );
-        policy.selectedComponentId = componentId;
         policy.presenter.selectedIndex = policy.getItemIndex( componentId );
         component.updateComponent( );
     }
@@ -331,7 +332,6 @@ class DeselectCommand extends TransitionCommand {
     Future< void > executeAfter( HasState target ) async {
         final componentId = ( target as ListItem ).id;
         var component = policy.getComponent( componentId );
-        policy.selectedComponentId = null;
         policy.presenter.selectedIndex = -1;
         component.updateComponent( );
     }

@@ -10,7 +10,11 @@ class ListPresenter extends WidgetPresenter {
 
     ListPresenter( super.dataType ) {
         eventBroker.subscribe( this, UPDATE );
-        list = AppPresenter( ).getData( dataType );
+        final initialList = AppPresenter( ).getData( dataType );
+        if( initialList.isNotEmpty ) {
+            selectedIndex = 0;      // select first item by default
+        }
+        list = initialList;
     }
 
     @override
@@ -46,12 +50,18 @@ class ListPresenter extends WidgetPresenter {
     @override
     void select( int index ) {
         if( selectedIndex == index ) {
-            list[ index ].inverse( );
+            // Toggle off: deselect the current item
+            //list[ index ].setState( ListItemState.unselected.index );
+            //selectedIndex = -1;
         } else {
-            list[ selectedIndex ].setState( ListItemState.unselected.index );
-            list[ index ].setState( ListItemState.unselected.index );
+            // Deselect previous item if any
+            if( selectedIndex != -1 ) {
+                list[ selectedIndex ].setState( ListItemState.unselected.index );
+            }
+            // Select the new item
+            list[ index ].setState( ListItemState.selected.index );
+            selectedIndex = index;
         }
-        selectedIndex = index;
         notifyListeners( );
     }
 
@@ -80,7 +90,13 @@ class ListPresenter extends WidgetPresenter {
     @override
     void onEvent( Event event ) {
         if( event.type == UPDATE ) {
-            list = AppPresenter( ).getData( dataType );
+            final newList = AppPresenter( ).getData( dataType );
+            // Adjust selectedIndex to be within bounds of the new list
+            if( selectedIndex >= newList.length ) {
+                selectedIndex = newList.isEmpty ? -1 : 0;
+            }
+            // Assign the new list; the setter will set the state for the (possibly adjusted) selectedIndex
+            list = newList;
         }
     }
 }

@@ -8,7 +8,11 @@ class FormPresenter extends WidgetPresenter {
 
     FormPresenter( super.dataType ) {
         eventBroker.subscribe( this, UPDATE );
-        list = AppPresenter( ).getData( dataType );
+        final initialList = AppPresenter( ).getData( dataType );
+        if( initialList.isNotEmpty ) {
+            selectedIndex = 0;      // select first item by default
+        }
+        list = initialList;
     }
 
     @override

@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'app_const.dart';
 import 'app_menu.dart';
 import 'package:base/base.dart';
@@ -26,14 +25,14 @@ class NotePanel {
         var pmb = PopupMenuButton( 
             icon: const Icon( Icons.menu ), 
             itemBuilder: ( context ) {
-                final presenter = Provider.of< NotePresenter >( context, listen: false );
+                final presenter = PresenterRegistry( ).getPresenter( NOTE, ( ) => NotePresenter( ) );
                 final bool selected = presenter.selectedIndex != -1;
                 return[ 
                     PopupMenuItem(
                         enabled: selected,
                         onTap: transcript,
                         child: const Text( 'Transcript Audio File...' )
-                    ),                    
+                    ),
                     showEditor,
                     const PopupMenuDivider( ),
                     exitApp

@@ -24,7 +24,12 @@ class NotePresenter extends WidgetPresenter {
     NotePresenter( ) : super( NOTE ) {
         eventBroker.subscribe( this, UPDATE );
         eventBroker.subscribe( this, SAVE_CONTENT );
-        list = AppPresenter( ).getData( dataType );
+        final initialList = AppPresenter( ).getData( dataType );
+        if( initialList.isNotEmpty ) {
+            selectedIndex = 0;      // select first item by default
+            onSelect( initialList[ selectedIndex ] ); 
+        }
+        list = initialList;
     }
 
     @override
@@ -125,6 +130,8 @@ class NotePresenter extends WidgetPresenter {
     void onEvent( Event event ) async {
         if( event.type == UPDATE ) {
             list = AppPresenter( ).getData( dataType );
+            // Find which item is selected now (if any)
+            selectedIndex = list.indexWhere( ( item ) => item.selected );            
             if( event.data ) {
                 refreshNotifier.notifyListeners( );
                 editor.clear( );
