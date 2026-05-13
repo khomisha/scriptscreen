@@ -45,7 +45,7 @@ class EditorImpl implements Editor {
     }
 
     @override
-    void load( String fileName ) async {
+    Future< void > load( String fileName ) async {
         try {
             final file = GenericFile( fileName );
             var content = await file.readString( );

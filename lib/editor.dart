@@ -19,7 +19,7 @@ abstract class Editor {
      * Put content to the editor running in separate browser window
      * fileName the text full file name to load 
      */    
-    void load( String fileName );
+    Future< void > load( String fileName );
 
     /**
      * Clears the editor content

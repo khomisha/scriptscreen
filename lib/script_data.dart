@@ -3,8 +3,6 @@
 
 import 'app_const.dart';
 import 'package:base/base.dart';
-// import 'package:html/parser.dart';
-// import 'package:path/path.dart' as p;
 
 /**
  * Returns empty item of the specified application data type

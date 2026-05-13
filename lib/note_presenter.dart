@@ -24,12 +24,7 @@ class NotePresenter extends WidgetPresenter {
     NotePresenter( ) : super( NOTE ) {
         eventBroker.subscribe( this, UPDATE );
         eventBroker.subscribe( this, SAVE_CONTENT );
-        final initialList = AppPresenter( ).getData( dataType );
-        if( initialList.isNotEmpty ) {
-            selectedIndex = 0;      // select first item by default
-            onSelect( initialList[ selectedIndex ] ); 
-        }
-        list = initialList;
+        list = AppPresenter( ).getData( dataType );
     }
 
     @override
@@ -42,11 +37,15 @@ class NotePresenter extends WidgetPresenter {
     }
 
     @override
-    void delete( int index ) {
-        editor.clear( );
+    void delete( int index ) async {
+        await editor.clear( );
         var file = GenericFile( getBodyFileName( list[ index ].customData as NoteData ) );
         file.delete( );
         super.delete( index );
+        // After deletion, load the content of the newly selected note (if any)
+        if( selectedIndex != -1 && selectedIndex < list.length ) {
+            await onSelect( list[ selectedIndex ] );
+        }
     }
 
     @override
@@ -59,6 +58,18 @@ class NotePresenter extends WidgetPresenter {
     void endEdit( bool ok ) {
         stackIndex = 0;
         readOnly = true;
+        if( ok ) {
+            int newIndex = list[ editIndex ].customData.attributes[ "index" ] - 1;
+            if( editIndex != newIndex ) {
+                if( selectedIndex != -1 ) {
+                    list[ selectedIndex ].setState( ListItemState.unselected.index );
+                }
+                ListItem item = list.removeAt( editIndex );
+                list.insert( newIndex, item );
+                selectedIndex = newIndex;
+                list[ selectedIndex ].setState( ListItemState.selected.index );
+            }
+        }
         super.endEdit( ok );
     }
 
@@ -108,7 +119,7 @@ class NotePresenter extends WidgetPresenter {
      */
     Future< void > onSelect( ListItem item ) async {
         var note = item.customData as NoteData;
-        editor.load( getBodyFileName( note ) );
+        await editor.load( getBodyFileName( note ) );
     }
 
     /**
@@ -129,14 +140,25 @@ class NotePresenter extends WidgetPresenter {
     @override
     void onEvent( Event event ) async {
         if( event.type == UPDATE ) {
-            list = AppPresenter( ).getData( dataType );
-            // Find which item is selected now (if any)
-            selectedIndex = list.indexWhere( ( item ) => item.selected );            
+            final newList = AppPresenter( ).getData( dataType );
             if( event.data ) {
-                refreshNotifier.notifyListeners( );
-                editor.clear( );
+                // Full project load: reset selection to first note
+                selectedIndex = newList.isEmpty ? -1 : 0;
+                list = newList;
+                await editor.clear( );
+                if( selectedIndex != -1 ) {
+                    await onSelect( list[ selectedIndex ] );
+                }
+            } else {
+                // Minor update (e.g., after save): preserve selection if possible
+                if( selectedIndex >= newList.length ) {
+                    selectedIndex = newList.isEmpty ? -1 : 0;
+                }
+                list = newList;
             }
+            refreshNotifier.notifyListeners( );
         }
+        
         if( event.type == SAVE_CONTENT && selectedIndex > -1 ) {
             var note = list[ selectedIndex ].customData as NoteData;
             await editor.save( getBodyFileName( note ) );

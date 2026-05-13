@@ -49,11 +49,7 @@ class ListPresenter extends WidgetPresenter {
 
     @override
     void select( int index ) {
-        if( selectedIndex == index ) {
-            // Toggle off: deselect the current item
-            //list[ index ].setState( ListItemState.unselected.index );
-            //selectedIndex = -1;
-        } else {
+        if( selectedIndex != index ) {
             // Deselect previous item if any
             if( selectedIndex != -1 ) {
                 list[ selectedIndex ].setState( ListItemState.unselected.index );

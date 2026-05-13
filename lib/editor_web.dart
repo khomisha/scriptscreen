@@ -17,9 +17,10 @@ class EditorImpl implements Editor {
     }
 
     @override
-    void load( String fileName ) async {
+    Future< void > load( String fileName ) async {
         try {
             await appElectronAPI.load( fileName.toJS ).toDart;
+            logger.fine( 'loading $fileName is finished' );
         }
         on JSError catch ( e ) {
             logger.severe( '$fileName ${e.message}' );
@@ -34,5 +35,6 @@ class EditorImpl implements Editor {
     @override
     Future< void > clear( ) async {
         await appElectronAPI.clear( ).toDart;
+        logger.fine( "clearing is finished" );
     }
 }

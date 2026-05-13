@@ -1,4 +1,4 @@
-// ignore_for_file: constant_identifier_names, slash_for_doc_comments
+// ignore_for_file: constant_identifier_names, slash_for_doc_comments, avoid_print
 
 import 'package:diagram_editor/diagram_editor.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +9,8 @@ import 'app_presenter.dart';
 import 'package:base/base.dart';
 import 'note_presenter.dart';
 
-const double COMPONENT_WIDTH = 400;
-const double COMPONENT_HEIGHT = 300;
+const double COMPONENT_WIDTH = 300;
+const double COMPONENT_HEIGHT = 200;
 const double WIDTH_OFFSET = COMPONENT_WIDTH + 10;
 const double HEIGHT_OFFSET = COMPONENT_HEIGHT + 10;
 
@@ -36,13 +36,18 @@ class _DiagramEditorState extends State< NoteDiagramEditor > {
     @override
     void didChangeDependencies( ) {
         super.didChangeDependencies( );
-        // Listen ONLY to refresh events
-        _presenter = context.read< NotePresenter >( );
-        _presenter!.refreshNotifier.addListener( _handleRefresh );
+        final presenter = context.read< NotePresenter >( );
+        if( _presenter != presenter ) {
+            // Remove listener from previous presenter (if any)
+            _presenter?.refreshNotifier.removeListener( _handleRefresh );
+            _presenter = presenter;
+            _presenter!.refreshNotifier.addListener( _handleRefresh );
+        }
     }
   
     void _handleRefresh( ) {
         if( mounted ) {
+            logger.fine( "_handleRefresh" );
             policySet.refresh( );
         }
     }
@@ -93,9 +98,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
 
     @override
     initializeDiagramEditor( ) async {
-        Functions.put( 'delete', delete );
-        Functions.put( 'startEdit', startEdit );
-        Functions.put( 'endEdit', endEdit );
         Functions.put( 'changeFilter', changeFilter );
         Functions.put( 'getFilter', getFilter );
         addComponents( );
@@ -105,19 +107,13 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
                 [ DeselectCommand( this ), NoCommand( ) ]  // selected
             ]
         );
-        // if( presenter.selectedIndex != -1 ) {
-        //     await transition.doTransition( 
-        //         ListItemState.selected.index, 
-        //         presenter.list[ presenter.selectedIndex ] 
-        //     );            
-        // }
     }
 
     @override
     Widget showComponentBody( ComponentData componentData ) {
         switch( componentData.type ) {
             case 'card':
-                return Note( componentData: componentData );
+                return Note( componentData: componentData, policy: this );
             default:
                 return const SizedBox.shrink( );
         }
@@ -126,32 +122,6 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
     @override
     showCustomWidgetWithComponentDataOver( context, componentData ) {
         return resizeCorner( componentData );
-    }
-
-    /**
-     * Deletes the specified component and based on custom data
-     */
-    void delete( String componentId ) {
-        presenter.delete( getItemIndex( componentId ) );
-        refresh( );
-    }
-
-    /**
-     * Starts editing the specified component 
-     */
-    void startEdit( String componentId ) {
-        presenter.startEdit( getItemIndex( componentId ) );
-    }
-
-    /**
-     * Ends editing component 
-     * ok the end editing approving flag
-     */
-    void endEdit( bool ok ) {
-        presenter.endEdit( ok );
-        if( ok ) {
-            refresh( );
-        }
     }
 
     void changeFilter( String name ) {
@@ -219,6 +189,7 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
      * Refreshes canvas
      */
     void refresh( ) {
+        logger.fine( "refresh" ); 
         deleteAllComponents( );
         addComponents( );
     }
@@ -266,6 +237,7 @@ class EditorPolicySet extends PolicySet with CanvasControlPolicy {
         canvasWriter.model.addComponent( component );
     }
 
+    // Changes note size
     Widget resizeCorner( ComponentData component ) {
         var rightCorner = component.position + component.size.bottomRight( Offset.zero );
         Offset bottomRightCorner = canvasReader.state.toCanvasCoordinates( rightCorner );
@@ -355,8 +327,9 @@ ComponentData createComponent( Offset position, dynamic item ) {
 
 class Note extends StatelessWidget {
     final ComponentData componentData;
+    final EditorPolicySet policy;
 
-    const Note( { super.key, required this.componentData } );
+    const Note( { super.key, required this.componentData, required this.policy } );
 
     @override
     Widget build( BuildContext context ) {
@@ -392,26 +365,30 @@ class Note extends StatelessWidget {
             style: Style.theme.textTheme.labelSmall 
         );
         var editBtn = IconButton( 
-                onPressed: componentData.data.selected ? 
-                    ( ) { Functions.get( 'startEdit' )( componentData.id ); } :
-                    null, 
-                icon: Icon( 
-                    Icons.edit_note, 
-                    color: componentData.data.selected ? Style.theme.primaryColor : null
-                ),
+                onPressed: ( ) async { 
+                    final noteIndex = componentData.data.customData.index - 1;
+                    // Select the note if not already selected (using existing transition)
+                    if( presenter.selectedIndex != noteIndex ) {
+                        await policy.onComponentTap( componentData.id );
+                    }
+                    presenter.startEdit( noteIndex ); 
+                },
+                icon: const Icon( Icons.edit_note ),
                 tooltip: "edit note"
             );
         var deleteBtn = Focus(
             descendantsAreFocusable: false,
             canRequestFocus: false,
             child: IconButton( 
-                onPressed: componentData.data.selected ? 
-                    ( ) { Functions.get( 'delete' )( componentData.id ); } :
-                    null, 
-                icon: Icon( 
-                    Icons.highlight_off, 
-                    color: componentData.data.selected ? Style.theme.primaryColor : null
-                ),
+                onPressed: ( ) async { 
+                    final noteIndex = componentData.data.customData.index - 1;
+                    // Select the note if not already selected (using existing transition)
+                    if( presenter.selectedIndex != noteIndex ) {
+                        await policy.onComponentTap( componentData.id );
+                    }
+                    presenter.delete( noteIndex ); 
+                },
+                icon: const Icon( Icons.highlight_off ),
                 tooltip: "delete note"
             )
        );
@@ -526,17 +503,6 @@ class NoteForm extends BaseForm< NotePresenter > {
                 field = Field( followup: pattern.style ?? "" );
         }
         return field;
-    }
-
-    @override
-    void onCancel( ) {
-        Functions.get( 'endEdit' )( false );
-    }
-
-    @override
-    void onOK( ) {
-        super.onOK( );
-        Functions.get( 'endEdit' )( true );
     }
 }
 

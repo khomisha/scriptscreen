@@ -17,7 +17,7 @@ tinymce.init({
 	content_style: 'body, body * { font-family: "Courier New", Arial, sans-serif !important; font-size: 12pt !important; }',
 	promotion: false,
 	menubar: true,
-    forced_root_block : 'div',
+    //forced_root_block : 'div',
 	contextmenu: false,
 	// 2
 	//Use a local file picker in the Insert Image dialog

@@ -14,11 +14,8 @@ import 'script_panel.dart';
 import 'action_time_panel.dart';
 import 'app_const.dart';
 import 'app_components.dart';
-//import 'form_presenter.dart';
-//import 'list_presenter.dart';
 import 'note_editor.dart';
 import 'note_panel.dart';
-//import 'note_presenter.dart';
 
 class MainPanel extends StatefulWidget implements base.Subscriber {
     late final Function( base.Event ) _onEvent;
@@ -37,7 +34,7 @@ class MainPanel extends StatefulWidget implements base.Subscriber {
 
     @override
     void onEvent( base.Event event ) {
-        logger.info( 'MainPanel: onEvent: ${event.type}' );
+        logger.fine( 'MainPanel: onEvent: ${event.type}' );
         _onEvent( event );
     }
 }

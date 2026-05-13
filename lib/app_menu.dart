@@ -59,7 +59,6 @@ void transcript( ) async {
 }
 
 void exit( ) async {
-    eventBroker.dispatch( Event( SAVE_CONTENT ) );
     AppPresenter( ).exit( );
 }
 

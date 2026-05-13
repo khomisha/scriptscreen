@@ -185,6 +185,9 @@ ipcMain.on(
             if( chunk === null ) {
                 if( saveStream.stream ) {
                     saveStream.stream.end( );
+                } else {
+                    // No chunks were sent (empty content) → create empty file
+                    fss.writeFileSync( saveStream.fileName, '' );
                 }
                 saveStream = null;
                 console.log( 'Save completed successfully' );
