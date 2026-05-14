@@ -38,13 +38,18 @@ class NotePresenter extends WidgetPresenter {
 
     @override
     void delete( int index ) async {
-        await editor.clear( );
-        var file = GenericFile( getBodyFileName( list[ index ].customData as NoteData ) );
+        final wasSelected = ( selectedIndex == index );
+        // Delete file
+        var file = GenericFile(getBodyFileName( list[ index ].customData as NoteData ) );
         file.delete( );
+        // Remove from list (this updates selectedIndex)
         super.delete( index );
-        // After deletion, load the content of the newly selected note (if any)
-        if( selectedIndex != -1 && selectedIndex < list.length ) {
-            await onSelect( list[ selectedIndex ] );
+        // Update editor only if the deleted note was selected
+        if( wasSelected ) {
+            await editor.clear( );
+            if( selectedIndex != -1 && selectedIndex < list.length ) {
+                await onSelect( list[ selectedIndex ] );
+            }
         }
     }
 

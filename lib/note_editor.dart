@@ -381,12 +381,7 @@ class Note extends StatelessWidget {
             canRequestFocus: false,
             child: IconButton( 
                 onPressed: ( ) async { 
-                    final noteIndex = componentData.data.customData.index - 1;
-                    // Select the note if not already selected (using existing transition)
-                    if( presenter.selectedIndex != noteIndex ) {
-                        await policy.onComponentTap( componentData.id );
-                    }
-                    presenter.delete( noteIndex ); 
+                    presenter.delete( componentData.data.customData.index - 1 ); 
                 },
                 icon: const Icon( Icons.highlight_off ),
                 tooltip: "delete note"
