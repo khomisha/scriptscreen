@@ -13,8 +13,12 @@ tinymce.init({
 	init_instance_callback: function( editor ) {
 		editor.execCommand( 'mceFullScreen' );
 	},
+	browser_spellcheck: true,
 	//content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
-	content_style: 'body, body * { font-family: "Courier New", Arial, sans-serif !important; font-size: 12pt !important; }',
+	content_style: `
+		body, body * { font-family: "Courier New", Arial, sans-serif !important; font-size: 12pt !important; }
+		body sup, body sub { font-size: 8pt !important; line-height: normal; }
+	`,	
 	promotion: false,
 	menubar: true,
     //forced_root_block : 'div',

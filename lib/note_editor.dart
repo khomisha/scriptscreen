@@ -11,8 +11,14 @@ import 'note_presenter.dart';
 
 const double COMPONENT_WIDTH = 300;
 const double COMPONENT_HEIGHT = 200;
+// const double COMPONENT_WIDTH = 400;
+// const double COMPONENT_HEIGHT = 300;
 const double WIDTH_OFFSET = COMPONENT_WIDTH + 10;
 const double HEIGHT_OFFSET = COMPONENT_HEIGHT + 10;
+
+const double _SCALE_W = COMPONENT_WIDTH / 525.0;
+const double _SCALE_H = COMPONENT_HEIGHT / 300.0;
+const double _SCALE = _SCALE_W < _SCALE_H ? _SCALE_W : _SCALE_H;
 
 class NoteDiagramEditor extends StatefulWidget {
 
@@ -339,30 +345,37 @@ class Note extends StatelessWidget {
             color: componentData.data.selected ? Colors.pink : Style.theme.primaryColor
         );
         var decoration = BoxDecoration(
-            borderRadius: BorderRadius.circular( 20 ),
+            borderRadius: BorderRadius.circular( 20 * _SCALE ),
             border: border,
             color: Colors.white.withValues( alpha: 255.0 )
         );
-        var title = Text( 
-            componentData.data.customData.title, 
-            style: Style.theme.textTheme.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis 
+        var title = Text(
+            componentData.data.customData.title,
+            style: Style.theme.textTheme.titleLarge?.copyWith(
+                fontSize: ( Style.theme.textTheme.titleLarge?.fontSize ?? 22.0 ) * _SCALE
+            ),
+            maxLines: 1, overflow: TextOverflow.ellipsis
         );
-        var divider = Divider( 
-            color: Style.theme.primaryColor, 
-            thickness: 1, 
-            height: 2, 
-            indent: 24, endIndent: 24 
+        var divider = Divider(
+            color: Style.theme.primaryColor,
+            thickness: 1,
+            height: 2,
+            indent: 24 * _SCALE_W, endIndent: 24 * _SCALE_W
         );
-        var description = Text( 
-            componentData.data.customData.description, 
-            style: Style.listTileStyle, 
-            maxLines: 2, 
+        var description = Text(
+            componentData.data.customData.description,
+            style: Style.listTileStyle.copyWith(
+                fontSize: ( Style.listTileStyle.fontSize ?? 14.0 ) * _SCALE
+            ),
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left
         );
-        var count = Text( 
-            ( componentData.data.customData.index ).toString( ), 
-            style: Style.theme.textTheme.labelSmall 
+        var count = Text(
+            ( componentData.data.customData.index ).toString( ),
+            style: Style.theme.textTheme.labelSmall?.copyWith(
+                fontSize: ( Style.theme.textTheme.labelSmall?.fontSize ?? 11.0 ) * _SCALE
+            )
         );
         var editBtn = IconButton( 
                 onPressed: ( ) async { 
@@ -397,12 +410,13 @@ class Note extends StatelessWidget {
         var attributeNames = [ ROLE, DETAIL, LOCATION, ACTION_TIME ];
         for( var attributeName in attributeNames ) {
             var pattern = getPattern( NOTE )[ attributeName ]!;
-            var chipList = ChipListField( 
+            var chipList = ChipListField(
                 value: componentData.data.customData.attributes[ attributeName ],
                 pattern: pattern,
                 isSelected: _isChipSelected,
                 onSelected: _onChipSelected,
-                showCheckmark: false
+                showCheckmark: false,
+                scale: _SCALE
             );
             chipLists.add( chipList );
         }
@@ -412,21 +426,21 @@ class Note extends StatelessWidget {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                     Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB( 12, 0, 0, 0 ),
+                        padding: const EdgeInsetsDirectional.fromSTEB( 12 * _SCALE_W, 0, 0, 0 ),
                         child: topRow
                     ),
                     Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB( 12, 0, 12, 6 ),
+                        padding: const EdgeInsetsDirectional.fromSTEB( 12 * _SCALE_W, 0, 12 * _SCALE_W, 6 * _SCALE_H ),
                         child: Center( child: title )
                     ),
                     divider,
                     Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB( 12, 6, 12, 0 ),
+                        padding: const EdgeInsetsDirectional.fromSTEB( 12 * _SCALE_W, 6 * _SCALE_H, 12 * _SCALE_W, 0 ),
                         child: description
                     ),
                     Expanded(
                         child: SizedBox(
-                            height: 140,
+                            height: 140 * _SCALE_H,
                             child: ListView( scrollDirection: Axis.horizontal, children: chipLists )
                         )
                     )

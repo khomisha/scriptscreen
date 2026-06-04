@@ -1,7 +1,7 @@
 // main.js
 
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain, dialog } = require( 'electron' )
+const { app, BrowserWindow, ipcMain, dialog, Menu, MenuItem } = require( 'electron' )
 const path = require( 'node:path' )
 const fs = require( 'fs/promises' );
 const fss = require( 'fs' )
@@ -82,7 +82,46 @@ const createWindow = ( ) => {
                     webPreferences: { 
                         nodeIntegration: true, 
                         contextIsolation: true,
-                        preload: path.join( __dirname, 'editor_preload.js' )
+                        preload: path.join( __dirname, 'editor_preload.js' ),
+                        spellcheck: true
+                    }
+                }
+            );
+
+            // After creating the editor window (browser)
+            browser.webContents.on(
+                'context-menu', 
+                ( event, params ) => {
+                    const menu = new Menu();
+
+                    // Add spelling suggestions
+                    for( const suggestion of params.dictionarySuggestions ) {
+                        menu.append( 
+                            new MenuItem(
+                                {
+                                    label: suggestion,
+                                    click: ( ) => browser.webContents.replaceMisspelling( suggestion )
+                                }
+                            )
+                        );
+                    }
+
+                    // Add option to add the misspelled word to the dictionary
+                    if( params.misspelledWord ) {
+                        if( menu.items.length > 0 ) menu.append( new MenuItem( { type: 'separator' } ) );
+                        menu.append( 
+                            new MenuItem(
+                                {
+                                    label: 'Add to dictionary',
+                                    click: ( ) => browser.webContents.session.addWordToSpellCheckerDictionary( params.misspelledWord )
+                                }
+                            )
+                        );
+                    }
+
+                    // Only show the menu if there are any items
+                    if( menu.items.length > 0 ) {
+                        menu.popup( );
                     }
                 }
             );
@@ -93,11 +132,13 @@ const createWindow = ( ) => {
             if( args.dev ) {
                 browser.webContents.openDevTools( );
             }
+            browser.webContents.session.setSpellCheckerLanguages( [ 'en-US', 'ru' ] );
         }
     );
 
     mainWindow.setMenuBarVisibility( false );
-    mainWindow.on( "closed", 
+    mainWindow.on( 
+        "closed", 
         ( ) => {
             browser.destroy( );
         }
