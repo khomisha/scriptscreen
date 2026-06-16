@@ -43,7 +43,30 @@ void export( ) async {
         headers.add( t );
         htmlFiles.add( getBodyFileName( note ) );
     }
-    export2pdf( headers, htmlFiles, pdfPath );
+    final script = AppPresenter( ).getData( SCRIPT )[ 0 ].customData as ScriptData;
+    export2pdf( _buildPreamble( script ), headers, htmlFiles, pdfPath );
+}
+
+String _buildPreamble( ScriptData script ) {
+    final buffer = StringBuffer( );
+    buffer.writeln( '<div style="page-break-after: always; text-align: center; padding-top: 200px;">' );
+    buffer.writeln( '<p style="font-size: 14pt;"><strong>${script.authors}</strong></p>' );
+    buffer.writeln( '<h1 style="font-size: 24pt;">${script.title}</h1>' );
+    buffer.writeln( '<p style="font-size: 12pt; margin-top: 60px;">${script.place}, ${script.date}</p>' );
+    buffer.writeln( '</div>' );
+    if( script.logline.isNotEmpty ) {
+        buffer.writeln( '<div style="page-break-after: always; padding: 40px;">' );
+        buffer.writeln( '<h2>Logline</h2>' );
+        buffer.writeln( '<p>${script.logline}</p>' );
+        buffer.writeln( '</div>' );
+    }
+    if( script.synopsis.isNotEmpty ) {
+        buffer.writeln( '<div style="page-break-after: always; padding: 40px;">' );
+        buffer.writeln( '<h2>Synopsis</h2>' );
+        buffer.writeln( '<p>${script.synopsis}</p>' );
+        buffer.writeln( '</div>' );
+    }
+    return buffer.toString( );
 }
 
 void transcript( ) async {
@@ -52,10 +75,26 @@ void transcript( ) async {
         filterName: 'Audio',
         extensions: ['mp3', 'wav', 'm4a'],
     );
-    if( path != null ) { 
+    if( path != null ) {
         final lang = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).lang;
-        transcribe( path, "medium", lang );
+        transcribe( path, config[ 'whisper_model' ], lang );
     }
+}
+
+PopupMenuEntry transcriptLiveItem( ) {
+    if( isLiveTranscribing( ) ) {
+        return const PopupMenuItem( onTap: _stopLive, child: Text( 'Stop Live Transcription' ) );
+    }
+    return const PopupMenuItem( onTap: _startLive, child: Text( 'Start Live Transcription' ) );
+}
+
+void _startLive( ) {
+    final lang = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).lang;
+    startLiveTranscription( config[ 'whisper_live_model' ], lang );
+}
+
+void _stopLive( ) {
+    stopLiveTranscription( );
 }
 
 void exit( ) async {

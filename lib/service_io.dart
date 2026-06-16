@@ -7,12 +7,17 @@ import 'package:path/path.dart';
 
 /**
  * Exports project content to the pdf file
+ * preamble the title page, logline, synopsis
  * headers the chapter headers
  * htmlFiles the content
  * pdfPath the pdf file path
  */
-void export2pdf( List< String > headers,  List< String > htmlFiles, String pdfPath ) async {
+void export2pdf( String preamble, List< String > headers,  List< String > htmlFiles, String pdfPath ) async {
     final buffer = StringBuffer( );
+
+    if( preamble.isNotEmpty ) {
+        buffer.writeln( preamble );
+    }
 
     var index = 0;
     for( var fileName in htmlFiles ) {
@@ -29,8 +34,18 @@ void export2pdf( List< String > headers,  List< String > htmlFiles, String pdfPa
  * Transcripts mp3 audio file to text
  * path the audio file path
  * model the whisper model name
- * lang the language symbol 
+ * lang the language symbol
  */
 void transcribe( String path, String model, String lang ) {
+    logger.warning( "Not yet implemented" );
+}
+
+bool isLiveTranscribing( ) => false;
+
+void startLiveTranscription( String model, String lang ) {
+    logger.warning( "Not yet implemented" );
+}
+
+void stopLiveTranscription( ) {
     logger.warning( "Not yet implemented" );
 }

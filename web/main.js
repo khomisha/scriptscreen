@@ -49,12 +49,13 @@ if( args.dev ) {
     console.log( 'Running in development mode' );
 }
 
+let mainWindow = null;
 let browser = null;
 let whisper = null;
 
 const createWindow = ( ) => {
     // Create the main window.
-    const mainWindow = new BrowserWindow( 
+    mainWindow = new BrowserWindow(
         {
             width: 800,
             height: 600,
@@ -362,11 +363,18 @@ ipcMain.handle(
 
 ipcMain.handle( 
     'convert-html-to-pdf', 
-    async ( _, headers, htmlFiles, pdfPath ) => {
+    async ( _, headers, htmlFiles, pdfPath, preamble ) => {
         const win = new BrowserWindow( { show: false, webPreferences: { offscreen: true } } );
         try {
             const pdfDocs = [];
             const options = { pageSize: 'A4', printBackground: true };
+
+            if( preamble ) {
+                await win.loadURL( 'data:text/html;charset=utf-8,' + encodeURIComponent( '<html><body>' + preamble + '</body></html>' ) );
+                const pdf = await win.webContents.printToPDF( options );
+                pdfDocs.push( pdf );
+            }
+
             var index = 0;
             for( const file of htmlFiles ) {
                 await win.loadFile( file );
@@ -428,6 +436,45 @@ ipcMain.handle(
         } 
         catch( err ) {
             throw new Error( `Transcription failed: ${err.message}\n${err.stack}` );
+        }
+    }
+);
+
+ipcMain.handle(
+    'start-live-transcribe',
+    async ( _, model, lang ) => {
+        try {
+            const w = getWhisper( );
+            w.startLive(
+                model, lang,
+                ( text ) => {
+                    if( browser && !browser.isDestroyed( ) ) {
+                        browser.webContents.send( 'live-transcribe-chunk', text );
+                    }
+                },
+                ( errMsg ) => {
+                    if( mainWindow && !mainWindow.isDestroyed( ) ) {
+                        mainWindow.webContents.send( 'live-transcribe-error', errMsg );
+                    }
+                }
+            );
+            return "success";
+        }
+        catch( err ) {
+            throw new Error( `Live transcription start failed: ${err.message}\n${err.stack}` );
+        }
+    }
+);
+
+ipcMain.handle(
+    'stop-live-transcribe',
+    async ( _ ) => {
+        try {
+            if( whisper ) whisper.stopLive( );
+            return "success";
+        }
+        catch( err ) {
+            throw new Error( `Live transcription stop failed: ${err.message}\n${err.stack}` );
         }
     }
 );

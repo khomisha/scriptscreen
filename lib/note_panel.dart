@@ -27,12 +27,13 @@ class NotePanel {
             itemBuilder: ( context ) {
                 final presenter = PresenterRegistry( ).getPresenter( NOTE, ( ) => NotePresenter( ) );
                 final bool selected = presenter.selectedIndex != -1;
-                return[ 
+                return[
                     PopupMenuItem(
                         enabled: selected,
                         onTap: transcript,
                         child: const Text( 'Transcript Audio File...' )
                     ),
+                    transcriptLiveItem( ),
                     showEditor,
                     const PopupMenuDivider( ),
                     exitApp

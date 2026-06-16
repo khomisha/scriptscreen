@@ -199,6 +199,17 @@ window.contentAPI.onLoadChunk(
 	}
 );
 
+window.contentAPI.onLiveTranscribeChunk(
+	( text ) => {
+		try {
+			tinymce.activeEditor.insertContent( text + ' ' );
+		}
+		catch( err ) {
+			console.error( 'Error inserting live chunk:', err );
+		}
+	}
+);
+
 window.contentAPI.onLoadComplete(
 	( dirty ) => {
 		try {

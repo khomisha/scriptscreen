@@ -7,5 +7,7 @@
     "editor_config": "editor.html",
     "note_header_template": "header.html",
     "log_level": "INFO",
-    "transcribe_fmt": "txt"
+    "transcribe_fmt": "txt",
+    "whisper_model": "large-v3-turbo-q8_0",
+    "whisper_live_model": "small"
 }
