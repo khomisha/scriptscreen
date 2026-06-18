@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld(
         load: ( fileName ) => ipcRenderer.invoke( 'load-content', fileName ),
 		save: ( fileName ) => ipcRenderer.invoke( 'save-content', fileName ),
 		clear: ( ) => ipcRenderer.invoke( 'clear-content' ),
-		convert2PDF: ( headers, htmlFiles, pdfPath, preamble ) => ipcRenderer.invoke( 'convert-html-to-pdf', headers, htmlFiles, pdfPath, preamble ),
+		convert2PDF: ( headers, htmlFiles, pdfPath, preamble, toc ) => ipcRenderer.invoke( 'convert-html-to-pdf', headers, htmlFiles, pdfPath, preamble, toc ),
 		transcribe: ( path, model, lang, format ) => ipcRenderer.invoke( 'transcribe-audio', path, model, lang, format ),
 		startLiveTranscribe: ( model, lang ) => ipcRenderer.invoke( 'start-live-transcribe', model, lang ),
 		stopLiveTranscribe: ( ) => ipcRenderer.invoke( 'stop-live-transcribe' ),

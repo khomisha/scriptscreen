@@ -4,9 +4,13 @@
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="./tinymce/js/tinymce/tinymce.min.js"></script>
+    <script src="./tinymce/js/tinymce/langs/ru.js"></script>
     <script>
+      // Interface language is passed by the app as ?lang=<code> (en, ru, ...).
+      var editorLang = new URLSearchParams( window.location.search ).get( 'lang' ) || 'en';
       tinymce.init({
         selector: 'textarea#mytextarea',
+        language: editorLang,
         height: 500,
         plugins: [
           'advlist', 'lists', 'anchor', 'autolink', 'link', 'image', 'colorpicker', 'imagetools',

@@ -29,7 +29,7 @@ class EditorImpl implements Editor {
         );
         _webview
             ..setBrightness( Brightness.dark )
-            ..launch( "file://$_path" );
+            ..launch( "file://$_path?lang=$languageCode" );
     }
 
     @override

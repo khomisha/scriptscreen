@@ -1,6 +1,10 @@
 
+// Interface language is passed by the app as ?lang=<code> (en, ru, ...).
+const editorLang = new URLSearchParams( window.location.search ).get( 'lang' ) || 'en';
+
 tinymce.init({
 	selector: 'textarea#mytextarea',
+	language: editorLang,
 	height: 500,
     plugins: [
       'advlist', 'lists', 'anchor', 'autolink', 'link', 'image',

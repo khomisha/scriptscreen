@@ -13,12 +13,13 @@ class LocationPanel {
     LocationPanel( Widget widget ) {
         var list = widget as DataList;
         List< PopupMenuEntry > menuItems = [
-            PopupMenuItem( onTap: list.add, child: const Text( "Add Location" ) ),
+            PopupMenuItem( onTap: list.add, child: Text( tr( 'menu_add_location' ) ) ),
             const PopupMenuDivider( ),
+            aboutApp,
             exitApp
         ];
-        panel = Panel( 
-            title: "Locations", 
+        panel = Panel(
+            title: tr( 'panel_locations' ),
             childWidget: createProvider< ListPresenter >(
                 PresenterRegistry( ).getPresenter( LOCATION, ( ) => ListPresenter( LOCATION ) ),
                 list

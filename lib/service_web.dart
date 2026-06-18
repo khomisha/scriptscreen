@@ -9,16 +9,56 @@ import 'app_electron_api.dart';
  * headers the chapter headers
  * htmlFiles the content
  * pdfPath the pdf file path
+ * titles the chapter titles, in order
+ * tocTitle the localized table of contents heading
  */
-void export2pdf( String preamble, List< String > headers,  List< String > htmlFiles, String pdfPath ) async {
+void export2pdf( String preamble, List< String > headers,  List< String > htmlFiles, String pdfPath, List< String > titles, String tocTitle ) async {
     try {
         logger.info( "Export to pdf started" );
-        appElectronAPI.convert2PDF( headers.toJSArray( ), htmlFiles.toJSArray( ), pdfPath.toJS, preamble.toJS ).toDart;
+        final toc = _buildTableOfContents( titles, tocTitle );
+        appElectronAPI.convert2PDF( headers.toJSArray( ), htmlFiles.toJSArray( ), pdfPath.toJS, preamble.toJS, toc.toJS ).toDart;
         logger.info( "Export to pdf completed" );
     }
     on JSError catch ( e ) {
         logger.severe( e.message );
     }
+}
+
+/**
+ * Builds the table of contents page as a standalone HTML document. The page
+ * number cell of each row is left empty; the Electron renderer fills it once
+ * the real per-section page counts are known. Returns an empty string when
+ * there are no chapters.
+ */
+String _buildTableOfContents( List< String > titles, String tocTitle ) {
+    if( titles.isEmpty ) {
+        return '';
+    }
+    final rows = StringBuffer( );
+    for( final title in titles ) {
+        rows.writeln(
+            '<div class="toc-row"><span class="toc-title">${_escape( title )}</span>'
+            '<span class="toc-dots"></span><span class="toc-page"></span></div>'
+        );
+    }
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+        'body { font-family: serif; padding: 40px; }'
+        'h1 { text-align: center; font-size: 24pt; margin-bottom: 40px; }'
+        '.toc-row { display: flex; align-items: baseline; font-size: 12pt; margin: 10px 0; }'
+        '.toc-title { white-space: nowrap; }'
+        '.toc-dots { flex: 1; border-bottom: 1px dotted #000; margin: 0 6px; transform: translateY( -3px ); }'
+        '.toc-page { white-space: nowrap; }'
+        '</style></head><body><h1>${_escape( tocTitle )}</h1>$rows</body></html>';
+}
+
+/**
+ * Escapes the HTML special characters of a plain text value.
+ */
+String _escape( String text ) {
+    return text
+        .replaceAll( '&', '&amp;' )
+        .replaceAll( '<', '&lt;' )
+        .replaceAll( '>', '&gt;' );
 }
 
 /**

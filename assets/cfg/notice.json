@@ -1,0 +1,101 @@
+{
+    "product": "ScriptScreen",
+    "version": "1.3.1",
+    "copyright": "© 2026 Mikhail Khodonov",
+    "license": "Apache-2.0",
+    "licenseName": "Apache License, Version 2.0",
+    "licenseUrl": "https://www.apache.org/licenses/LICENSE-2.0",
+    "thirdParty": [
+        {
+            "name": "flutter",
+            "version": "SDK",
+            "license": "BSD-3-Clause",
+            "copyright": "Copyright 2014 The Flutter Authors",
+            "url": "https://github.com/flutter/flutter"
+        },
+        {
+            "name": "flutter_localizations",
+            "version": "SDK",
+            "license": "BSD-3-Clause",
+            "copyright": "Copyright 2014 The Flutter Authors",
+            "url": "https://github.com/flutter/flutter"
+        },
+        {
+            "name": "cupertino_icons",
+            "version": "1.0.8",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2016 Vladimir Kharlampidi",
+            "url": "https://pub.dev/packages/cupertino_icons"
+        },
+        {
+            "name": "file_picker",
+            "version": "6.2.1",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2018 Miguel Ruivo",
+            "url": "https://pub.dev/packages/file_picker"
+        },
+        {
+            "name": "easy_isolate",
+            "version": "1.3.1",
+            "license": "Apache-2.0",
+            "copyright": "Copyright easy_isolate authors",
+            "url": "https://pub.dev/packages/easy_isolate"
+        },
+        {
+            "name": "provider",
+            "version": "6.1.2",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2019 Remi Rousselet",
+            "url": "https://pub.dev/packages/provider"
+        },
+        {
+            "name": "diagram_editor",
+            "version": "0.1.9",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2021 Arokip",
+            "url": "https://pub.dev/packages/diagram_editor"
+        },
+        {
+            "name": "uuid",
+            "version": "4.5.1",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2021 Yulian Kuncheff",
+            "url": "https://pub.dev/packages/uuid"
+        },
+        {
+            "name": "hex",
+            "version": "0.2.0",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2016 Dartcoin",
+            "url": "https://pub.dev/packages/hex"
+        },
+        {
+            "name": "path",
+            "version": "1.9.1",
+            "license": "BSD-3-Clause",
+            "copyright": "Copyright 2014 the Dart project authors",
+            "url": "https://pub.dev/packages/path"
+        },
+        {
+            "name": "html",
+            "version": "0.15.5",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2006-2012 The Authors",
+            "url": "https://pub.dev/packages/html"
+        },
+        {
+            "name": "desktop_webview_window",
+            "version": "0.2.3",
+            "license": "Apache-2.0",
+            "copyright": "Copyright (c) MixinNetwork",
+            "url": "https://pub.dev/packages/desktop_webview_window"
+        },
+        {
+            "name": "flutter_html_to_pdf",
+            "version": "0.7.0",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2019 Afur",
+            "url": "https://pub.dev/packages/flutter_html_to_pdf"
+        }
+    ]
+}

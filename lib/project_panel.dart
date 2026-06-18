@@ -15,12 +15,14 @@ class ProjectPanel {
         List< PopupMenuEntry > menuItems = [
             createProject,
             openProject,
-            PopupMenuItem( onTap: form.edit, child: const Text( "Edit Project" ) ),
+            PopupMenuItem( onTap: form.edit, child: Text( tr( 'menu_edit_project' ) ) ),
             exportProject,
+            const PopupMenuDivider( ),
+            aboutApp,
             exitApp
         ];
-        panel = Panel( 
-            title: "Project", 
+        panel = Panel(
+            title: tr( 'panel_project' ),
             childWidget: createProvider< FormPresenter >(
                 PresenterRegistry( ).getPresenter( PROJECT, ( ) => FormPresenter( PROJECT ) ),
                 form

@@ -14,12 +14,13 @@ class DetailPanel {
     DetailPanel( Widget widget ) {
         var list = widget as DataList;
         List< PopupMenuEntry > menuItems = [
-            PopupMenuItem( onTap: list.add, child: const Text( "Add Detail" ) ),
+            PopupMenuItem( onTap: list.add, child: Text( tr( 'menu_add_detail' ) ) ),
             const PopupMenuDivider( ),
+            aboutApp,
             exitApp
         ];
-        panel = Panel( 
-            title: "Details", 
+        panel = Panel(
+            title: tr( 'panel_details' ),
             childWidget: createProvider< ListPresenter >(
                 PresenterRegistry( ).getPresenter( DETAIL, ( ) => ListPresenter( DETAIL ) ),
                 list

@@ -10,8 +10,8 @@ class NotePanel {
     late Panel panel;
 
     NotePanel( Widget widget ) {
-        panel = Panel( 
-            title: "Notes", 
+        panel = Panel(
+            title: tr( 'panel_notes' ),
             childWidget: createProvider< NotePresenter >(
                 PresenterRegistry( ).getPresenter( NOTE, ( ) => NotePresenter( ) ),
                 widget
@@ -31,11 +31,12 @@ class NotePanel {
                     PopupMenuItem(
                         enabled: selected,
                         onTap: transcript,
-                        child: const Text( 'Transcript Audio File...' )
+                        child: Text( tr( 'menu_transcript_audio' ) )
                     ),
                     transcriptLiveItem( ),
                     showEditor,
                     const PopupMenuDivider( ),
+                    aboutApp,
                     exitApp
                 ];
             } 

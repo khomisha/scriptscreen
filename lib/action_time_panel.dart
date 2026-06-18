@@ -14,12 +14,13 @@ class ActionTimePanel {
     ActionTimePanel( Widget widget ) {
         var list = widget as DataList;
         List< PopupMenuEntry > menuItems = [
-            PopupMenuItem( onTap: list.add, child: const Text( "Add Action Time" ) ),
+            PopupMenuItem( onTap: list.add, child: Text( tr( 'menu_add_action_time' ) ) ),
             const PopupMenuDivider( ),
+            aboutApp,
             exitApp
         ];
-        panel = Panel( 
-            title: "Action Times", 
+        panel = Panel(
+            title: tr( 'panel_action_times' ),
             childWidget: createProvider< ListPresenter >(
                 PresenterRegistry( ).getPresenter( ACTION_TIME, ( ) => ListPresenter( ACTION_TIME ) ),
                 list

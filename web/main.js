@@ -11,6 +11,22 @@ const WhisperCLI = require('./simple-whisper');
 // app.commandLine.appendSwitch( 'enable-logging' )
 // app.commandLine.appendSwitch( 'log-level', '0' )
 
+/**
+ * Reads the GUI language code (e.g. 'en', 'ru') from app_settings.json so the
+ * editor window can load the matching TinyMCE interface language. Falls back
+ * to English when the setting is absent or unreadable.
+ */
+function getInterfaceLang( ) {
+    try {
+        const file = path.join( app.getAppPath( ), 'assets', 'assets', 'cfg', 'app_settings.json' );
+        const cfg = JSON.parse( fss.readFileSync( file, 'utf-8' ) );
+        return ( cfg.language || 'en' ).split( /[_-]/ )[ 0 ].toLowerCase( );
+    } catch( err ) {
+        console.log( "Cannot read interface language:", err.message );
+        return 'en';
+    }
+}
+
 // Constants
 const CMD_CREATE = "cmd_create";
 const CMD_LOAD = "cmd_load";
@@ -129,7 +145,7 @@ const createWindow = ( ) => {
 
             browser.setMenuBarVisibility( false );
             browser.on( "close", ( event ) => { event.preventDefault( ) } );
-            browser.loadFile( 'editor.html' );
+            browser.loadFile( 'editor.html', { query: { lang: getInterfaceLang( ) } } );
             if( args.dev ) {
                 browser.webContents.openDevTools( );
             }
@@ -361,20 +377,30 @@ ipcMain.handle(
     }
 );
 
-ipcMain.handle( 
-    'convert-html-to-pdf', 
-    async ( _, headers, htmlFiles, pdfPath, preamble ) => {
+function pageCount( pdfBytes ) {
+    return PDFDocument.load( pdfBytes ).then( ( doc ) => doc.getPageCount( ) );
+}
+
+ipcMain.handle(
+    'convert-html-to-pdf',
+    async ( _, headers, htmlFiles, pdfPath, preamble, toc ) => {
         const win = new BrowserWindow( { show: false, webPreferences: { offscreen: true } } );
         try {
-            const pdfDocs = [];
             const options = { pageSize: 'A4', printBackground: true };
 
+            // Render the preamble (title page, logline, synopsis) on its own.
+            let preamblePdf = null;
+            let preamblePages = 0;
             if( preamble ) {
                 await win.loadURL( 'data:text/html;charset=utf-8,' + encodeURIComponent( '<html><body>' + preamble + '</body></html>' ) );
-                const pdf = await win.webContents.printToPDF( options );
-                pdfDocs.push( pdf );
+                preamblePdf = await win.webContents.printToPDF( options );
+                preamblePages = await pageCount( preamblePdf );
             }
 
+            // Render every chapter and record its page count so the table of
+            // contents can reference real page numbers.
+            const chapterPdfs = [];
+            const chapterPages = [];
             var index = 0;
             for( const file of htmlFiles ) {
                 await win.loadFile( file );
@@ -385,11 +411,44 @@ ipcMain.handle(
                     document.body.insertBefore(header, document.body.firstChild);
                 `);
                 const pdfBuffer = await win.webContents.printToPDF( options );
-                pdfDocs.push( pdfBuffer );
+                chapterPdfs.push( pdfBuffer );
+                chapterPages.push( await pageCount( pdfBuffer ) );
                 index++;
             }
 
-            // Merge all PDFs using pdf-lib
+            // The table of contents markup is built in Dart; here we only fill
+            // each row's page number. The TOC's own length shifts those numbers,
+            // so render until the page count stabilises (usually one pass).
+            let tocPdf = null;
+            if( toc && chapterPages.length > 0 ) {
+                let tocPages = 1;
+                for( let pass = 0; pass < 3; pass++ ) {
+                    var start = preamblePages + tocPages + 1;
+                    const numbers = chapterPages.map( ( pages ) => {
+                        const page = start;
+                        start += pages;
+                        return page;
+                    } );
+                    await win.loadURL( 'data:text/html;charset=utf-8,' + encodeURIComponent( toc ) );
+                    await win.webContents.executeJavaScript(`
+                        const numbers = ${JSON.stringify(numbers)};
+                        document.querySelectorAll( '.toc-page' ).forEach( ( cell, i ) => {
+                            cell.textContent = numbers[ i ] != null ? String( numbers[ i ] ) : '';
+                        } );
+                    `);
+                    tocPdf = await win.webContents.printToPDF( options );
+                    const rendered = await pageCount( tocPdf );
+                    if( rendered === tocPages ) break;
+                    tocPages = rendered;
+                }
+            }
+
+            // Merge everything: preamble, table of contents, then the chapters.
+            const pdfDocs = [];
+            if( preamblePdf ) pdfDocs.push( preamblePdf );
+            if( tocPdf ) pdfDocs.push( tocPdf );
+            for( const pdf of chapterPdfs ) pdfDocs.push( pdf );
+
             const mergedPdf = await PDFDocument.create( );
             for( const pdfBytes of pdfDocs ) {
                 const doc = await PDFDocument.load( pdfBytes );

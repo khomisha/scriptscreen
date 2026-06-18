@@ -13,12 +13,13 @@ class ScriptPanel {
     ScriptPanel( Widget widget ) {
         var form = widget as ScriptForm;
         List< PopupMenuEntry > menuItems = [
-            PopupMenuItem( onTap: form.edit, child: const Text( "Edit Script Summary" ) ),
+            PopupMenuItem( onTap: form.edit, child: Text( tr( 'menu_edit_script' ) ) ),
             const PopupMenuDivider( ),
+            aboutApp,
             exitApp
         ];
-        panel = Panel( 
-            title: "Script Summary", 
+        panel = Panel(
+            title: tr( 'panel_script' ),
             childWidget: createProvider< FormPresenter >(
                 PresenterRegistry( ).getPresenter( SCRIPT, ( ) => FormPresenter( SCRIPT ) ),
                 form

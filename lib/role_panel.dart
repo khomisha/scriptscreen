@@ -14,12 +14,13 @@ class RolePanel {
     RolePanel( Widget widget ) {
         var list = widget as DataList;
         List< PopupMenuEntry > menuItems = [
-            PopupMenuItem( onTap: list.add, child: const Text( "Add Role" ) ),
+            PopupMenuItem( onTap: list.add, child: Text( tr( 'menu_add_role' ) ) ),
             const PopupMenuDivider( ),
+            aboutApp,
             exitApp
         ];
-        panel = Panel( 
-            title: "Roles", 
+        panel = Panel(
+            title: tr( 'panel_roles' ),
             childWidget: createProvider< ListPresenter >(
                 PresenterRegistry( ).getPresenter( ROLE, ( ) => ListPresenter( ROLE ) ),
                 list

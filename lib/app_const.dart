@@ -19,6 +19,11 @@ const String PROJECT = "project";
 const String NONAME = "noname";
 const String START_VERSION = "1.0";
 
+// application info ( keep APP_VERSION in sync with pubspec.yaml )
+const String APP_NAME = "ScriptScreen";
+const String APP_VERSION = "1.3.1";
+const String APP_COPYRIGHT = "© Mikhail Khodonov";
+
 typedef Delete = void Function( String id );
 typedef StartEdit = void Function( String id );
 typedef EndEdit = void Function( bool ok );
