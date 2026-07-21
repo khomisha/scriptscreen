@@ -106,7 +106,7 @@ class NotePresenter extends WidgetPresenter {
         if( _filter.isEmpty ) {
             return true;
         }
-        var attributeNames = [ ROLE, DETAIL, LOCATION ];
+        var attributeNames = [ ROLE, DETAIL, LOCATION, ACTION_TIME ];
         for( var attributeName in attributeNames ) {
             var l = list[ index ].customData[ attributeName ] as List;
             for( var listItem in l ) {

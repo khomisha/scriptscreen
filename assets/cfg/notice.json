@@ -96,6 +96,55 @@
             "license": "MIT",
             "copyright": "Copyright (c) 2019 Afur",
             "url": "https://pub.dev/packages/flutter_html_to_pdf"
+        },
+        {
+            "name": "TinyMCE",
+            "version": "6.7.0",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2022 Ephox Corporation DBA Tiny Technologies, Inc.",
+            "url": "https://www.tiny.cloud/"
+        },
+        {
+            "name": "whisper.cpp",
+            "version": "bundled",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2023-2024 The ggml authors",
+            "url": "https://github.com/ggml-org/whisper.cpp"
+        },
+        {
+            "name": "ggml",
+            "version": "bundled",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2023-2024 The ggml authors",
+            "url": "https://github.com/ggml-org/ggml"
+        },
+        {
+            "name": "SDL2",
+            "version": "bundled",
+            "license": "Zlib",
+            "copyright": "Copyright (c) 1997-2024 Sam Lantinga",
+            "url": "https://www.libsdl.org/"
+        },
+        {
+            "name": "FFmpeg",
+            "version": "bundled (LGPL build)",
+            "license": "LGPL-2.1-or-later",
+            "copyright": "Copyright (c) 2000-2024 the FFmpeg developers",
+            "url": "https://ffmpeg.org/"
+        },
+        {
+            "name": "Electron",
+            "version": "33.2.1",
+            "license": "MIT",
+            "copyright": "Copyright (c) Electron contributors; Copyright (c) 2013-2020 GitHub Inc.",
+            "url": "https://github.com/electron/electron"
+        },
+        {
+            "name": "pdf-lib",
+            "version": "1.17.1",
+            "license": "MIT",
+            "copyright": "Copyright (c) 2019 Andrew Dillon",
+            "url": "https://github.com/Hopding/pdf-lib"
         }
     ]
 }
