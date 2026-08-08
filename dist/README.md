@@ -61,7 +61,10 @@ archive only benefits machines with the matching GPU/driver. The build script
 records the backend in a `GPU_BACKEND` marker inside the vendor payload, and
 `make-dist.sh` automatically names the archive
 `scriptscreen-<version>-<platform>-gpu-<backend>.tar.gz|zip` so users can tell
-the flavors apart. Every Linux/Windows archive also ships a `check-gpu.sh` /
+the flavors apart. Each flavor is cached in its own
+`dist/vendor/<platform>/whisper-<flavor>` directory (`cpu`, `vulkan`, `cuda`),
+so build each flavor **once** — releasing an app-only change never needs a
+whisper rebuild, and `make-dist.sh` packages every cached flavor in one run. Every Linux/Windows archive also ships a `check-gpu.sh` /
 `check-gpu.ps1` the user can run **before installing** — it reports the
 archive's GPU flavor, detects the NVIDIA driver (CUDA) and the Vulkan runtime,
 and test-launches the archive's own `whisper-cli` to catch missing runtime
@@ -90,9 +93,12 @@ dist/make-dist.sh --platform macos
 > `whisper/` and `ffmpeg/` are platform-specific.
 
 The Flutter web bundle is always built with `--no-web-resources-cdn` (assets are
-served locally by the Electron shell). Archives are written to `dist/out/`.
-Useful flags:
+served locally by the Electron shell). Archives are written to `dist/out/` —
+**one per whisper flavor cached in `dist/vendor/<platform>/`** (e.g. both the
+CPU and the Vulkan archive from a single run, with the Flutter bundle built
+once). Useful flags:
 
+- `--gpu <flavor>` package only this cached whisper flavor: `cpu` | `vulkan` | `cuda`
 - `--debug`       build the Flutter web bundle with `--debug` instead of `--release`
 - `--skip-build`  reuse the existing `build/web` instead of running `flutter build web`
 - `--skip-vendor` package without whisper/ffmpeg (produces a non-runnable archive; for plumbing tests only)

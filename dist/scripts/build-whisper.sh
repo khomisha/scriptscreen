@@ -6,11 +6,14 @@
 #
 # Works on Linux and macOS (auto-detected). For Windows use build-whisper.ps1.
 #
-# It produces the exact layout make-dist.sh expects:
-#   dist/vendor/<platform>/whisper/build/bin/whisper-cli
-#   dist/vendor/<platform>/whisper/build/bin/whisper-stream
-#   dist/vendor/<platform>/whisper/models/            (empty by default)
+# It produces the layout make-dist.sh expects, cached per GPU flavor so
+# several flavors coexist — an app-only release never rebuilds whisper:
+#   dist/vendor/<platform>/whisper-<flavor>/build/bin/whisper-cli    (flavor: cpu|vulkan|cuda)
+#   dist/vendor/<platform>/whisper-<flavor>/build/bin/whisper-stream
+#   dist/vendor/<platform>/whisper-<flavor>/models/   (empty by default)
 #   dist/vendor/<platform>/ffmpeg/ffmpeg
+# A legacy single-slot dist/vendor/<platform>/whisper payload is migrated to
+# its flavored name automatically on the next run.
 #
 # Speech models are NOT bundled by default — they are large, and the install
 # scripts download the needed ones on the client machine. Pass --models to
@@ -42,6 +45,7 @@
 #                        be installed beforehand. cuda/vulkan write a GPU_BACKEND
 #                        marker into the vendor payload, and make-dist.sh then
 #                        names the archive scriptscreen-<version>-<platform>-gpu-<backend>.
+#                        'cpu' is accepted as an alias for 'none'.
 #   --jobs <n>           Parallel build jobs (default: all cores).
 #   --log [file]         Also write all output to a log file
 #                        (default: dist/out/build-whisper-<platform>.log).
@@ -87,12 +91,19 @@ while [ $# -gt 0 ]; do
             WANT_LOG=1
             if [ $# -ge 2 ] && [ "${2#-}" = "$2" ]; then LOG_FILE="$2"; shift 2; else shift; fi
             ;;
-        -h|--help) sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+        -h|--help) sed -n '2,52p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
         *) die "unknown argument: $1";;
     esac
 done
 
+if [ "$GPU" = "cpu" ]; then GPU="none"; fi
+
 VENDOR="$REPO_ROOT/dist/vendor/$PLATFORM"
+case "$GPU" in
+    cuda|vulkan) FLAVOR="$GPU";;
+    *)           FLAVOR="cpu";;
+esac
+WHISPER_VENDOR="$VENDOR/whisper-$FLAVOR"
 
 # Optional logging: tee everything to a file as well as the terminal.
 if [ "$WANT_LOG" -eq 1 ]; then
@@ -208,24 +219,41 @@ if [ -f "$SRC_DIR/models/ggml-large-v3-turbo.bin" ] && [ ! -f "$SRC_DIR/models/g
 fi
 
 # ---------------------------------------------------------------------------
-# Stage whisper/ into dist/vendor/<platform>/
+# Stage whisper/ into dist/vendor/<platform>/whisper-<flavor> — flavors are
+# cached side by side so make-dist.sh can package all of them without a
+# whisper rebuild when only the app changed.
 # ---------------------------------------------------------------------------
-log "Staging whisper -> $VENDOR/whisper"
-rm -rf "$VENDOR/whisper"
-mkdir -p "$VENDOR/whisper/build/bin" "$VENDOR/whisper/models"
-cp "$BIN/whisper-cli" "$BIN/whisper-stream" "$VENDOR/whisper/build/bin/"
+# Migrate a legacy single-slot dist/vendor/<platform>/whisper payload: keep it
+# under its flavored name if that flavor is not cached yet, otherwise drop it
+# (it is superseded by this build or by an existing flavored payload).
+if [ -d "$VENDOR/whisper" ]; then
+    LEGACY_FLAVOR="cpu"
+    [ ! -f "$VENDOR/whisper/GPU_BACKEND" ] || LEGACY_FLAVOR="$(tr -d '[:space:]' < "$VENDOR/whisper/GPU_BACKEND")"
+    if [ "$LEGACY_FLAVOR" != "$FLAVOR" ] && [ ! -d "$VENDOR/whisper-$LEGACY_FLAVOR" ]; then
+        log "Migrating legacy vendor payload -> dist/vendor/$PLATFORM/whisper-$LEGACY_FLAVOR"
+        mv "$VENDOR/whisper" "$VENDOR/whisper-$LEGACY_FLAVOR"
+    else
+        log "Removing superseded legacy vendor payload dist/vendor/$PLATFORM/whisper"
+        rm -rf "$VENDOR/whisper"
+    fi
+fi
+
+log "Staging whisper -> $WHISPER_VENDOR"
+rm -rf "$WHISPER_VENDOR"
+mkdir -p "$WHISPER_VENDOR/build/bin" "$WHISPER_VENDOR/models"
+cp "$BIN/whisper-cli" "$BIN/whisper-stream" "$WHISPER_VENDOR/build/bin/"
 # Ship any shared libs the binaries still need (e.g. libSDL2 if not fully static).
 find "$BIN" -maxdepth 1 \( -name '*.so' -o -name '*.so.*' -o -name '*.dylib' \) \
-    -exec cp -a {} "$VENDOR/whisper/build/bin/" \; 2>/dev/null || true
+    -exec cp -a {} "$WHISPER_VENDOR/build/bin/" \; 2>/dev/null || true
 if [ -n "$MODELS" ]; then
-    cp "$SRC_DIR"/models/ggml-*.bin "$VENDOR/whisper/models/"
+    cp "$SRC_DIR"/models/ggml-*.bin "$WHISPER_VENDOR/models/"
 else
     log "No models bundled — the installer downloads them on the client"
 fi
 # Mark GPU-flavored payloads so make-dist.sh names the archive accordingly
 # (…-gpu-cuda / …-gpu-vulkan) and check-gpu.sh can tell the user the flavor.
 case "$GPU" in
-    cuda|vulkan) echo "$GPU" > "$VENDOR/whisper/GPU_BACKEND";;
+    cuda|vulkan) echo "$GPU" > "$WHISPER_VENDOR/GPU_BACKEND";;
 esac
 
 # ---------------------------------------------------------------------------
@@ -288,6 +316,6 @@ esac
 # Done
 # ---------------------------------------------------------------------------
 echo
-log "whisper.cpp vendor payload ready under dist/vendor/$PLATFORM/"
+log "whisper.cpp vendor payload ready: dist/vendor/$PLATFORM/whisper-$FLAVOR/ (cached flavors: $(cd "$VENDOR" && ls -d whisper-* 2>/dev/null | sed 's/whisper-//' | paste -sd' ' -))"
 log "Binaries still dynamically link SDL2 — the installer installs it on the client."
-log "Next: dist/make-dist.sh --platform $PLATFORM"
+log "Next: dist/make-dist.sh --platform $PLATFORM   (packages every cached flavor; --gpu <flavor> for just one)"

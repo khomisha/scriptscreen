@@ -5,26 +5,34 @@ These are **not** committed to git (see `.gitignore`) because they are large and
 platform-specific — you build/download them once and drop them in before
 packaging.
 
-Expected layout (only the platform you are packaging needs to exist):
+Expected layout (only the platform you are packaging needs to exist). Whisper
+payloads are cached **per GPU flavor** (`whisper-cpu`, `whisper-vulkan`,
+`whisper-cuda`) so several flavors coexist and `make-dist.sh` packages each of
+them without rebuilding whisper when only the app changed. A legacy single
+`whisper/` directory is still understood (its flavor is read from the
+`GPU_BACKEND` marker) and gets migrated to its flavored name by the next
+build-whisper run:
 
 ```
 dist/vendor/
 ├── linux/
-│   ├── whisper/
+│   ├── whisper-cpu/                       (one dir per built flavor: cpu | vulkan | cuda)
 │   │   ├── build/bin/whisper-cli
 │   │   ├── build/bin/whisper-stream
 │   │   └── models/                       (empty — models are downloaded at install time)
+│   ├── whisper-vulkan/
+│   │   └── ...                            (same layout + GPU_BACKEND marker)
 │   └── ffmpeg/
-│       └── ffmpeg                         (static x86_64 build)
+│       └── ffmpeg                         (static x86_64 build, shared by all flavors)
 ├── windows/
-│   ├── whisper/
+│   ├── whisper-<flavor>/
 │   │   ├── build/bin/whisper-cli.exe
 │   │   ├── build/bin/whisper-stream.exe
 │   │   └── models/
 │   └── ffmpeg/
 │       └── ffmpeg.exe
 └── macos/
-    ├── whisper/
+    ├── whisper-<flavor>/
     │   ├── build/bin/whisper-cli
     │   ├── build/bin/whisper-stream
     │   └── models/
@@ -37,9 +45,10 @@ archive — the install scripts download the selected ones from Hugging Face on
 the client machine. Any `ggml-*.bin` present here is excluded by `make-dist.sh`
 unless you pass `--with-models` (offline installs).
 
-The directory structure under `whisper/` mirrors exactly what the app expects at
-runtime (`~/whisper.cpp/build/bin/...` and `~/whisper.cpp/models/...`), because
-the installer copies `whisper/` straight into `~/whisper.cpp`.
+The directory structure under `whisper-<flavor>/` mirrors exactly what the app
+expects at runtime (`~/whisper.cpp/build/bin/...` and `~/whisper.cpp/models/...`),
+because `make-dist.sh` stages the chosen flavor as `whisper/` inside the archive
+and the installer copies it straight into `~/whisper.cpp`.
 
 ## Building whisper.cpp
 
@@ -57,7 +66,7 @@ cmake --build build --config Release -j
 ```
 
 Then copy `build/bin/whisper-cli` and `build/bin/whisper-stream` into the
-matching `dist/vendor/<platform>/whisper/` tree above. Build whisper.cpp
+matching `dist/vendor/<platform>/whisper-<flavor>/` tree above. Build whisper.cpp
 **on each target platform** so the binaries match.
 
 ## ffmpeg (LGPL build only)

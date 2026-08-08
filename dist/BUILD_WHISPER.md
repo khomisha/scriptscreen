@@ -34,16 +34,24 @@ At runtime the app reads them from a fixed location (`web/simple-whisper.js`):
 ```
 
 For packaging, build whisper.cpp **on each target OS** and copy the results into
-`dist/vendor/<platform>/whisper/` with this exact layout (the installer copies it
-verbatim to `~/whisper.cpp`):
+`dist/vendor/<platform>/whisper-<flavor>/` (flavor: `cpu` | `vulkan` | `cuda`)
+with this exact layout (`make-dist.sh` stages it as `whisper/` inside the
+archive and the installer copies that verbatim to `~/whisper.cpp`):
 
 ```
-dist/vendor/<platform>/whisper/
+dist/vendor/<platform>/whisper-<flavor>/
 ├── build/bin/whisper-cli[.exe]
 ├── build/bin/whisper-stream[.exe]
 ├── build/bin/*.dll  or  *.so / *.dylib   (only if you build shared libs — see notes)
-└── models/                                (empty — models are downloaded at install time)
+├── models/                                (empty — models are downloaded at install time)
+└── GPU_BACKEND                            (only for vulkan/cuda flavors: the backend name)
 ```
+
+Flavors are cached side by side, so `make-dist.sh` can package all of them (one
+archive per flavor) without rebuilding whisper when only the app changed. The
+build-whisper scripts stage this layout automatically; a legacy single
+`dist/vendor/<platform>/whisper/` directory (as in the manual examples below)
+also still works and is migrated on the next build-whisper run.
 
 > **Build on the OS you target.** whisper.cpp produces native binaries; a Linux
 > build will not run on Windows or macOS. Cross-compiling is possible but out of

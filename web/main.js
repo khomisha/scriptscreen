@@ -37,6 +37,7 @@ const FAILURE = 1;
 const ERR_MSG = 'error_message';
 const ERROR = 'error';
 const STACK = 'stack_trace';
+const INDENT = '    ';
 const READ = 0;
 const WRITE = 1;
 const APPEND = 2;
@@ -611,10 +612,12 @@ async function _create( map ) {
     }
     await fs.mkdir( map.get( 'dirname' ), { recursive: true } );
     var fileName = path.join( app.getAppPath( ), 'assets', 'assets', 'cfg', 'empty.json' );
-    var data = await fs.readFile( fileName, 'utf-8' );
+    var project = JSON.parse( await fs.readFile( fileName, 'utf-8' ) );
+    project.dir = map.get( 'dirname' );
+    var data = JSON.stringify( project, null, INDENT );
     map.set( 'data', data );
     await fs.writeFile( map.get( 'filename' ), map.get( 'data' ), 'utf-8' );
-    map.set( 'result', SUCCESS ); 
+    map.set( 'result', SUCCESS );
 }
 
 /**

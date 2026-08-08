@@ -3,12 +3,15 @@
     provide ffmpeg, then stage everything into dist\vendor\windows\ ready
     for make-dist.sh.
 
-    Produces the layout make-dist.sh expects:
-      dist\vendor\windows\whisper\build\bin\whisper-cli.exe
-      dist\vendor\windows\whisper\build\bin\whisper-stream.exe
-      dist\vendor\windows\whisper\build\bin\*.dll   (SDL2.dll + any runtime DLLs)
-      dist\vendor\windows\whisper\models\           (empty by default)
+    Produces the layout make-dist.sh expects, cached per GPU flavor so several
+    flavors coexist - an app-only release never rebuilds whisper:
+      dist\vendor\windows\whisper-<flavor>\build\bin\whisper-cli.exe    (flavor: cpu|vulkan|cuda)
+      dist\vendor\windows\whisper-<flavor>\build\bin\whisper-stream.exe
+      dist\vendor\windows\whisper-<flavor>\build\bin\*.dll   (SDL2.dll + any runtime DLLs)
+      dist\vendor\windows\whisper-<flavor>\models\           (empty by default)
       dist\vendor\windows\ffmpeg\ffmpeg.exe
+    A legacy single-slot dist\vendor\windows\whisper payload is migrated to its
+    flavored name automatically on the next run.
 
     Speech models are NOT bundled by default - they are large, and install.ps1
     downloads the needed ones on the client machine. Pass -Models to pre-bundle
@@ -35,6 +38,7 @@
                                          cuda/vulkan write a GPU_BACKEND marker into
                                          the vendor payload, and make-dist.sh then
                                          names the archive ...-windows-gpu-<backend>.
+                                         'cpu' is accepted as an alias for 'none'.
       -SkipSdl2                          Build whisper-cli only (no live transcription).
       -Log     <file>                    Log file path
                                          (default: dist\out\build-whisper-windows.log).
@@ -46,7 +50,7 @@ param(
     [string]$Src    = "",
     [string]$Vcpkg  = "",
     [string]$Ffmpeg = "download",
-    [ValidateSet('cuda','vulkan','none')]
+    [ValidateSet('cuda','vulkan','none','cpu')]
     [string]$Gpu    = "none",
     [switch]$SkipSdl2,
     [string]$Log    = "",
@@ -76,6 +80,7 @@ function Die($m) { Write-Host "ERROR: $m" -ForegroundColor Red; exit 1 }
 function Have($c) { return [bool](Get-Command $c -ErrorAction SilentlyContinue) }
 
 try {
+    if ($Gpu -eq 'cpu') { $Gpu = 'none' }   # 'cpu' = alias for 'none'
     $ModelList = @($Models -split '\s+' | Where-Object { $_ })
     Log "Building whisper.cpp for windows (models: $(if ($ModelList) { $Models } else { 'none' }), gpu: $Gpu, ffmpeg: $Ffmpeg, sdl2: $([bool](-not $SkipSdl2)))"
 
@@ -144,9 +149,25 @@ try {
     $turboDst = Join-Path $Src 'models\ggml-turbo.bin'
     if ((Test-Path $turbo) -and -not (Test-Path $turboDst)) { Copy-Item $turbo $turboDst }
 
-    # --- stage whisper\ ----------------------------------------------------
-    Log "Staging whisper -> $Vendor\whisper"
-    $wDst = Join-Path $Vendor 'whisper'
+    # --- stage whisper\ (cached per GPU flavor, side by side) --------------
+    $Flavor = if ($Gpu -eq 'cuda' -or $Gpu -eq 'vulkan') { $Gpu } else { 'cpu' }
+    $wDst = Join-Path $Vendor "whisper-$Flavor"
+    # Migrate a legacy single-slot whisper\ payload: keep it under its flavored
+    # name if that flavor is not cached yet, otherwise drop it (superseded).
+    $legacy = Join-Path $Vendor 'whisper'
+    if (Test-Path $legacy) {
+        $legacyMarker = Join-Path $legacy 'GPU_BACKEND'
+        $legacyFlavor = if (Test-Path $legacyMarker) { (Get-Content $legacyMarker -Raw).Trim() } else { 'cpu' }
+        $legacyDst = Join-Path $Vendor "whisper-$legacyFlavor"
+        if (($legacyFlavor -ne $Flavor) -and -not (Test-Path $legacyDst)) {
+            Log "Migrating legacy vendor payload -> whisper-$legacyFlavor"
+            Move-Item $legacy $legacyDst
+        } else {
+            Log "Removing superseded legacy vendor payload whisper\"
+            Remove-Item -Recurse -Force $legacy
+        }
+    }
+    Log "Staging whisper -> $wDst"
     if (Test-Path $wDst) { Remove-Item -Recurse -Force $wDst }
     New-Item -ItemType Directory -Force -Path (Join-Path $wDst 'build\bin') | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $wDst 'models')    | Out-Null
@@ -196,9 +217,9 @@ try {
     }
 
     Write-Host ""
-    Log "whisper.cpp vendor payload ready under dist\vendor\windows\"
+    Log "whisper.cpp vendor payload ready: dist\vendor\windows\whisper-$Flavor\"
     Log "SDL2.dll and runtime DLLs are bundled next to the .exe (no client SDL2 install needed)."
-    Log "Next: bash dist/make-dist.sh --platform windows   (run from Git Bash - it is a bash script, PowerShell/cmd cannot run it)"
+    Log "Next: bash dist/make-dist.sh --platform windows   (run from Git Bash - it is a bash script, PowerShell/cmd cannot run it; packages every cached flavor, --gpu <flavor> for just one)"
     if ($LogPath) { Log "Log written to $LogPath" }
 }
 finally {
