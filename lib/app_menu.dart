@@ -40,7 +40,18 @@ PopupMenuEntry get openProject => PopupMenuItem( onTap: open, child: Text( tr( '
 PopupMenuEntry get exportProject => PopupMenuItem( onTap: export, child: Text( tr( 'menu_export_project' ) ) );
 PopupMenuEntry get aboutApp => PopupMenuItem( onTap: about, child: Text( tr( 'menu_about' ) ) );
 PopupMenuEntry get exitApp => PopupMenuItem( onTap: exit, child: Text( tr( 'menu_exit' ) ) );
-PopupMenuEntry get showEditor => ToggleMenuItem( editor.setVisible, < String >[ tr( 'menu_show_editor' ), tr( 'menu_hide_editor' ) ] );
+PopupMenuEntry get showEditor => PopupMenuItem(
+    onTap: _toggleEditor,
+    child: Text( tr( _editorVisible ? 'menu_hide_editor' : 'menu_show_editor' ) )
+);
+
+// current editor window visibility, the editor window is created hidden ( see main.js )
+// kept outside the menu item because itemBuilder recreates the item on every menu opening
+bool _editorVisible = false;
+
+void _toggleEditor( ) async {
+    _editorVisible = await editor.setVisible( !_editorVisible );
+}
 
 void create( ) async {
     AppPresenter( ).create( true );

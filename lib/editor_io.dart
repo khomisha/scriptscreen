@@ -58,8 +58,9 @@ class EditorImpl implements Editor {
     }
 
     @override
-    void setVisible( bool visible ) {
+    Future< bool > setVisible( bool visible ) async {
         _webview.setWebviewWindowVisibility( visible );
+        return visible;
     }
     
     @override

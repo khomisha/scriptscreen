@@ -28,8 +28,9 @@ class EditorImpl implements Editor {
     }
 
     @override
-    void setVisible( bool visible ) {
-        changeVisibility( );
+    Future< bool > setVisible( bool visible ) async {
+        final bool isVisible = await changeVisibility( );
+        return isVisible;
     }
     
     @override

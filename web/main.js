@@ -341,7 +341,7 @@ ipcMain.handle(
             } else {
                 browser.show( );
             }
-            return visible
+            return !visible
 		} catch( err ) {
             throw new Error( `Change visibility failed: ${err.message}\n${err.stack}` );
 		}

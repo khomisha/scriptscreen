@@ -27,10 +27,11 @@ abstract class Editor {
     Future< void > clear( );
 
     /**
-     * Set visible editor browser window 
+     * Set visible editor browser window
      * visible the browser window show flag
+     * returns the resulting visibility of the browser window
      */
-    void setVisible( bool visible );
+    Future< bool > setVisible( bool visible );
 }
 
 final Editor editor = Editor( );
