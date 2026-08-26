@@ -45,6 +45,10 @@
     "menu_add_detail": "Add Detail",
     "menu_add_action_time": "Add Action Time",
     "menu_transcript_audio": "Transcript Audio File...",
+    "menu_cut": "Cut",
+    "menu_copy": "Copy",
+    "menu_paste": "Paste",
+    "menu_add_to_dictionary": "Add to Dictionary",
 
     "picker_project_title": "Project files",
     "picker_project_filter": "Project",

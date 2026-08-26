@@ -45,6 +45,10 @@
     "menu_add_detail": "Добавить деталь",
     "menu_add_action_time": "Добавить время действия",
     "menu_transcript_audio": "Транскрибировать аудиофайл...",
+    "menu_cut": "Вырезать",
+    "menu_copy": "Копировать",
+    "menu_paste": "Вставить",
+    "menu_add_to_dictionary": "Добавить в словарь",
 
     "picker_project_title": "Файлы проекта",
     "picker_project_filter": "Проект",

@@ -27,6 +27,23 @@ function getInterfaceLang( ) {
     }
 }
 
+/**
+ * Reads the GUI translations for the given language code from the l10n assets.
+ * The editor window context menu is built in the main process, so it has no
+ * access to the flutter side tr( ) and reads the same files on it's own.
+ * lang the language code, see getInterfaceLang
+ * returns the key to label map, empty when the file is absent or unreadable
+ */
+function loadTranslations( lang ) {
+    try {
+        const file = path.join( app.getAppPath( ), 'assets', 'assets', 'l10n', `${lang}.json` );
+        return JSON.parse( fss.readFileSync( file, 'utf-8' ) );
+    } catch( err ) {
+        console.log( "Cannot read translations:", err.message );
+        return {};
+    }
+}
+
 // Constants
 const CMD_CREATE = "cmd_create";
 const CMD_LOAD = "cmd_load";
@@ -106,15 +123,23 @@ const createWindow = ( ) => {
                 }
             );
 
+            const tr = loadTranslations( getInterfaceLang( ) );
+            const label = ( key, fallback ) => tr[ key ] || fallback;
+
             // After creating the editor window (browser)
+            // The editor context menu is built here and not by tinymce: a tinymce
+            // contextmenu swallows the right click ( see the contextmenu option in
+            // editor_renderer.js ), so this event would never arrive and the spelling
+            // suggestions would be lost. The clipboard items call webContents directly,
+            // the tinymce ones rely on document.execCommand, where paste is blocked.
             browser.webContents.on(
-                'context-menu', 
+                'context-menu',
                 ( event, params ) => {
                     const menu = new Menu();
 
                     // Add spelling suggestions
                     for( const suggestion of params.dictionarySuggestions ) {
-                        menu.append( 
+                        menu.append(
                             new MenuItem(
                                 {
                                     label: suggestion,
@@ -127,19 +152,44 @@ const createWindow = ( ) => {
                     // Add option to add the misspelled word to the dictionary
                     if( params.misspelledWord ) {
                         if( menu.items.length > 0 ) menu.append( new MenuItem( { type: 'separator' } ) );
-                        menu.append( 
+                        menu.append(
                             new MenuItem(
                                 {
-                                    label: 'Add to dictionary',
+                                    label: label( 'menu_add_to_dictionary', 'Add to Dictionary' ),
                                     click: ( ) => browser.webContents.session.addWordToSpellCheckerDictionary( params.misspelledWord )
                                 }
                             )
                         );
                     }
 
+                    // Add the clipboard items, the accelerators are shown for reference only,
+                    // the keyboard shortcuts themselves are handled by the editor
+                    const flags = params.editFlags;
+                    if( params.isEditable || flags.canCopy ) {
+                        if( menu.items.length > 0 ) menu.append( new MenuItem( { type: 'separator' } ) );
+                        const clipboardItems = [
+                            { key: 'menu_cut', fallback: 'Cut', accelerator: 'CommandOrControl+X', enabled: flags.canCut, action: ( ) => browser.webContents.cut( ) },
+                            { key: 'menu_copy', fallback: 'Copy', accelerator: 'CommandOrControl+C', enabled: flags.canCopy, action: ( ) => browser.webContents.copy( ) },
+                            { key: 'menu_paste', fallback: 'Paste', accelerator: 'CommandOrControl+V', enabled: flags.canPaste, action: ( ) => browser.webContents.paste( ) },
+                        ];
+                        for( const item of clipboardItems ) {
+                            menu.append(
+                                new MenuItem(
+                                    {
+                                        label: label( item.key, item.fallback ),
+                                        accelerator: item.accelerator,
+                                        registerAccelerator: false,
+                                        enabled: item.enabled,
+                                        click: item.action
+                                    }
+                                )
+                            );
+                        }
+                    }
+
                     // Only show the menu if there are any items
                     if( menu.items.length > 0 ) {
-                        menu.popup( );
+                        menu.popup( { window: browser } );
                     }
                 }
             );
