@@ -1,6 +1,6 @@
 # Scriptscreen
 
-Scriptscreen editor with mind cards.
+Scriptscreen editor with plot cards.
 
 #
 
