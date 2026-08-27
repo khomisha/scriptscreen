@@ -6,7 +6,9 @@
 #   - the Flutter web build wrapped by the Electron shell (app/)
 #   - a prebuilt whisper.cpp (whisper/), taken from dist/vendor/<platform>
 #   - a bundled ffmpeg binary (ffmpeg/), taken from dist/vendor/<platform>
-#   - per-platform install/uninstall scripts and INSTALL.md
+#   - per-platform install/uninstall scripts and the install guide in English
+#     and Russian, as .md and .pdf (regenerate the PDFs with
+#     dist/scripts/make-install-pdf.sh after editing a guide)
 #   - a check-gpu script (linux/windows) so users can test GPU suitability
 #
 # Speech models (ggml-*.bin) are NOT included by default — they are large, and
@@ -80,7 +82,7 @@ while [ $# -gt 0 ]; do
             if [ $# -ge 2 ] && [ "${2#-}" = "$2" ]; then LOG_FILE="$2"; shift 2; else shift; fi
             ;;
         --no-log)  WANT_LOG=0; shift;;
-        -h|--help) sed -n '2,46p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+        -h|--help) sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
         *) die "unknown argument: $1";;
     esac
 done
@@ -209,7 +211,10 @@ package_one() {  # $1 = whisper payload dir, or "" with --skip-vendor
     fi
 
     # Install/uninstall scripts, docs, icon, metadata.
-    cp "$REPO_ROOT/dist/templates/common/INSTALL.md" "$stage/INSTALL.md"
+    cp "$REPO_ROOT/dist/templates/common/INSTALL.md"     "$stage/INSTALL.md"
+    cp "$REPO_ROOT/dist/templates/common/INSTALL.ru.md"  "$stage/INSTALL.ru.md"
+    cp "$REPO_ROOT/dist/templates/common/INSTALL.pdf"    "$stage/INSTALL.pdf"
+    cp "$REPO_ROOT/dist/templates/common/INSTALL.ru.pdf" "$stage/INSTALL.ru.pdf"
     cp "$REPO_ROOT/web/icons/Icon-512.png" "$stage/icon.png" 2>/dev/null || true
     echo "$VERSION" > "$stage/VERSION"
 

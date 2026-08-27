@@ -18,10 +18,24 @@ scriptscreen-<version>-<platform>[-gpu-<backend>]/
 ├── install.{sh,command,ps1}
 ├── uninstall.{sh,command,ps1}
 ├── check-gpu.{sh,ps1}   (linux/windows) user-side GPU suitability test
-├── INSTALL.md      end-user instructions (install + uninstall)
+├── INSTALL.md      end-user instructions (install + uninstall), English
+├── INSTALL.ru.md   the same instructions in Russian
+├── INSTALL.pdf     PDF of INSTALL.md
+├── INSTALL.ru.pdf  PDF of INSTALL.ru.md
 ├── icon.png
 └── VERSION
 ```
+
+The end-user guide lives in `dist/templates/common/` in two languages
+(`INSTALL.md`, `INSTALL.ru.md`). After editing either one, regenerate the PDFs
+that ship alongside them:
+
+```bash
+dist/scripts/make-install-pdf.sh
+```
+
+It needs `python3` with `markdown-it-py` and a Chrome/Chromium binary on the
+build host (end users need neither).
 
 ## One-time prerequisites (build host)
 

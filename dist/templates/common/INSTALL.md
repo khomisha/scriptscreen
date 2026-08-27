@@ -1,5 +1,7 @@
 # ScriptScreen — Installation Guide
 
+> 🇷🇺 Russian version: [INSTALL.ru.md](INSTALL.ru.md)
+
 ScriptScreen is distributed as a single archive. After unpacking it and running
 the install script for your platform, the application is ready to use. The
 installer also sets up the third-party components it needs (Node.js/npm,

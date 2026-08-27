@@ -50,7 +50,8 @@ are required for the application itself.
 
 For full step-by-step installation, uninstallation and troubleshooting
 instructions, see **[DISTRIBUTION.md](DISTRIBUTION.md)** (the same guide is also
-included as `INSTALL.md` inside each archive).
+included inside each archive as `INSTALL.md`, with a Russian version in
+`INSTALL.ru.md`).
 
 | Platform | Install command |
 |---|---|

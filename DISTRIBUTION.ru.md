@@ -14,7 +14,7 @@
 | [dist/README.md](dist/README.md) | Мейнтейнер | Сборка архивов дистрибутива через `make-dist.sh`; структура архива. |
 | [dist/vendor/README.md](dist/vendor/README.md) | Мейнтейнер | Куда класть готовые сборки whisper.cpp + ffmpeg (модели речи в архив не включаются — их скачивает инсталлятор). |
 | [dist/BUILD_WHISPER.md](dist/BUILD_WHISPER.md) | Мейнтейнер | Сборка бинарников `whisper-cli` / `whisper-stream` на каждой ОС. |
-| [dist/templates/common/INSTALL.md](dist/templates/common/INSTALL.md) | Пользователь | Установка и удаление приложения (также входит в каждый архив). |
+| [dist/templates/common/INSTALL.ru.md](dist/templates/common/INSTALL.ru.md) ([en](dist/templates/common/INSTALL.md)) | Пользователь | Установка и удаление приложения (обе языковые версии входят в каждый архив, в форматах `.md` и `.pdf`). |
 
 > 🇬🇧 English version: [DISTRIBUTION.md](DISTRIBUTION.md)
 

@@ -14,7 +14,7 @@ This page is an index. The full documentation lives in `dist/`:
 | [dist/README.md](dist/README.md) | Maintainer | Building the distribution archives with `make-dist.sh`; archive layout. |
 | [dist/vendor/README.md](dist/vendor/README.md) | Maintainer | Where to place the prebuilt whisper.cpp + ffmpeg payloads (speech models are not bundled — the installer downloads them). |
 | [dist/BUILD_WHISPER.md](dist/BUILD_WHISPER.md) | Maintainer | Building the `whisper-cli` / `whisper-stream` binaries on each OS. |
-| [dist/templates/common/INSTALL.md](dist/templates/common/INSTALL.md) | End user | Installing and uninstalling the app (also shipped inside each archive). |
+| [dist/templates/common/INSTALL.md](dist/templates/common/INSTALL.md) ([ru](dist/templates/common/INSTALL.ru.md)) | End user | Installing and uninstalling the app (both language versions are shipped inside each archive, as `.md` and `.pdf`). |
 
 > 🇷🇺 Russian version: [DISTRIBUTION.ru.md](DISTRIBUTION.ru.md)
 
