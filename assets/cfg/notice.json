@@ -5,6 +5,12 @@
     "license": "Apache-2.0",
     "licenseName": "Apache License, Version 2.0",
     "licenseUrl": "https://www.apache.org/licenses/LICENSE-2.0",
+    "support": [
+        { "name": "ETH", "address": "0xD28545A4a16C0857cD8af84185CcaAa9Bbef675e" },
+        { "name": "BTC", "address": "bc1q20nv9jj0zt04e0sa4h6s8xgyur70e48ue2de5r" },
+        { "name": "SOL", "address": "596MbbR8XGhFbCHzhWGgJEmPe42VjT7bSpMbUPBV41TU" },
+        { "name": "TRX", "address": "TSKCpMdPswcqRbBEmnq2cseQ6zr9XiwdDX" }
+    ],
     "thirdParty": [
         {
             "name": "flutter",

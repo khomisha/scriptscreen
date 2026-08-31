@@ -55,6 +55,9 @@
     "picker_audio_title": "Выберите аудиофайл",
     "picker_audio_filter": "Аудио",
 
+    "support_me": "Поддержать автора",
+    "support_copied": "Адрес скопирован",
+
     "tooltip_edit_note": "редактировать заметку",
     "tooltip_delete_note": "удалить заметку"
 }

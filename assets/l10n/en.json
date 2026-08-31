@@ -55,6 +55,9 @@
     "picker_audio_title": "Select audio file",
     "picker_audio_filter": "Audio",
 
+    "support_me": "Support Me",
+    "support_copied": "Address copied",
+
     "tooltip_edit_note": "edit note",
     "tooltip_delete_note": "delete note"
 }

@@ -2,6 +2,7 @@
 // ignore_for_file: slash_for_doc_comments
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'app_presenter.dart';
 import 'package:base/base.dart';
 import 'package:path/path.dart';
@@ -21,6 +22,7 @@ Map< String, dynamic > notice = {
     'copyright': APP_COPYRIGHT,
     'licenseName': 'Apache License, Version 2.0',
     'licenseUrl': 'https://www.apache.org/licenses/LICENSE-2.0',
+    'support': < dynamic >[],
     'thirdParty': < dynamic >[],
 };
 
@@ -145,6 +147,60 @@ void about( ) {
         applicationName: notice[ 'product' ] as String,
         applicationVersion: '${tr( 'version' )} ${notice[ 'version' ]}',
         applicationLegalese: '${notice[ 'copyright' ]}\n${notice[ 'licenseName' ]}',
+        children: _supportSection( ),
+    );
+}
+
+/**
+ * Builds the 'support me' block of the about dialog from the donation addresses of notice.json
+ */
+List< Widget > _supportSection( ) {
+    final support = ( notice[ 'support' ] as List< dynamic >? ) ?? < dynamic >[];
+    if( support.isEmpty ) { return < Widget >[]; }
+    return < Widget >[
+        const SizedBox( height: 16.0 ),
+        Builder(
+            builder: ( context ) => Text( tr( 'support_me' ), style: Theme.of( context ).textTheme.titleSmall )
+        ),
+        const SizedBox( height: 8.0 ),
+        for( final item in support ) _supportRow( item as Map< String, dynamic > ),
+    ];
+}
+
+/**
+ * Builds a single donation row ( coin name, address, copy button )
+ */
+Widget _supportRow( Map< String, dynamic > item ) {
+    final name = item[ 'name' ] as String? ?? '';
+    final address = item[ 'address' ] as String? ?? '';
+    return Builder(
+        builder: ( context ) => Row(
+            children: [
+                SizedBox( width: 44.0, child: Text( name, style: const TextStyle( fontWeight: FontWeight.bold ) ) ),
+                Expanded(
+                    child: SelectableText( address, style: const TextStyle( fontFamily: 'monospace', fontSize: 12.0 ) )
+                ),
+                IconButton(
+                    icon: const Icon( Icons.copy, size: 16.0 ),
+                    tooltip: tr( 'menu_copy' ),
+                    onPressed: ( ) => _copyAddress( context, address ),
+                ),
+            ],
+        ),
+    );
+}
+
+/**
+ * Copies a donation address to the clipboard and confirms it with a snack bar
+ */
+void _copyAddress( BuildContext context, String address ) {
+    Clipboard.setData( ClipboardData( text: address ) );
+    ScaffoldMessenger.of( context ).showSnackBar(
+        SnackBar(
+            content: Text( tr( 'support_copied' ) ),
+            duration: const Duration( seconds: 2 ),
+            behavior: SnackBarBehavior.floating,
+        )
     );
 }
 
