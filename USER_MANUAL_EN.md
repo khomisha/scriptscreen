@@ -22,7 +22,7 @@
 
 ## 1. Overview
 
-**Script Screen** is a screenplay writing and organization tool built around the concept of visual index cards (Notes). Each scene is represented as a draggable card on a canvas. Cards are linked to characters, locations, story details, and time periods, giving you a bird's-eye view of your script's structure alongside a full-featured text editor for writing scene content.
+**Script Screen** is a screenplay writing and organization tool built around the concept of visual index cards (Notes). Each scene is represented as a draggable card on a board. Cards are linked to characters, locations, story details, and time periods, giving you a bird's-eye view of your script's structure alongside a full-featured text editor for writing scene content.
 
 **Core concepts:**
 
@@ -95,7 +95,7 @@ The bottom navigation bar gives access to seven panels:
 |---|---|---|
 | Briefcase | **Project** | Project metadata and file operations |
 | Summarize | **Script** | Title page, logline, and synopsis |
-| Dashboard | **Notes** | Visual canvas of scene cards |
+| Dashboard | **Notes** | Visual board of scene cards |
 | Theater mask | **Roles** | List of characters |
 | Door/Room | **Locations** | List of locations |
 | Bookmark | **Details** | List of story details |
@@ -125,7 +125,7 @@ Access from the **Project** panel.
   on the next save a **new copy** is created — a new project `.json` file and a
   new directory under the new name/version — and all files from the previous
   project directory are copied into it. The original project is left untouched,
-  so each name/version is preserved as a separate snapshot. Changing only the
+  so each name/version is preserved as a separate version of the script. Changing only the
   **language or authors** updates the existing project in place.
 - **Export Project** — Export the script to PDF format.
 - **About** — Show the application version and third-party license information.
@@ -162,16 +162,16 @@ This panel holds the screenplay's front matter — information that appears befo
 
 Access from the **Notes** panel. This is the main working panel.
 
-### The Canvas
+### The Board
 
-The canvas displays all your scenes as draggable index cards arranged in a grid. You can freely move cards to create a visual structure that mirrors your script's flow.
+The board displays all your scenes as draggable index cards arranged in a grid. You can freely move cards to create a visual structure that mirrors your script's flow.
 
-### Navigating the Canvas
+### Navigating the Board
 
 - **Zoom in / out** — Scroll the **middle mouse wheel** up to zoom in and down to zoom out.
-- **Pan (move the whole canvas)** — Press and **hold the left mouse button on an empty area** of the canvas and drag. All cards move together so you can reach any part of the board.
+- **Pan (move the whole board)** — Press and **hold the left mouse button on an empty area** of the board and drag. All cards move together so you can reach any part of it.
 
-> Holding the left button on a **card** moves that card; holding it on **empty space** pans the canvas.
+> Holding the left button on a **card** moves that card; holding it on **empty space** pans the board.
 
 ### Anatomy of a Card
 
@@ -182,9 +182,9 @@ Each card shows:
 
 ### Creating a Note
 
-**Shift + Click** anywhere on the empty canvas to create a new scene card at that position.
+**Shift + Click** anywhere on the empty board to create a new scene card at that position.
 
-A form opens on the right (or below the canvas) where you fill in:
+A form opens on the right (or below the board) where you fill in:
 
 | Field | Description |
 |---|---|
@@ -209,7 +209,7 @@ Click the **X icon** on a card. The card and its associated scene content file a
 
 ### Moving and Resizing Cards
 
-- **Move**: Drag a card by its header/body to reposition it on the canvas.
+- **Move**: Drag a card by its header/body to reposition it on the board.
 - **Resize**: Drag the bottom-right corner handle of a card.
 
 ### Selecting and Deselecting
@@ -223,7 +223,7 @@ Only one card can be selected at a time.
 
 Each card displays attribute chips for its **Roles**, **Details**, **Locations**, and **Action Times**. Clicking a chip turns it into a filter so you can focus on a subset of scenes.
 
-- **Activate a filter** — Click any attribute chip on a card. The chip becomes highlighted and only the matching cards stay visible; all other cards are hidden from the canvas.
+- **Activate a filter** — Click any attribute chip on a card. The chip becomes highlighted and only the matching cards stay visible; all other cards are hidden from the board.
 - **Combine filters** — Click additional chips to add more attributes to the filter. A card stays visible if it matches **any** of the active attributes (OR logic), not all of them.
 - **Clear a filter** — Click a highlighted chip again to remove that attribute from the filter. When no chips are active, every card is shown.
 
@@ -353,7 +353,7 @@ Click the item in the list to edit or delete.
 
 ## 11. The Script Editor
 
-The editor is a rich text editor (TinyMCE) that opens in a separate webview window alongside the canvas.
+The editor is a rich text editor (TinyMCE) that opens in a separate webview window alongside the board.
 
 ### Showing and Hiding the Editor
 
@@ -380,7 +380,7 @@ The TinyMCE editor provides standard rich text formatting:
 
 ## 12. Filtering
 
-On the **Notes** canvas, you can filter which cards are visible by clicking the attribute chips shown on each card.
+On the **Notes** board, you can filter which cards are visible by clicking the attribute chips shown on each card.
 
 ### How to Filter
 
@@ -401,14 +401,14 @@ When no chips are active, all cards are visible.
 
 | Action | Control |
 |---|---|
-| Create new scene card | **Shift + Click** on empty canvas |
+| Create new scene card | **Shift + Click** on empty board |
 | Select a card | **Click** on card |
 | Deselect a card | **Click** on selected card |
 | Move a card | **Drag** card body |
 | Resize a card | **Drag** bottom-right corner |
-| Zoom canvas in / out | **Middle mouse wheel** scroll up / down |
-| Pan (move the canvas) | **Hold left mouse button** on empty canvas and drag |
-| Refresh canvas view | **Right-click** on canvas |
+| Zoom board in / out | **Middle mouse wheel** scroll up / down |
+| Pan (move the board) | **Hold left mouse button** on empty board and drag |
+| Refresh board view | **Right-click** on board |
 
 ---
 
