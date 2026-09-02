@@ -22,7 +22,7 @@
 
 ## 1. Overview
 
-**Script Screen** is a screenplay writing and organization tool built around the concept of visual index cards (Notes). Each scene is represented as a draggable card on a board. Cards are linked to characters, locations, story details, and time periods, giving you a bird's-eye view of your script's structure alongside a full-featured text editor for writing scene content.
+**Script Screen** is a screenplay writing and organization tool built around the concept of visual index cards (Notes). Each scene is represented as a card on a board, and its place in the structure is set by the card's own **Index** attribute. Cards are linked to characters, locations, story details, and time periods, giving you a bird's-eye view of your script's structure alongside a full-featured text editor for writing scene content.
 
 **Core concepts:**
 
@@ -164,7 +164,7 @@ Access from the **Notes** panel. This is the main working panel.
 
 ### The Board
 
-The board displays all your scenes as draggable index cards arranged in a grid. You can freely move cards to create a visual structure that mirrors your script's flow.
+The board displays all your scenes as index cards arranged in a grid, four per row, in ascending order of their index. The order of the cards on the board *is* the order of the scenes in the script: to move a scene, change its **Index** in the card form (see "Card Structure") and the board rearranges itself.
 
 ### Navigating the Board
 
@@ -176,7 +176,7 @@ The board displays all your scenes as draggable index cards arranged in a grid. 
 ### Anatomy of a Card
 
 Each card shows:
-- **Index number** — The scene's position in the script (editable).
+- **Index** — The scene's position in the script and therefore the card's place on the board (editable).
 - **Title / Description** — A brief description of the scene.
 - **Attribute chips** — Roles, locations, details, and action times tagged to this scene.
 
@@ -188,7 +188,7 @@ A form opens on the right (or below the board) where you fill in:
 
 | Field | Description |
 |---|---|
-| **Index** | Scene number (positive integer ≥ 1). Determines order in the script. |
+| **Index** | Scene number (positive integer ≥ 1). Determines the order of scenes in the script, the card's position on the board and the scene order in the PDF. Changing the index of an existing card moves it to its new place. |
 | **Title** | Short name for the scene. |
 | **Description** | Brief description shown on the card. |
 | **Roles** | Characters present in this scene (multi-select). |
@@ -211,6 +211,12 @@ Click the **X icon** on a card. The card and its associated scene content file a
 
 - **Move**: Drag a card by its header/body to reposition it on the board.
 - **Resize**: Drag the bottom-right corner handle of a card.
+
+> **This is a temporary change to the view.** Card position and size are not stored
+> in the project: on any board refresh (adding or deleting a card, saving the
+> project, changing the filter, right-clicking the board, reopening the project)
+> cards return to the four-per-row grid in index order. To change the structure for
+> good, edit the card's **Index** rather than its position on the board.
 
 ### Selecting and Deselecting
 
@@ -404,8 +410,9 @@ When no chips are active, all cards are visible.
 | Create new scene card | **Shift + Click** on empty board |
 | Select a card | **Click** on card |
 | Deselect a card | **Click** on selected card |
-| Move a card | **Drag** card body |
-| Resize a card | **Drag** bottom-right corner |
+| Move a card (temporary, until the board refreshes) | **Drag** card body |
+| Resize a card (temporary, until the board refreshes) | **Drag** bottom-right corner |
+| Move a scene for good | Change **Index** in the card form |
 | Zoom board in / out | **Middle mouse wheel** scroll up / down |
 | Pan (move the board) | **Hold left mouse button** on empty board and drag |
 | Refresh board view | **Right-click** on board |

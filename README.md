@@ -3,9 +3,9 @@
 **Write your screenplay on a board of plot cards.**
 
 ScriptScreen is a free, open-source desktop app for writing screenplays. Every scene
-is a plot card on an infinite board: drag it into place, tag it with characters,
-locations, story details and time of action, then click a tag to filter the board
-down to a single thread. Scene text is written in a built-in rich-text editor, and
+is a plot card on an infinite board: its place is set by the card's own index
+attribute; tag it with characters, locations, story details and time of action,
+then click a tag to filter the board down to a single thread. Scene text is written in a built-in rich-text editor, and
 can be dictated — speech recognition runs locally on your machine. Export the
 finished script to PDF.
 
@@ -17,13 +17,16 @@ Linux and Windows. English and Russian interface. Apache 2.0.
 
 ## Features
 
-- **Plot cards on an infinite board** — drag, resize, zoom and pan; Shift+Click to add a scene.
+- **Plot cards on an infinite board** — zoom and pan; Shift+Click to add a scene.
+- **Scene order is a card attribute** — the card's index field sets its place on the
+  board and in the finished script; to move a scene, change the number.
 - **Four tag dimensions** — Roles, Locations, Details and Action Times, attached to any scene.
 - **One-click filtering** — click a tag chip to show only the scenes carrying it; tags combine.
 - **Built-in script editor** — full rich-text editing of scene bodies, saved automatically.
 - **Offline dictation** — transcribe audio files or live microphone input via whisper.cpp, locally.
 - **Front matter** — title page, logline and synopsis kept with the script.
-- **PDF export** — the assembled screenplay, scenes in index order.
+- **PDF export** — the assembled screenplay with title page and table of contents,
+  scenes in index order.
 - **Your files stay yours** — a project is plain JSON plus HTML scene files on your disk;
   changing the name or version keeps a separate version of the script instead of
   overwriting the previous one.
