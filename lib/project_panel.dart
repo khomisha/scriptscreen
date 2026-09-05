@@ -16,6 +16,7 @@ class ProjectPanel {
             createProject,
             openProject,
             PopupMenuItem( onTap: form.edit, child: Text( tr( 'menu_edit_project' ) ) ),
+            importFile,
             exportProject,
             const PopupMenuDivider( ),
             aboutApp,

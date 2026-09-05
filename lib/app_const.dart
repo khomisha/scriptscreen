@@ -21,7 +21,7 @@ const String START_VERSION = "1.0";
 
 // application info ( keep APP_VERSION in sync with pubspec.yaml )
 const String APP_NAME = "ScriptScreen";
-const String APP_VERSION = "1.3.1";
+const String APP_VERSION = "1.4.0";
 const String APP_COPYRIGHT = "© Mikhail Khodonov";
 
 typedef Delete = void Function( String id );

@@ -155,6 +155,23 @@ class AppPresenter {
     }
 
     /**
+     * Returns the current project state, see [restore]. Used to make a bulk
+     * change to the project, the import for one, undoable.
+     */
+    String snapshot( ) {
+        return jsonEncode( _broker.projectData );
+    }
+
+    /**
+     * Restores the project state taken by [snapshot]. The presenters keep the
+     * references to the replaced lists, so dispatch [UPDATE] afterwards.
+     * snapshot the state to restore
+     */
+    void restore( String snapshot ) {
+        _broker.projectData = ProjectData.fromJson( jsonDecode( snapshot ) );
+    }
+
+    /**
      * Returns data of the specified type
      * type the list type [ROLE], [DETAIL], [LOCATION], [NOTE], [SCRIPT], [PROJECT]
      */

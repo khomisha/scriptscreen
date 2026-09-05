@@ -387,7 +387,7 @@ class Note extends StatelessWidget {
                     presenter.startEdit( noteIndex ); 
                 },
                 icon: const Icon( Icons.edit_note ),
-                tooltip: tr( 'tooltip_edit_note' )
+                tooltip: tr( 'tooltip_edit_card' )
             );
         var deleteBtn = Focus(
             descendantsAreFocusable: false,
@@ -397,7 +397,7 @@ class Note extends StatelessWidget {
                     presenter.delete( componentData.data.customData.index - 1 ); 
                 },
                 icon: const Icon( Icons.highlight_off ),
-                tooltip: tr( 'tooltip_delete_note' )
+                tooltip: tr( 'tooltip_delete_card' )
             )
        );
         var topRow = Row(

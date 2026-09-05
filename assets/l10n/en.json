@@ -23,7 +23,7 @@
 
     "panel_project": "Project",
     "panel_script": "Script Summary",
-    "panel_notes": "Notes",
+    "panel_cards": "Cards",
     "panel_roles": "Roles",
     "panel_locations": "Locations",
     "panel_details": "Details",
@@ -31,6 +31,7 @@
 
     "menu_new_project": "New Project",
     "menu_open_project": "Open Project...",
+    "menu_import_file": "Import File...",
     "menu_export_project": "Export Project",
     "menu_about": "About",
     "menu_exit": "Exit",
@@ -54,10 +55,24 @@
     "picker_project_filter": "Project",
     "picker_audio_title": "Select audio file",
     "picker_audio_filter": "Audio",
+    "picker_import_title": "Select file to import",
+    "picker_import_filter": "Marked up text",
+
+    "import_done": "Import complete. Cards: @cards, roles: @roles, locations: @locations, details: @details, action times: @times",
+    "import_empty": "The file has no marked up text, nothing to import",
+    "import_failed": "Import failed, the project is unchanged.",
+
+    "err_import_line": "line @line",
+    "err_import_nested_text": "nested <text> tag, the previous fragment is not closed",
+    "err_import_unclosed_text": "unclosed <text> tag",
+    "err_import_unexpected_close": "closing tag </@tag> without an opening one",
+    "err_import_unclosed_tag": "unclosed <@tag> tag",
+    "err_import_no_title": "the fragment has no <title>",
+    "err_import_empty_value": "empty <@tag> value",
 
     "support_me": "Support Me",
     "support_copied": "Address copied",
 
-    "tooltip_edit_note": "edit note",
-    "tooltip_delete_note": "delete note"
+    "tooltip_edit_card": "edit card",
+    "tooltip_delete_card": "delete card"
 }

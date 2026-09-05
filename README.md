@@ -25,6 +25,8 @@ Linux and Windows. English and Russian interface. Apache 2.0.
 - **Built-in script editor** — full rich-text editing of scene bodies, saved automatically.
 - **Offline dictation** — transcribe audio files or live microphone input via whisper.cpp, locally.
 - **Front matter** — title page, logline and synopsis kept with the script.
+- **Text import** — bring in a script written elsewhere: mark the flat text with a
+  handful of tags and it becomes cards, roles, locations, details and action times.
 - **PDF export** — the assembled screenplay with title page and table of contents,
   scenes in index order.
 - **Your files stay yours** — a project is plain JSON plus HTML scene files on your disk;
@@ -71,7 +73,7 @@ inside every archive as `INSTALL.md` / `INSTALL.ru.md`.
 ## Getting started
 
 1. Open the app and create a project (**Project** panel ▸ menu ▸ *New Project*).
-2. Go to the **Notes** panel and **Shift+Click** the board to add your first plot card.
+2. Go to the **Cards** panel and **Shift+Click** the board to add your first plot card.
 3. Add characters, locations, details and action times in their own panels, then tag
    the card with them.
 4. Select the card and write the scene in the editor — or dictate it.

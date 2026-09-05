@@ -11,7 +11,7 @@ class NotePanel {
 
     NotePanel( Widget widget ) {
         panel = Panel(
-            title: tr( 'panel_notes' ),
+            title: tr( 'panel_cards' ),
             childWidget: createProvider< NotePresenter >(
                 PresenterRegistry( ).getPresenter( NOTE, ( ) => NotePresenter( ) ),
                 widget

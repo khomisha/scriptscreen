@@ -1,6 +1,6 @@
 {
     "name": "scriptscreen",
-    "version": "1.3.1",
+    "version": "1.4.0",
     "description": "ScriptScreen editor with mind cards (Electron shell for the Flutter web build).",
     "main": "main.js",
     "scripts": {

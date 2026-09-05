@@ -7,7 +7,7 @@
 3. [Application Layout](#3-application-layout)
 4. [Project Management](#4-project-management)
 5. [Script Summary](#5-script-summary)
-6. [Notes (Scene Cards)](#6-notes-scene-cards)
+6. [Cards (Scenes)](#6-cards-scenes)
 7. [Roles (Characters)](#7-roles-characters)
 8. [Locations](#8-locations)
 9. [Details](#9-details)
@@ -22,7 +22,7 @@
 
 ## 1. Overview
 
-**Script Screen** is a screenplay writing and organization tool built around the concept of visual index cards (Notes). Each scene is represented as a card on a board, and its place in the structure is set by the card's own **Index** attribute. Cards are linked to characters, locations, story details, and time periods, giving you a bird's-eye view of your script's structure alongside a full-featured text editor for writing scene content.
+**Script Screen** is a screenplay writing and organization tool built around the concept of visual plot cards. Each scene is represented as a card on a board, and its place in the structure is set by the card's own **Index** attribute. Cards are linked to characters, locations, story details, and time periods, giving you a bird's-eye view of your script's structure alongside a full-featured text editor for writing scene content.
 
 **Core concepts:**
 
@@ -30,7 +30,7 @@
 |---|---|
 | **Project** | The top-level container holding all script data (name, version, authors) |
 | **Script** | The screenplay itself — title page, logline, synopsis, and scene body text |
-| **Note (Scene Card)** | A single scene: has an index number, title, description, and tagged attributes |
+| **Card (scene)** | A single scene: has an index number, title, description, and tagged attributes |
 | **Role** | A character or person who appears in the script |
 | **Location** | A place where scenes take place |
 | **Detail** | A story element, motif, or prop that connects scenes |
@@ -77,7 +77,7 @@ included inside each archive as `INSTALL.md`, with a Russian version in
 
 1. In the **Project** panel menu, choose **Open Project**.
 2. Browse to and select the project's `.json` file.
-3. The project loads, restoring all notes, roles, locations, details, and action times.
+3. The project loads, restoring all cards, roles, locations, details, and action times.
 
 > **Tip:** The app remembers the last opened project and reloads it automatically on the next launch.
 
@@ -95,7 +95,7 @@ The bottom navigation bar gives access to seven panels:
 |---|---|---|
 | Briefcase | **Project** | Project metadata and file operations |
 | Summarize | **Script** | Title page, logline, and synopsis |
-| Dashboard | **Notes** | Visual board of scene cards |
+| Dashboard | **Cards** | Visual board of plot cards |
 | Theater mask | **Roles** | List of characters |
 | Door/Room | **Locations** | List of locations |
 | Bookmark | **Details** | List of story details |
@@ -127,11 +127,83 @@ Access from the **Project** panel.
   project directory are copied into it. The original project is left untouched,
   so each name/version is preserved as a separate version of the script. Changing only the
   **language or authors** updates the existing project in place.
+- **Import File…** — Load a marked up text file into the project, see
+  "[Importing Marked Up Text](#importing-marked-up-text)".
 - **Export Project** — Export the script to PDF format.
 - **About** — Show the application version and third-party license information.
 - **Exit** — Save and close the application.
 
 > **About** and **Exit** are available from the menu of every panel.
+
+### Importing Marked Up Text
+
+**Import File…** brings a script prepared outside the application into the
+current project. Export the text from any editor to a plain text file (`.txt`),
+mark it up with the tags below and pick that file in the dialog.
+
+The import creates new cards along with the roles, locations, details and action
+times the project is missing; the text of a fragment goes to the content file of
+its card. The new cards are appended after the existing ones, nothing is
+replaced. On success the project is saved.
+
+#### Markup Tags
+
+| Tag | Meaning |
+|---|---|
+| `<text> </text>` | The fragment bounds: one fragment makes one card. The other tags are meaningful inside a fragment only, and text outside `<text>` is not imported. |
+| `<title> </title>` | The card title. One fragment, one title: the first one wins, the rest are ignored. The title is required. |
+| `<desc> </desc>` | The card description. The first one wins, the rest are ignored. |
+| `<role> </role>` | A role name. Any number per fragment; the name is the identifier, so a repeated name counts once. |
+| `<loc> </loc>` | A location name. See `<role>`. |
+| `<det> </det>` | A detail name. See `<role>`. |
+| `<time> </time>` | An action time name. See `<role>`. |
+
+The title and the description are kept out of the card content: they are already
+shown on the card and, when exporting to PDF, in the scene header. The names
+marked with `<role>`, `<loc>`, `<det>` and `<time>` stay where they are written,
+so the sentences are imported as they are.
+
+> A name is taken exactly as it stands between the tags, so mark up the form you
+> want to see in the list: "in the <loc>kitchens</loc>" adds the location
+> "kitchens", not "kitchen", and the same name written differently becomes
+> another location.
+
+#### Example
+
+```text
+Anything outside the text tag is not imported:
+notes, production marks, separators.
+
+<text>
+<title>1. Kitchen. Morning</title>
+<desc>Anna finds the letter</desc>
+<loc>Kitchen</loc>. <time>Morning</time>.
+
+<role>ANNA</role> enters and finds a <det>letter</det> on the table.
+</text>
+```
+
+This fragment makes a card titled "1. Kitchen. Morning", described as "Anna
+finds the letter", with the location "Kitchen", the action time "Morning", the
+role "ANNA", the detail "letter" and the content:
+
+```text
+Kitchen. Morning.
+
+ANNA enters and finds a letter on the table.
+```
+
+#### The Import Is All or Nothing
+
+The file is parsed in full before the project is touched. On any markup error
+the project is left exactly as it was before the import and the message points
+at the line at fault. These count as errors:
+
+- an unclosed or nested `<text>` tag;
+- a closing tag without an opening one;
+- a tag left unclosed inside a fragment;
+- a fragment without a `<title>`;
+- an empty `<title>`, `<role>`, `<loc>`, `<det>` or `<time>` value.
 
 ---
 
@@ -158,9 +230,9 @@ This panel holds the screenplay's front matter — information that appears befo
 
 ---
 
-## 6. Notes (Scene Cards)
+## 6. Cards (Scenes)
 
-Access from the **Notes** panel. This is the main working panel.
+Access from the **Cards** panel. This is the main working panel.
 
 ### The Board
 
@@ -180,7 +252,7 @@ Each card shows:
 - **Title / Description** — A brief description of the scene.
 - **Attribute chips** — Roles, locations, details, and action times tagged to this scene.
 
-### Creating a Note
+### Creating a Card
 
 **Shift + Click** anywhere on the empty board to create a new scene card at that position.
 
@@ -196,14 +268,14 @@ A form opens on the right (or below the board) where you fill in:
 | **Details** | Story elements or motifs in this scene (multi-select). |
 | **Action Times** | Time period of the scene (multi-select). |
 
-### Editing a Note
+### Editing a Card
 
 - Click the **pencil icon** on a card to open its edit form, **or**
 - Click the card to select it — the form appears automatically.
 
 Make changes in the form. Changes are saved when you move to another card or deselect.
 
-### Deleting a Note
+### Deleting a Card
 
 Click the **X icon** on a card. The card and its associated scene content file are permanently removed.
 
@@ -363,7 +435,7 @@ The editor is a rich text editor (TinyMCE) that opens in a separate webview wind
 
 ### Showing and Hiding the Editor
 
-In the **Notes** panel menu, choose **Show Editor** or **Hide Editor** to toggle the editor window.
+In the **Cards** panel menu, choose **Show Editor** or **Hide Editor** to toggle the editor window.
 
 ### How the Editor Works
 
@@ -386,7 +458,7 @@ The TinyMCE editor provides standard rich text formatting:
 
 ## 12. Filtering
 
-On the **Notes** board, you can filter which cards are visible by clicking the attribute chips shown on each card.
+On the **Cards** board, you can filter which cards are visible by clicking the attribute chips shown on each card.
 
 ### How to Filter
 
@@ -423,7 +495,7 @@ When no chips are active, all cards are visible.
 
 ### File Format
 
-Projects are stored as **JSON files** (`.json`). Each project file contains all metadata: notes, roles, locations, details, action times, and script summary.
+Projects are stored as **JSON files** (`.json`). Each project file contains all metadata: cards, roles, locations, details, action times, and script summary.
 
 ### Scene Content
 
@@ -440,7 +512,7 @@ When you change a project's **name or version** and save, the application create
 | Field | Rule |
 |---|---|
 | Project / Script Name | Alphanumeric, `_`, `-`, `.` only |
-| Note Index | Positive integer ≥ 1 |
+| Card Index | Positive integer ≥ 1 |
 | Name fields (Role, Location, etc.) | Cannot be empty |
 | Description fields | Optional |
 

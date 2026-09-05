@@ -23,7 +23,7 @@
 
     "panel_project": "Проект",
     "panel_script": "О сценарии",
-    "panel_notes": "Заметки",
+    "panel_cards": "Карточки",
     "panel_roles": "Роли",
     "panel_locations": "Локации",
     "panel_details": "Детали",
@@ -31,6 +31,7 @@
 
     "menu_new_project": "Новый проект",
     "menu_open_project": "Открыть проект...",
+    "menu_import_file": "Импорт файла...",
     "menu_export_project": "Экспорт проекта",
     "menu_about": "О программе",
     "menu_exit": "Выход",
@@ -54,10 +55,24 @@
     "picker_project_filter": "Проект",
     "picker_audio_title": "Выберите аудиофайл",
     "picker_audio_filter": "Аудио",
+    "picker_import_title": "Выберите файл для импорта",
+    "picker_import_filter": "Размеченный текст",
+
+    "import_done": "Импорт завершён. Карточек: @cards, ролей: @roles, локаций: @locations, деталей: @details, времён действия: @times",
+    "import_empty": "В файле нет размеченного текста, импортировать нечего",
+    "import_failed": "Импорт не выполнен, проект не изменён.",
+
+    "err_import_line": "строка @line",
+    "err_import_nested_text": "вложенный тег <text>, предыдущий фрагмент не закрыт",
+    "err_import_unclosed_text": "не закрыт тег <text>",
+    "err_import_unexpected_close": "закрывающий тег </@tag> без открывающего",
+    "err_import_unclosed_tag": "не закрыт тег <@tag>",
+    "err_import_no_title": "во фрагменте нет заголовка <title>",
+    "err_import_empty_value": "пустое значение тега <@tag>",
 
     "support_me": "Поддержать автора",
     "support_copied": "Адрес скопирован",
 
-    "tooltip_edit_note": "редактировать заметку",
-    "tooltip_delete_note": "удалить заметку"
+    "tooltip_edit_card": "редактировать карточку",
+    "tooltip_delete_card": "удалить карточку"
 }

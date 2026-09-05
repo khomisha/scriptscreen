@@ -8,6 +8,7 @@ import 'package:base/base.dart';
 import 'package:path/path.dart';
 import 'editor.dart';
 import 'app_const.dart';
+import 'import.dart';
 import 'script_data.dart';
 import 'service_web.dart' if( dart.library.io ) 'service_io.dart';
 
@@ -39,6 +40,7 @@ Future< void > loadNotice( ) async {
 
 PopupMenuEntry get createProject => PopupMenuItem( onTap: create, child: Text( tr( 'menu_new_project' ) ) );
 PopupMenuEntry get openProject => PopupMenuItem( onTap: open, child: Text( tr( 'menu_open_project' ) ) );
+PopupMenuEntry get importFile => PopupMenuItem( onTap: _import, child: Text( tr( 'menu_import_file' ) ) );
 PopupMenuEntry get exportProject => PopupMenuItem( onTap: export, child: Text( tr( 'menu_export_project' ) ) );
 PopupMenuEntry get aboutApp => PopupMenuItem( onTap: about, child: Text( tr( 'menu_about' ) ) );
 PopupMenuEntry get exitApp => PopupMenuItem( onTap: exit, child: Text( tr( 'menu_exit' ) ) );
@@ -67,6 +69,20 @@ void open( ) async {
     );
     if( path != null ) { 
         AppPresenter( ).load( path, true );
+    }
+}
+
+/**
+ * Imports the marked up text file into the current project, see [importText]
+ */
+void _import( ) async {
+    final path = await GenericFile.pickFile(
+        title: tr( 'picker_import_title' ),
+        filterName: tr( 'picker_import_filter' ),
+        extensions: [ 'txt' ],
+    );
+    if( path != null ) {
+        await importText( path );
     }
 }
 
