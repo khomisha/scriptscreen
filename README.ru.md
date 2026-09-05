@@ -36,21 +36,21 @@ Linux и Windows. Интерфейс на русском и английском
 
 ## Установка
 
-Скачайте архив для своей платформы из
-[релиза v1.3.1](https://github.com/khomisha/scriptscreen/releases/tag/v1.3.1),
-распакуйте и запустите установочный скрипт. Всё устанавливается в вашу
-пользовательскую папку — права администратора не требуются.
+Откройте
+[страницу релизов](https://github.com/khomisha/scriptscreen/releases/latest),
+скачайте архив для своей платформы, распакуйте и запустите установочный скрипт.
+Всё устанавливается в вашу пользовательскую папку — права администратора не
+требуются. В именах файлов ниже `<версия>` — версия выбранного релиза.
 
-| Платформа | Загрузка | Команда установки |
+| Архив | Что это | Команда установки |
 |---|---|---|
-| Linux | [`scriptscreen-1.3.1-linux.tar.gz`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-linux.tar.gz) | `./install.sh` |
-| Linux, GPU | [`scriptscreen-1.3.1-linux-gpu-vulkan.tar.gz`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-linux-gpu-vulkan.tar.gz) | `./install.sh` |
-| Windows | [`scriptscreen-1.3.1-windows.zip`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-windows.zip) | правый клик по `install.ps1` ▸ **Выполнить с помощью PowerShell** |
-| Windows, GPU | [`scriptscreen-1.3.1-windows-gpu-vulkan.zip`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-windows-gpu-vulkan.zip) | правый клик по `install.ps1` ▸ **Выполнить с помощью PowerShell** |
+| `scriptscreen-<версия>-linux.tar.gz` | Linux, x86-64. Речь распознаётся на процессоре — работает на любой машине, видеокарта не нужна. | `./install.sh` |
+| `scriptscreen-<версия>-linux-gpu-vulkan.tar.gz` | Та же сборка для Linux, но речевые модели считаются на видеокарте с поддержкой Vulkan: диктовка, особенно живая, идёт заметно быстрее. | `./install.sh` |
+| `scriptscreen-<версия>-windows.zip` | Windows 10/11, x86-64. Речь распознаётся на процессоре — работает на любой машине, видеокарта не нужна. | правый клик по `install.ps1` ▸ **Выполнить с помощью PowerShell** |
+| `scriptscreen-<версия>-windows-gpu-vulkan.zip` | Та же сборка для Windows, речевые модели считаются на видеокарте с поддержкой Vulkan — диктовка быстрее. | правый клик по `install.ps1` ▸ **Выполнить с помощью PowerShell** |
 
-**Какой архив выбрать?** Обычный распознаёт речь на процессоре и работает везде.
-Архив `gpu-vulkan` считает речевые модели на видеокарте с поддержкой Vulkan —
-диктовка, особенно живая, идёт заметно быстрее. Если не уверены, берите обычный.
+Если не уверены, берите обычный (CPU) архив: он работает везде, а GPU-версия
+меняет только скорость диктовки, но не возможности программы.
 
 Установщик также разворачивает компоненты для диктовки: речевые модели whisper.cpp
 и ffmpeg — в каталог `~/whisper.cpp`.

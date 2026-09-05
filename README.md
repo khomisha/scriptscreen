@@ -34,22 +34,23 @@ Linux and Windows. English and Russian interface. Apache 2.0.
 
 ## Installation
 
-Download the archive for your platform from the
-[v1.3.1 release](https://github.com/khomisha/scriptscreen/releases/tag/v1.3.1),
-unpack it and run the install script. Everything is installed under your user
-account — no administrator rights are required.
+Open the
+[releases page](https://github.com/khomisha/scriptscreen/releases/latest),
+download the archive for your platform, unpack it and run the install script.
+Everything is installed under your user account — no administrator rights are
+required. In the file names below `<version>` is the version of the release you
+picked.
 
-| Platform | Download | Install command |
+| Archive | What it is | Install command |
 |---|---|---|
-| Linux | [`scriptscreen-1.3.1-linux.tar.gz`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-linux.tar.gz) | `./install.sh` |
-| Linux, GPU | [`scriptscreen-1.3.1-linux-gpu-vulkan.tar.gz`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-linux-gpu-vulkan.tar.gz) | `./install.sh` |
-| Windows | [`scriptscreen-1.3.1-windows.zip`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-windows.zip) | right-click `install.ps1` ▸ **Run with PowerShell** |
-| Windows, GPU | [`scriptscreen-1.3.1-windows-gpu-vulkan.zip`](https://github.com/khomisha/scriptscreen/releases/download/v1.3.1/scriptscreen-1.3.1-windows-gpu-vulkan.zip) | right-click `install.ps1` ▸ **Run with PowerShell** |
+| `scriptscreen-<version>-linux.tar.gz` | Linux, x86-64. Speech is transcribed on the CPU — works on any machine, no video card needed. | `./install.sh` |
+| `scriptscreen-<version>-linux-gpu-vulkan.tar.gz` | The same Linux build, but the speech models run on a Vulkan-capable GPU: dictation, live transcription especially, is noticeably faster. | `./install.sh` |
+| `scriptscreen-<version>-windows.zip` | Windows 10/11, x86-64. Speech is transcribed on the CPU — works on any machine, no video card needed. | right-click `install.ps1` ▸ **Run with PowerShell** |
+| `scriptscreen-<version>-windows-gpu-vulkan.zip` | The same Windows build with speech models running on a Vulkan-capable GPU — faster dictation. | right-click `install.ps1` ▸ **Run with PowerShell** |
 
-**Which build?** The plain archive transcribes speech on the CPU and works
-everywhere. The `gpu-vulkan` archive runs the speech models on a Vulkan-capable
-GPU, which makes dictation — live transcription especially — noticeably faster.
-If you are unsure, take the plain one.
+If you are unsure which one to take, take the plain (CPU) archive: it works
+everywhere, and the GPU one only changes how fast dictation is, not what the app
+can do.
 
 The installer also sets up the components used for dictation: whisper.cpp speech
 models and ffmpeg, placed under `~/whisper.cpp`.
