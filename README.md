@@ -26,9 +26,14 @@ Linux and Windows. English and Russian interface. Apache 2.0.
 - **Offline dictation** — transcribe audio files or live microphone input via whisper.cpp, locally.
 - **Front matter** — title page, logline and synopsis kept with the script.
 - **Text import** — bring in a script written elsewhere: mark the flat text with a
-  handful of tags and it becomes cards, roles, locations, details and action times.
+  handful of tags and it becomes cards, roles, locations, details and action
+  times, descriptions included.
+- **Object references in the text** — the name of a role, location, detail or
+  action time attached to a card marks itself in the scene text: underlined with
+  a dashed line, showing the description of the object under the cursor.
 - **PDF export** — the assembled screenplay with title page and table of contents,
-  scenes in index order.
+  scenes in index order; the description of an object is written into the text at
+  its first appearance.
 - **Your files stay yours** — a project is plain JSON plus HTML scene files on your disk;
   changing the name or version keeps a separate version of the script instead of
   overwriting the previous one.

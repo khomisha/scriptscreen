@@ -5,6 +5,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="./tinymce/js/tinymce/tinymce.min.js"></script>
     <script src="./tinymce/js/tinymce/langs/ru.js"></script>
+    <script src="./editor_refs.js"></script> <!-- object references of the card text -->
     <script>
       // Interface language is passed by the app as ?lang=<code> (en, ru, ...).
       var editorLang = new URLSearchParams( window.location.search ).get( 'lang' ) || 'en';
@@ -23,7 +24,14 @@
         init_instance_callback: function(editor) {
           editor.execCommand('mceFullScreen');
         },
-        content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
+        // the object references of the card text, see editor_refs.js
+        extended_valid_elements: 'span[id|class|style|title|dir|lang|data-type|data-name]',
+        setup: function(editor) {
+          // underline the references and show the description of the object on hover
+          window.initRefs( editor );
+        },
+        content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }'
+          + ' span.ref { border-bottom: 1px dashed #808080; cursor: help; }',
         promotion: false,
         menubar: true,
         //forced_root_block : 'div',

@@ -9,12 +9,12 @@ import 'package:path/path.dart';
  * Exports project content to the pdf file
  * preamble the title page, logline, synopsis
  * headers the chapter headers
- * htmlFiles the content
+ * bodies the chapter content, the card text with the references resolved
  * pdfPath the pdf file path
  * titles the chapter titles, in order
  * tocTitle the localized table of contents heading
  */
-void export2pdf( String preamble, List< String > headers,  List< String > htmlFiles, String pdfPath, List< String > titles, String tocTitle ) async {
+Future< void > export2pdf( String preamble, List< String > headers,  List< String > bodies, String pdfPath, List< String > titles, String tocTitle ) async {
     final buffer = StringBuffer( );
 
     if( preamble.isNotEmpty ) {
@@ -24,15 +24,14 @@ void export2pdf( String preamble, List< String > headers,  List< String > htmlFi
     buffer.writeln( _buildTableOfContents( titles, tocTitle ) );
 
     var index = 0;
-    for( var fileName in htmlFiles ) {
-        var file = GenericFile( fileName );
+    for( var body in bodies ) {
         buffer.writeln( '<a id="chapter-$index"></a>' );
         buffer.writeln( headers[ index ] );
-        buffer.writeln( file.readString( ) );
+        buffer.writeln( body );
         buffer.writeln( '<hr>' );
         index++;
     }
-    FlutterHtmlToPdf.convertFromHtmlContent( buffer.toString( ), dirname( pdfPath ), basename( pdfPath ) );
+    await FlutterHtmlToPdf.convertFromHtmlContent( buffer.toString( ), dirname( pdfPath ), basename( pdfPath ) );
 }
 
 /**

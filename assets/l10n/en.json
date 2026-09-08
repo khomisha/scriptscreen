@@ -58,7 +58,7 @@
     "picker_import_title": "Select file to import",
     "picker_import_filter": "Marked up text",
 
-    "import_done": "Import complete. Cards: @cards, roles: @roles, locations: @locations, details: @details, action times: @times",
+    "import_done": "Import complete. Cards: @cards, roles: @roles, locations: @locations, details: @details, action times: @times, descriptions: @descs",
     "import_empty": "The file has no marked up text, nothing to import",
     "import_failed": "Import failed, the project is unchanged.",
 
@@ -69,6 +69,7 @@
     "err_import_unclosed_tag": "unclosed <@tag> tag",
     "err_import_no_title": "the fragment has no <title>",
     "err_import_empty_value": "empty <@tag> value",
+    "err_import_desc_outside": "the <@tag> tag outside the tag of the object it describes",
 
     "support_me": "Support Me",
     "support_copied": "Address copied",

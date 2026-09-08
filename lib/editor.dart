@@ -27,6 +27,13 @@ abstract class Editor {
     Future< void > clear( );
 
     /**
+     * Puts the object descriptions the editor shows on the references of the
+     * card text to the editor window, see [refsAsJson]
+     * json the descriptions as json
+     */
+    Future< void > setRefs( String json );
+
+    /**
      * Set visible editor browser window
      * visible the browser window show flag
      * returns the resulting visibility of the browser window

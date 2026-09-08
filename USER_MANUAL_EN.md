@@ -129,7 +129,10 @@ Access from the **Project** panel.
   **language or authors** updates the existing project in place.
 - **Import File…** — Load a marked up text file into the project, see
   "[Importing Marked Up Text](#importing-marked-up-text)".
-- **Export Project** — Export the script to PDF format.
+- **Export Project** — Export the script to PDF format. The descriptions of the
+  roles, locations, details and action times are written into the text at the
+  first appearance of the object, see "[Object References in the
+  Text](#object-references-in-the-text)".
 - **About** — Show the application version and third-party license information.
 - **Exit** — Save and close the application.
 
@@ -157,11 +160,33 @@ replaced. On success the project is saved.
 | `<loc> </loc>` | A location name. See `<role>`. |
 | `<det> </det>` | A detail name. See `<role>`. |
 | `<time> </time>` | An action time name. See `<role>`. |
+| `<role_desc> </role_desc>` | The description of a role. Written **inside** the `<role>` tag; outside it the tag means nothing and is reported as a markup error. One description per object: the first one wins, the rest are ignored. |
+| `<loc_desc> </loc_desc>` | The description of a location, inside the `<loc>` tag. See `<role_desc>`. |
+| `<det_desc> </det_desc>` | The description of a detail, inside the `<det>` tag. See `<role_desc>`. |
+| `<time_desc> </time_desc>` | The description of an action time, inside the `<time>` tag. See `<role_desc>`. |
 
 The title and the description are kept out of the card content: they are already
 shown on the card and, when exporting to PDF, in the scene header. The names
 marked with `<role>`, `<loc>`, `<det>` and `<time>` stay where they are written,
-so the sentences are imported as they are.
+so the sentences are imported as they are, and become references to the project
+objects, see "[Object References in the Text](#object-references-in-the-text)".
+
+The description of an object, on the contrary, is taken out of the card text: it
+belongs to the object and goes to its **Description** field:
+
+```text
+<role>Kirill<role_desc>33, a failed businessman dressed in crumpled clothes</role_desc></role> enters the room and sits down at the table.
+```
+
+makes the role "Kirill" described as "33, a failed businessman dressed in
+crumpled clothes" and the card text "Kirill enters the room and sits down at the
+table.". Exporting to PDF writes the description back into the text at the first
+appearance of the object, see "[Object References in the
+Text](#object-references-in-the-text)".
+
+> When the object is already in the project and its description is **filled in**,
+> the import keeps it and the description written in the text is ignored. An
+> empty description is filled in.
 
 > A name is taken exactly as it stands between the tags, so mark up the form you
 > want to see in the list: "in the <loc>kitchens</loc>" adds the location
@@ -177,15 +202,17 @@ notes, production marks, separators.
 <text>
 <title>1. Kitchen. Morning</title>
 <desc>Anna finds the letter</desc>
-<loc>Kitchen</loc>. <time>Morning</time>.
+<loc>Kitchen<loc_desc>cramped, the window looks into the yard</loc_desc></loc>. <time>Morning</time>.
 
-<role>ANNA</role> enters and finds a <det>letter</det> on the table.
+<role>ANNA<role_desc>28, the daughter of the house owner</role_desc></role> enters and finds a <det>letter</det> on the table.
 </text>
 ```
 
 This fragment makes a card titled "1. Kitchen. Morning", described as "Anna
-finds the letter", with the location "Kitchen", the action time "Morning", the
-role "ANNA", the detail "letter" and the content:
+finds the letter", with the location "Kitchen" (described as "cramped, the
+window looks into the yard"), the action time "Morning", the role "ANNA"
+(described as "28, the daughter of the house owner"), the detail "letter" and
+the content:
 
 ```text
 Kitchen. Morning.
@@ -203,7 +230,9 @@ at the line at fault. These count as errors:
 - a closing tag without an opening one;
 - a tag left unclosed inside a fragment;
 - a fragment without a `<title>`;
-- an empty `<title>`, `<role>`, `<loc>`, `<det>` or `<time>` value.
+- an empty `<title>`, `<role>`, `<loc>`, `<det>` or `<time>` value;
+- a description tag (`<role_desc>` and the rest) outside the tag of the object
+  it describes.
 
 ---
 
@@ -445,6 +474,53 @@ In the **Cards** panel menu, choose **Show Editor** or **Hide Editor** to toggle
 - When you **deselect** a card, content is saved and the editor clears.
 - When you **delete** a card, its content file is deleted permanently.
 
+### Object References in the Text
+
+Roles, locations, details and action times may be marked in the scene text
+itself. Such a reference is underlined with a dashed line; point at it and the
+description of the object shows up. An object without a description shows
+nothing.
+
+The application keeps the marks itself, they follow what the card refers to:
+
+- as soon as an object is attached to a card, its name met in the text of that
+  card becomes a reference;
+- when the object is taken from the card, the references to it are dropped from
+  the text of that card; when the object is deleted from its list, from the text
+  of every card;
+- when the object is renamed, the chips and the references to it in every card
+  take the new name;
+- the text is synced with the attached objects when the card is opened in the
+  editor and when the project is exported, so a name typed after the object was
+  attached becomes a reference as well;
+- the import writes the references right away from the `<role>`, `<loc>`,
+  `<det>` and `<time>` tags, inflected forms included, see "[Importing Marked Up
+  Text](#importing-marked-up-text)".
+
+A name is matched as a whole word, ignoring the case, and the longer of two
+matching names wins. An inflected form is not matched this way — the import is
+the place for those, and such a reference is kept as long as the object stays
+attached to the card.
+
+A reference holds the type and the name of the object only, the description
+itself is taken from the project, so an edited description shows up at once. The
+text you wrote is left as it is.
+
+Renaming an object reaches the cards it is attached to: the chip of the card and
+the references in its text start pointing at the new name. The words you wrote
+are left as they are — a reference keeps the word it is written over.
+
+Exporting to PDF drops the markup and writes the description of the object into
+the text at its first appearance:
+
+```text
+...Kirill (33, a failed businessman dressed in crumpled clothes) enters the
+room and sits down at the table...
+```
+
+At the next appearances of the same object, in every other scene as well, the
+description is not repeated.
+
 ### Formatting
 
 The TinyMCE editor provides standard rich text formatting:
@@ -500,6 +576,11 @@ Projects are stored as **JSON files** (`.json`). Each project file contains all 
 ### Scene Content
 
 The body text of each scene is stored as a separate **HTML file** in the project directory. These files are created and managed automatically.
+
+A reference to an object is kept in that file as `<span class="ref"
+data-type="role" data-name="Kirill">Kirill</span>`: the type and the name of the
+object only, the description is taken from the project file, see "[Object
+References in the Text](#object-references-in-the-text)".
 
 ### Project Directory
 

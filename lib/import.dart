@@ -4,6 +4,7 @@
 import 'app_const.dart';
 import 'app_presenter.dart';
 import 'package:base/base.dart';
+import 'refs.dart';
 import 'script_data.dart';
 
 /**
@@ -20,11 +21,19 @@ import 'script_data.dart';
  * <loc>     a location name, see <role>
  * <det>     a detail name, see <role>
  * <time>    an action time name, see <role>
+ * <role_desc>, <loc_desc>, <det_desc>, <time_desc>
+ *           the description of the object, written within the tag of that
+ *           object and nowhere else:
+ *           <role>Кирилл<role_desc>предприниматель-неудачник</role_desc></role>
  *
  * Roles, locations, details and action times missing from the project are
  * created, the remaining fragment text becomes the card content file. The
- * import is transactional: on any error the project stays as it was before,
- * see [importText].
+ * tagged names stay in place in that text and become the references the
+ * editor and the export work with, see [refSpan]. A description is taken out
+ * of the card text, it belongs to the object; the export writes it back at the
+ * first appearance of the object, see [resolveRefs]. The import is
+ * transactional: on any error the project stays as it was before, see
+ * [importText].
  */
 
 const String TAG_TEXT = "text";
@@ -35,6 +44,11 @@ const String TAG_LOC = "loc";
 const String TAG_DET = "det";
 const String TAG_TIME = "time";
 
+const String TAG_ROLE_DESC = "role_desc";
+const String TAG_LOC_DESC = "loc_desc";
+const String TAG_DET_DESC = "det_desc";
+const String TAG_TIME_DESC = "time_desc";
+
 // markup tag to application data type, see app_const
 const Map< String, String > _TYPES = < String, String > {
     TAG_ROLE: ROLE,
@@ -43,8 +57,20 @@ const Map< String, String > _TYPES = < String, String > {
     TAG_TIME: ACTION_TIME
 };
 
+// object markup tag to the tag of its description, see [parse]
+const Map< String, String > _DESC_TAGS = < String, String > {
+    TAG_ROLE: TAG_ROLE_DESC,
+    TAG_LOC: TAG_LOC_DESC,
+    TAG_DET: TAG_DET_DESC,
+    TAG_TIME: TAG_TIME_DESC
+};
+
+// the description tags are matched before the object ones, so <role_desc> is
+// never read as <role> followed by '_desc>'
 final RegExp _TAG = RegExp(
-    '<(/?)($TAG_TEXT|$TAG_TITLE|$TAG_DESC|$TAG_ROLE|$TAG_LOC|$TAG_DET|$TAG_TIME)>',
+    '<(/?)($TAG_TEXT|$TAG_TITLE|$TAG_DESC'
+    '|$TAG_ROLE_DESC|$TAG_LOC_DESC|$TAG_DET_DESC|$TAG_TIME_DESC'
+    '|$TAG_ROLE|$TAG_LOC|$TAG_DET|$TAG_TIME)>',
     caseSensitive: false
 );
 
@@ -74,6 +100,13 @@ class Fragment {
         DETAIL: < String > [],
         ACTION_TIME: < String > []
     };
+    // data type to the descriptions met in the fragment, by object name
+    final Map< String, Map< String, String > > descriptions = < String, Map< String, String > > {
+        ROLE: < String, String > {},
+        LOCATION: < String, String > {},
+        DETAIL: < String, String > {},
+        ACTION_TIME: < String, String > {}
+    };
     final StringBuffer body = StringBuffer( );
 
     Fragment( this.line );
@@ -88,6 +121,7 @@ class ImportStat {
     int locations = 0;
     int details = 0;
     int actionTimes = 0;
+    int descriptions = 0;
 }
 
 /**
@@ -144,6 +178,10 @@ List< Fragment > parse( String content ) {
     String? openTag;            // the inner tag being read, null when none is open
     var openLine = 0;           // the line the inner tag is opened at
     var buffer = StringBuffer( );   // the inner tag content
+    String? openDesc;           // the description tag being read within the object tag
+    var openDescLine = 0;       // the line the description tag is opened at
+    var descBuffer = StringBuffer( );   // the description tag content
+    String? description;        // the description of the object being read
     var last = 0;               // the end of the previously met tag
 
     for( final match in _TAG.allMatches( content ) ) {
@@ -152,13 +190,34 @@ List< Fragment > parse( String content ) {
         final text = content.substring( last, match.start );
         final line = counter.lineAt( match.start );
         last = match.end;
+        if( openDesc != null ) {
+            if( !closing || tag != openDesc ) {
+                throw ImportException( _error( 'err_import_unclosed_tag', openDescLine, tag: openDesc ) );
+            }
+            descBuffer.write( text );
+            // the first description of the object wins, the rest are ignored
+            description ??= descBuffer.toString( ).trim( );
+            descBuffer = StringBuffer( );
+            openDesc = null;
+            continue;
+        }
         if( openTag != null ) {
+            if( !closing && tag == _DESC_TAGS[ openTag ] ) {
+                buffer.write( text );
+                openDesc = tag;
+                openDescLine = line;
+                continue;
+            }
+            if( _DESC_TAGS.containsValue( tag ) ) {
+                throw ImportException( _error( 'err_import_desc_outside', line, tag: tag ) );
+            }
             if( !closing || tag != openTag ) {
                 throw ImportException( _error( 'err_import_unclosed_tag', openLine, tag: openTag ) );
             }
             buffer.write( text );
-            _closeTag( fragment!, openTag, buffer.toString( ), line );
+            _closeTag( fragment!, openTag, buffer.toString( ), description, line );
             buffer = StringBuffer( );
+            description = null;
             openTag = null;
             continue;
         }
@@ -190,8 +249,15 @@ List< Fragment > parse( String content ) {
         if( closing ) {
             throw ImportException( _error( 'err_import_unexpected_close', line, tag: tag ) );
         }
+        // a description belongs to the object it describes and to nothing else
+        if( _DESC_TAGS.containsValue( tag ) ) {
+            throw ImportException( _error( 'err_import_desc_outside', line, tag: tag ) );
+        }
         openTag = tag;
         openLine = line;
+    }
+    if( openDesc != null ) {
+        throw ImportException( _error( 'err_import_unclosed_tag', openDescLine, tag: openDesc ) );
     }
     if( openTag != null ) {
         throw ImportException( _error( 'err_import_unclosed_tag', openLine, tag: openTag ) );
@@ -205,13 +271,17 @@ List< Fragment > parse( String content ) {
 /**
  * Adds the content of the closed inner tag to the fragment. The title and the
  * description are taken out of the card content, the names stay in place, so
- * the sentences they belong to are imported as they are written.
+ * the sentences they belong to are imported as they are written. The markup
+ * of a name is kept as well, [toHtml] turns it into a reference. The
+ * description of the object, on the contrary, is taken out of the text: it
+ * belongs to the object and the export writes it back at its first appearance.
  * fragment the fragment being read
  * tag the closed tag
- * value the tag content
+ * value the tag content, the description left out
+ * description the description read within the tag, null when there is none
  * line the line the tag is closed at
  */
-void _closeTag( Fragment fragment, String tag, String value, int line ) {
+void _closeTag( Fragment fragment, String tag, String value, String? description, int line ) {
     final name = value.trim( );
     switch( tag ) {
         case TAG_TITLE:
@@ -231,11 +301,15 @@ void _closeTag( Fragment fragment, String tag, String value, int line ) {
             if( name.isEmpty ) {
                 throw ImportException( _error( 'err_import_empty_value', line, tag: tag ) );
             }
-            final names = fragment.names[ _TYPES[ tag ] ]!;
+            final type = _TYPES[ tag ]!;
+            final names = fragment.names[ type ]!;
             if( !names.contains( name ) ) {
                 names.add( name );
             }
-            fragment.body.write( value );
+            if( description != null && description.isNotEmpty ) {
+                fragment.descriptions[ type ]!.putIfAbsent( name, ( ) => description );
+            }
+            fragment.body.write( '<$tag>$name</$tag>' );
     }
 }
 
@@ -277,7 +351,8 @@ ImportStat _apply( List< Fragment > fragments, List< String > written ) {
 
 /**
  * Returns the card attribute list for the specified data type, adding the
- * names missing from the project to the project list
+ * names missing from the project to the project list and the descriptions
+ * read from the text to the objects that have none
  * fragment the parsed fragment
  * type the data type [ROLE], [LOCATION], [DETAIL], [ACTION_TIME]
  * stat the counters to update
@@ -298,6 +373,13 @@ List< ListItem > _references( Fragment fragment, String type, ImportStat stat ) 
             data.name = name;
             projectItems.add( ListItem( data ) );
             _count( stat, type );
+        }
+        // an object described in the project keeps its description, the one
+        // written in the imported text is taken as a description of its own
+        final description = fragment.descriptions[ type ]![ name ];
+        if( description != null && data.description.isEmpty ) {
+            data.description = description;
+            stat.descriptions++;
         }
         references.add( ListItem( data.copy( ) ) );
     }
@@ -347,7 +429,8 @@ String bodyText( String raw ) {
 
 /**
  * Converts the card content to the html the text editor works with, see
- * [EMPTY_CONTENT]
+ * [EMPTY_CONTENT]. The name markup kept by [_closeTag] becomes a reference,
+ * the rest of the text is escaped as it is written.
  * text the card content as plain text
  */
 String toHtml( String text ) {
@@ -356,20 +439,34 @@ String toHtml( String text ) {
     }
     final buffer = StringBuffer( );
     for( final line in text.split( '\n' ) ) {
-        final escaped = _escape( line );
-        buffer.write( '<div><span style="font-size: 12pt;">${ escaped.isEmpty ? '&nbsp;' : escaped }</span></div>' );
+        final content = _lineToHtml( line );
+        buffer.write( '<div><span style="font-size: 12pt;">${ content.isEmpty ? '&nbsp;' : content }</span></div>' );
     }
     return buffer.toString( );
 }
 
+// a name with the markup kept around it, see [_closeTag]
+final RegExp _NAME = RegExp(
+    '<($TAG_ROLE|$TAG_LOC|$TAG_DET|$TAG_TIME)>(.*?)</\\1>',
+    caseSensitive: false
+);
+
 /**
- * Escapes the html markup characters of the imported text
+ * Converts one line of the card content to html, see [toHtml]. A markup left
+ * open by the author, the opening and the closing tag on different lines for
+ * one, is written as the text it is.
  */
-String _escape( String text ) {
-    return text
-        .replaceAll( '&', '&amp;' )
-        .replaceAll( '<', '&lt;' )
-        .replaceAll( '>', '&gt;' );
+String _lineToHtml( String line ) {
+    final buffer = StringBuffer( );
+    var last = 0;
+    for( final match in _NAME.allMatches( line ) ) {
+        buffer.write( escapeHtml( line.substring( last, match.start ) ) );
+        final name = match.group( 2 )!;
+        buffer.write( refSpan( _TYPES[ match.group( 1 )!.toLowerCase( ) ]!, name, name ) );
+        last = match.end;
+    }
+    buffer.write( escapeHtml( line.substring( last ) ) );
+    return buffer.toString( );
 }
 
 /**
@@ -391,6 +488,7 @@ String _error( String key, int line, { String? tag } ) {
  */
 String _report( ImportStat stat ) {
     return tr( 'import_done' )
+        .replaceAll( '@descs', stat.descriptions.toString( ) )
         .replaceAll( '@cards', stat.cards.toString( ) )
         .replaceAll( '@roles', stat.roles.toString( ) )
         .replaceAll( '@locations', stat.locations.toString( ) )

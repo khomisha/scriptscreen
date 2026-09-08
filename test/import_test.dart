@@ -37,10 +37,12 @@ void main( ) {
             expect( fragment.names[ LOCATION ], [ 'KITCHEN' ] );
             expect( fragment.names[ ACTION_TIME ], [ 'DAY' ] );
             expect( fragment.names[ DETAIL ], [ 'letter' ] );
-            // the title and the description are taken out, the names stay in place
+            // the title and the description are taken out, the names stay in
+            // place with their markup, see toHtml
             expect(
                 bodyText( fragment.body.toString( ) ),
-                'ANNA enters the KITCHEN at DAY\nand finds a letter on the table.'
+                '<role>ANNA</role> enters the <loc>KITCHEN</loc> at <time>DAY</time>\n'
+                'and finds a <det>letter</det> on the table.'
             );
         } );
 
@@ -59,7 +61,10 @@ void main( ) {
                 '<text><title>t</title><role>ANNA</role> and <role>ANNA</role> again</text>'
             );
             expect( fragments[ 0 ].names[ ROLE ], [ 'ANNA' ] );
-            expect( bodyText( fragments[ 0 ].body.toString( ) ), 'ANNA and ANNA again' );
+            expect(
+                bodyText( fragments[ 0 ].body.toString( ) ),
+                '<role>ANNA</role> and <role>ANNA</role> again'
+            );
         } );
 
         test( 'reads several fragments', ( ) {
@@ -111,6 +116,83 @@ void main( ) {
             );
         } );
 
+        test( 'reads the description of an object', ( ) {
+            final fragments = parse(
+                '<text><title>t</title>'
+                'Входит <role>Кирилл<role_desc>  33 года, предприниматель  </role_desc></role>.'
+                '</text>'
+            );
+            final fragment = fragments[ 0 ];
+            expect( fragment.names[ ROLE ], [ 'Кирилл' ] );
+            expect( fragment.descriptions[ ROLE ], { 'Кирилл': '33 года, предприниматель' } );
+            // the description belongs to the object, the name stays in the text
+            expect(
+                bodyText( fragment.body.toString( ) ),
+                'Входит <role>Кирилл</role>.'
+            );
+        } );
+
+        test( 'reads the description of every kind of object', ( ) {
+            final fragments = parse(
+                '<text><title>t</title>'
+                '<loc>Кухня<loc_desc>тесная</loc_desc></loc> '
+                '<det>письмо<det_desc>мятый конверт</det_desc></det> '
+                '<time>Утро<time_desc>раннее</time_desc></time>'
+                '</text>'
+            );
+            final fragment = fragments[ 0 ];
+            expect( fragment.descriptions[ LOCATION ], { 'Кухня': 'тесная' } );
+            expect( fragment.descriptions[ DETAIL ], { 'письмо': 'мятый конверт' } );
+            expect( fragment.descriptions[ ACTION_TIME ], { 'Утро': 'раннее' } );
+        } );
+
+        test( 'keeps the first description of an object', ( ) {
+            final fragments = parse(
+                '<text><title>t</title>'
+                '<role>Кирилл<role_desc>первое</role_desc></role> и '
+                '<role>Кирилл<role_desc>второе</role_desc></role>'
+                '</text>'
+            );
+            expect( fragments[ 0 ].descriptions[ ROLE ], { 'Кирилл': 'первое' } );
+        } );
+
+        test( 'reads the name written around the description', ( ) {
+            final fragments = parse(
+                '<text><title>t</title>'
+                '<role>Кирилл<role_desc>предприниматель</role_desc> Петров</role>'
+                '</text>'
+            );
+            expect( fragments[ 0 ].names[ ROLE ], [ 'Кирилл Петров' ] );
+            expect( fragments[ 0 ].descriptions[ ROLE ], { 'Кирилл Петров': 'предприниматель' } );
+        } );
+
+        test( 'ignores an empty description', ( ) {
+            final fragments = parse(
+                '<text><title>t</title><role>Кирилл<role_desc> </role_desc></role></text>'
+            );
+            expect( fragments[ 0 ].descriptions[ ROLE ], < String, String > {} );
+        } );
+
+        test( 'reports a description outside the tag of its object', ( ) {
+            expect(
+                ( ) => parse( '<text><title>t</title><role_desc>кто это</role_desc></text>' ),
+                throwsA( isA< ImportException >( ) )
+            );
+            expect(
+                ( ) => parse(
+                    '<text><title>t</title><loc>Кухня<role_desc>кто это</role_desc></loc></text>'
+                ),
+                throwsA( isA< ImportException >( ) )
+            );
+        } );
+
+        test( 'reports an unclosed description tag', ( ) {
+            expect(
+                ( ) => parse( '<text><title>t</title><role>Кирилл<role_desc>кто это</role></text>' ),
+                throwsA( isA< ImportException >( ) )
+            );
+        } );
+
         test( 'reports the line the error is found at', ( ) {
             try {
                 parse( 'line one\nline two\n<text>\n<title>t</title>\n<role>A\n</text>\n' );
@@ -151,6 +233,33 @@ void main( ) {
 
         test( 'returns the empty editor content for an empty body', ( ) {
             expect( toHtml( '' ), EMPTY_CONTENT );
+        } );
+
+        test( 'turns the name markup into a reference', ( ) {
+            expect(
+                toHtml( '<role>ANNA</role> enters the <loc>KITCHEN</loc>' ),
+                '<div><span style="font-size: 12pt;">'
+                '<span class="ref" data-type="role" data-name="ANNA">ANNA</span>'
+                ' enters the '
+                '<span class="ref" data-type="location" data-name="KITCHEN">KITCHEN</span>'
+                '</span></div>'
+            );
+        } );
+
+        test( 'escapes the name and the text around it', ( ) {
+            expect(
+                toHtml( 'a < b <det>"key"</det>' ),
+                '<div><span style="font-size: 12pt;">a &lt; b '
+                '<span class="ref" data-type="detail" data-name="&quot;key&quot;">'
+                '&quot;key&quot;</span></span></div>'
+            );
+        } );
+
+        test( 'writes an unclosed markup as the text it is', ( ) {
+            expect(
+                toHtml( '<role>ANNA' ),
+                '<div><span style="font-size: 12pt;">&lt;role&gt;ANNA</span></div>'
+            );
         } );
     } );
 }

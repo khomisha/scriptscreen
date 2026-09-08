@@ -14,6 +14,11 @@ class EditorImpl implements Editor {
         on JSError catch ( e ) {
             logger.severe( '$fileName ${e.message}' );
         }
+        // the editor window may fail to answer, see SAVE_TIMEOUT in main.js,
+        // the caller goes on with the content the file holds
+        catch( e, stack ) {
+            logger.severe( '$fileName $e', e, stack );
+        }
     }
 
     @override
@@ -24,6 +29,19 @@ class EditorImpl implements Editor {
         }
         on JSError catch ( e ) {
             logger.severe( '$fileName ${e.message}' );
+        }
+    }
+
+    @override
+    Future< void > setRefs( String json ) async {
+        try {
+            await appElectronAPI.setRefs( json.toJS ).toDart;
+        }
+        on JSError catch ( e ) {
+            logger.severe( e.message );
+        }
+        catch( e, stack ) {
+            logger.severe( '$e', e, stack );
         }
     }
 

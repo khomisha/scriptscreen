@@ -3,6 +3,7 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, ipcMain, dialog, Menu, MenuItem } = require( 'electron' )
 const path = require( 'node:path' )
+const os = require( 'node:os' )
 const fs = require( 'fs/promises' );
 const fss = require( 'fs' )
 const { PDFDocument } = require( 'pdf-lib' );
@@ -267,18 +268,57 @@ ipcMain.handle(
 );
 
 let saveStream = null;
+
+// the editor window may be busy or gone, the save is given up after this
+const SAVE_TIMEOUT = 30000;
+
+/**
+ * Completes the pending save, the caller of 'save-content' waits for it
+ * pending the save being completed
+ * error the error to report, null when the content is written
+ */
+function finishSave( pending, error ) {
+    if( !pending || pending.done ) {
+        return;
+    }
+    pending.done = true;
+    clearTimeout( pending.timer );
+    if( saveStream === pending ) {
+        saveStream = null;
+    }
+    if( error ) {
+        pending.reject( error );
+    } else {
+        pending.resolve( "success" );
+    }
+}
+
+/**
+ * Saves the editor content to the specified file. The content comes in chunks
+ * from the editor window, so the answer waits for the last one to be written
+ * and the caller may read the file back afterwards.
+ */
 ipcMain.handle( 
     'save-content', 
     async ( _, fileName ) => {
         try {
-            // Just store the filename, don't create stream yet
-            saveStream = { fileName, stream: null };
-            // Start the process by requesting first chunk
-            browser.webContents.send( 'request-chunk' );
-            return "success";
+            // the previous save, if any, is left behind by this one
+            finishSave( saveStream, null );
+            return await new Promise(
+                ( resolve, reject ) => {
+                    const pending = { fileName, stream: null, resolve, reject, done: false };
+                    pending.timer = setTimeout( 
+                        ( ) => finishSave( pending, new Error( `no answer from the editor: ${fileName}` ) ), 
+                        SAVE_TIMEOUT 
+                    );
+                    saveStream = pending;
+                    // Start the process by requesting first chunk
+                    browser.webContents.send( 'request-chunk' );
+                }
+            );
         } 
         catch( err ) {
-            throw new Error( `Save content init failed: ${err.message}\n${err.stack}` );
+            throw new Error( `Save content failed: ${err.message}\n${err.stack}` );
         }
     }
 );
@@ -287,31 +327,32 @@ ipcMain.handle(
 ipcMain.on(
     'save-chunk', 
     ( _, chunk ) => {
+        const pending = saveStream;
         try{
-            if( !saveStream ) return;
+            if( !pending ) return;
 
             // End of stream signal
             if( chunk === null ) {
-                if( saveStream.stream ) {
-                    saveStream.stream.end( );
+                if( pending.stream ) {
+                    pending.stream.end( ( ) => finishSave( pending, null ) );
                 } else {
                     // No chunks were sent (empty content) → create empty file
-                    fss.writeFileSync( saveStream.fileName, '' );
+                    fss.writeFileSync( pending.fileName, '' );
+                    finishSave( pending, null );
                 }
-                saveStream = null;
                 console.log( 'Save completed successfully' );
                 return;
             }
 
             // First chunk? Create the stream now
-            if( !saveStream.stream ) {
-                saveStream.stream = fss.createWriteStream( saveStream.fileName );
+            if( !pending.stream ) {
+                pending.stream = fss.createWriteStream( pending.fileName );
             }
 
             // Write chunk to file
-            if( !saveStream.stream.write( chunk ) ) {
+            if( !pending.stream.write( chunk ) ) {
                 // Pause if buffer is full
-                saveStream.stream.once( 'drain', ( ) => browser.webContents.send( 'request-chunk' ) );
+                pending.stream.once( 'drain', ( ) => browser.webContents.send( 'request-chunk' ) );
             } else {
                 // Immediately request next chunk
                 browser.webContents.send( 'request-chunk' );
@@ -319,9 +360,14 @@ ipcMain.on(
         }
         catch( err ) {
             console.error( 'Save content chunks failed:', err );
+            finishSave( pending, err );
         }
     }
 );
+
+// The editor content has not changed since it was loaded, the file holds it
+// already and is left alone, see the chunk request in editor_renderer.js
+ipcMain.on( 'skip-save', ( ) => finishSave( saveStream, null ) );
 
 ipcMain.handle( 
 	'clear-content', 
@@ -335,6 +381,27 @@ ipcMain.handle(
 		}
 	}
 );
+
+// the object descriptions of the current project, kept to answer the editor
+// window when it becomes ready after the application has sent them
+let refsJson = null;
+
+ipcMain.handle( 
+	'set-refs', 
+	async ( _, json ) => {
+		try {
+			refsJson = json;
+			if( browser && !browser.isDestroyed( ) ) {
+				browser.webContents.send( 'set-refs', json );
+			}
+			return "success";
+		} catch( err ) {
+            throw new Error( `Set references failed: ${err.message}\n${err.stack}` );
+		}
+	}
+);
+
+ipcMain.handle( 'get-refs', async ( ) => refsJson );
 
 ipcMain.on( 
     'user-dir', 
@@ -403,11 +470,12 @@ ipcMain.handle(
     async ( _, fileName, content, mode ) => {
 		try {
             await fs.mkdir( path.dirname( fileName ), { recursive: true } );
+            // awaited, the caller may read the file back right after this
             if( mode == WRITE ) {
-                fs.writeFile( fileName, content, 'utf-8' );
+                await fs.writeFile( fileName, content, 'utf-8' );
             }
             if( mode == APPEND ) {
-                 fs.appendFile( fileName, content, 'utf-8' );
+                await fs.appendFile( fileName, content, 'utf-8' );
             }
             return "success"
 		} catch( err ) {
@@ -432,10 +500,16 @@ function pageCount( pdfBytes ) {
     return PDFDocument.load( pdfBytes ).then( ( doc ) => doc.getPageCount( ) );
 }
 
+/**
+ * Renders the project to pdf. The chapter content comes as html, the card text
+ * with the object references already resolved ( see refs.dart ), so it is
+ * written to a temporary directory to be printed and removed afterwards.
+ */
 ipcMain.handle(
     'convert-html-to-pdf',
-    async ( _, headers, htmlFiles, pdfPath, preamble, toc ) => {
+    async ( _, headers, bodies, pdfPath, preamble, toc ) => {
         const win = new BrowserWindow( { show: false, webPreferences: { offscreen: true } } );
+        const tmpDir = await fs.mkdtemp( path.join( os.tmpdir( ), 'scriptscreen-' ) );
         try {
             const options = { pageSize: 'A4', printBackground: true };
 
@@ -453,7 +527,9 @@ ipcMain.handle(
             const chapterPdfs = [];
             const chapterPages = [];
             var index = 0;
-            for( const file of htmlFiles ) {
+            for( const body of bodies ) {
+                const file = path.join( tmpDir, `chapter-${index}.html` );
+                await fs.writeFile( file, '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>' + body + '</body></html>', 'utf-8' );
                 await win.loadFile( file );
                 var header = headers[ index ];
                 await win.webContents.executeJavaScript(`
@@ -515,6 +591,7 @@ ipcMain.handle(
         }
         finally {
             win.destroy( );
+            await fs.rm( tmpDir, { recursive: true, force: true } );
         }
     }
 );

@@ -6,17 +6,18 @@ import 'app_electron_api.dart';
 
 /**
  * Exports project content to the pdf file
+ * preamble the title page, logline, synopsis
  * headers the chapter headers
- * htmlFiles the content
+ * bodies the chapter content, the card text with the references resolved
  * pdfPath the pdf file path
  * titles the chapter titles, in order
  * tocTitle the localized table of contents heading
  */
-void export2pdf( String preamble, List< String > headers,  List< String > htmlFiles, String pdfPath, List< String > titles, String tocTitle ) async {
+Future< void > export2pdf( String preamble, List< String > headers,  List< String > bodies, String pdfPath, List< String > titles, String tocTitle ) async {
     try {
         logger.info( "Export to pdf started" );
         final toc = _buildTableOfContents( titles, tocTitle );
-        appElectronAPI.convert2PDF( headers.toJSArray( ), htmlFiles.toJSArray( ), pdfPath.toJS, preamble.toJS, toc.toJS ).toDart;
+        await appElectronAPI.convert2PDF( headers.toJSArray( ), bodies.toJSArray( ), pdfPath.toJS, preamble.toJS, toc.toJS ).toDart;
         logger.info( "Export to pdf completed" );
     }
     on JSError catch ( e ) {

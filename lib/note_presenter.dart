@@ -6,6 +6,7 @@ import 'editor.dart';
 import 'app_const.dart';
 import 'app_presenter.dart';
 import 'package:base/base.dart';
+import 'refs.dart';
 import 'script_data.dart';
 
 class NotePresenter extends WidgetPresenter {
@@ -61,6 +62,7 @@ class NotePresenter extends WidgetPresenter {
 
     @override
     void endEdit( bool ok ) {
+        final note = list[ editIndex ].customData as NoteData;
         stackIndex = 0;
         readOnly = true;
         if( ok ) {
@@ -76,6 +78,68 @@ class NotePresenter extends WidgetPresenter {
             }
         }
         super.endEdit( ok );
+        // the objects attached to the card are changed by the form as they are
+        // picked, cancelling the form does not take them back, so the text
+        // follows them either way
+        syncNote( note );
+    }
+
+    /**
+     * Brings the text of the specified card in step with the objects attached
+     * to it, see [syncNoteRefs]. The card open in the editor is written to its
+     * file first and read back after, so the editor shows the synced text.
+     * note the card to sync
+     */
+    Future< void > syncNote( NoteData note ) async {
+        await _changeText( note, syncNoteRefs );
+    }
+
+    /**
+     * Points the references of every card at the new name of the object, see
+     * [renameNoteRefs]. Called when an object is renamed in its list, the
+     * cards it is attached to follow the new name.
+     * type the data type of the renamed object
+     * oldName the name of the object before the rename
+     * newName the name after it
+     */
+    Future< void > renameRefs( String type, String oldName, String newName ) async {
+        for( final item in list ) {
+            await _changeText(
+                item.customData as NoteData,
+                ( note ) => renameNoteRefs( note, type, oldName, newName )
+            );
+        }
+    }
+
+    /**
+     * Rewrites the text file of the specified card, keeping the editor in
+     * step: the card open in the editor is written to its file first and read
+     * back after, so the editor shows the changed text.
+     * note the card
+     * change rewrites the file, returns true when it did
+     */
+    Future< void > _changeText( NoteData note, Future< bool > Function( NoteData ) change ) async {
+        final fileName = getBodyFileName( note );
+        final open = selectedIndex != -1
+            && identical( list[ selectedIndex ].customData, note );
+        if( open ) {
+            await editor.save( fileName );
+        }
+        if( await change( note ) && open ) {
+            await editor.clear( );
+            await editor.load( fileName );
+        }
+    }
+
+    /**
+     * Brings the text of every card in step with the objects attached to it,
+     * see [syncNote]. Called when an object is deleted from the project, the
+     * references to it are gone from the text of every card.
+     */
+    Future< void > syncNotes( ) async {
+        for( final item in list ) {
+            await syncNote( item.customData as NoteData );
+        }
     }
 
     /**
@@ -124,6 +188,9 @@ class NotePresenter extends WidgetPresenter {
      */
     Future< void > onSelect( ListItem item ) async {
         var note = item.customData as NoteData;
+        // the text may have been typed after the objects were attached to the
+        // card, the names met in it become references
+        await syncNoteRefs( note );
         await editor.load( getBodyFileName( note ) );
     }
 
@@ -145,6 +212,9 @@ class NotePresenter extends WidgetPresenter {
     @override
     void onEvent( Event event ) async {
         if( event.type == UPDATE ) {
+            // the objects or their descriptions may have changed, the editor
+            // shows the description of a reference on hover, see [refsAsJson]
+            await editor.setRefs( refsAsJson( ) );
             final newList = AppPresenter( ).getData( dataType );
             if( event.data ) {
                 // Full project load: reset selection to first note

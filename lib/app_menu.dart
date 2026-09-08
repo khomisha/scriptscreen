@@ -9,6 +9,8 @@ import 'package:path/path.dart';
 import 'editor.dart';
 import 'app_const.dart';
 import 'import.dart';
+import 'note_presenter.dart';
+import 'refs.dart';
 import 'script_data.dart';
 import 'service_web.dart' if( dart.library.io ) 'service_io.dart';
 
@@ -86,23 +88,39 @@ void _import( ) async {
     }
 }
 
+/**
+ * Exports the project to the pdf file. The references of the card text are
+ * unwrapped on the way, the description of an object is written at its first
+ * appearance in the text, see [resolveRefs].
+ */
 void export( ) async {
+    // the text of the selected card is in the editor, it is written to the
+    // file first, so the export takes what the author sees
+    final presenter = PresenterRegistry( ).getPresenter( NOTE, ( ) => NotePresenter( ) );
+    if( presenter.selectedIndex != -1 ) {
+        await editor.save( getBodyFileName( presenter.list[ presenter.selectedIndex ].customData as NoteData ) );
+    }
     final pdfPath = ( config[ 'last_project' ] as String ).replaceFirst( ".json", ".pdf" );
     final headerTemplateFile = GenericFile( join( GenericFile.assetsDir, 'cfg', config[ 'note_header_template' ] ) );
     final headerTemplate = await headerTemplateFile.readString( );
+    final descriptions = projectDescriptions( );
+    final described = < String > {};
     List< String > headers = [];
-    List< String > htmlFiles = [];
+    List< String > bodies = [];
     List< String > titles = [];
     for( ListItem item in AppPresenter( ).getData( NOTE ) ) {
         var note = item.customData as NoteData;
         var t = headerTemplate.replaceAll( "@title", note.title );
         t = t.replaceAll( "@description", note.description );
         headers.add( t );
-        htmlFiles.add( getBodyFileName( note ) );
+        final body = await GenericFile( getBodyFileName( note ) ).readString( );
+        // the text of a card never opened since its objects were attached may
+        // hold no references yet, see [syncRefs]
+        bodies.add( resolveRefs( syncRefs( body, noteNames( note ) ) ?? body, descriptions, described ) );
         titles.add( note.title );
     }
     final script = AppPresenter( ).getData( SCRIPT )[ 0 ].customData as ScriptData;
-    export2pdf( _buildPreamble( script ), headers, htmlFiles, pdfPath, titles, tr( 'toc_title' ) );
+    await export2pdf( _buildPreamble( script ), headers, bodies, pdfPath, titles, tr( 'toc_title' ) );
 }
 
 String _buildPreamble( ScriptData script ) {

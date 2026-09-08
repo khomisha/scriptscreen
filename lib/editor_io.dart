@@ -1,5 +1,6 @@
 // ignore_for_file: constant_identifier_names, slash_for_doc_comments
 
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
@@ -51,6 +52,16 @@ class EditorImpl implements Editor {
             var content = await file.readString( );
             var script = 'tinymce.activeEditor.setContent("$content")';
             await _webview.evaluateJavaScript( script );
+        }
+        on Exception catch( e, stack ) {
+            logger.severe( e.toString( ), stack );
+        }
+    }
+
+    @override
+    Future< void > setRefs( String json ) async {
+        try {
+            await _webview.evaluateJavaScript( 'window.setRefs( ${ jsonEncode( json ) } )' );
         }
         on Exception catch( e, stack ) {
             logger.severe( e.toString( ), stack );

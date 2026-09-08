@@ -58,7 +58,7 @@
     "picker_import_title": "Выберите файл для импорта",
     "picker_import_filter": "Размеченный текст",
 
-    "import_done": "Импорт завершён. Карточек: @cards, ролей: @roles, локаций: @locations, деталей: @details, времён действия: @times",
+    "import_done": "Импорт завершён. Карточек: @cards, ролей: @roles, локаций: @locations, деталей: @details, времён действия: @times, описаний: @descs",
     "import_empty": "В файле нет размеченного текста, импортировать нечего",
     "import_failed": "Импорт не выполнен, проект не изменён.",
 
@@ -69,6 +69,7 @@
     "err_import_unclosed_tag": "не закрыт тег <@tag>",
     "err_import_no_title": "во фрагменте нет заголовка <title>",
     "err_import_empty_value": "пустое значение тега <@tag>",
+    "err_import_desc_outside": "тег <@tag> вне тега объекта, который он описывает",
 
     "support_me": "Поддержать автора",
     "support_copied": "Адрес скопирован",

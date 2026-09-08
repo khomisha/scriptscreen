@@ -17,11 +17,14 @@ tinymce.init({
 	init_instance_callback: function( editor ) {
 		editor.execCommand( 'mceFullScreen' );
 	},
+	// the object references of the card text, see editor_refs.js
+	extended_valid_elements: 'span[id|class|style|title|dir|lang|data-type|data-name]',
 	browser_spellcheck: true,
 	//content_style: 'div { font-family:Courier New,Arial,sans-serif; font-size:12pt }',
 	content_style: `
 		body, body * { font-family: "Courier New", Arial, sans-serif !important; font-size: 12pt !important; }
 		body sup, body sub { font-size: 8pt !important; line-height: normal; }
+		span.ref { border-bottom: 1px dashed #808080; cursor: help; }
 	`,	
 	promotion: false,
 	menubar: true,
@@ -41,6 +44,14 @@ tinymce.init({
 		input.click( );
     },
     setup: ( editor ) => {
+		// The object references of the card text: underline them and show the
+		// description of the object on hover, see editor_refs.js. The
+		// descriptions are pushed by the application on every project change,
+		// the ones sent before this window was ready are asked for here.
+		window.initRefs( editor );
+		window.contentAPI.onSetRefs( ( json ) => window.setRefs( json ) );
+		window.contentAPI.getRefs( ).then( ( json ) => { if( json ) { window.setRefs( json ); } } );
+
 		// Intercept drag & drop and embed as base64
 		editor.on( 
 			'drop', 
@@ -87,9 +98,9 @@ window.contentAPI.onChunkRequest(
 		try {
 			// First request
 			if( !tinymce.activeEditor.isDirty( ) ) {
-				// nothing to save
+				// nothing to save, the file keeps the content it was loaded from
 				console.log( 'nothing to save' );
-				window.contentAPI.sendChunk( null );
+				window.contentAPI.skipSave( );
 				tinymce.activeEditor.setDirty( false );
 				return;
 			}
