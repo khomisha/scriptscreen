@@ -28,6 +28,18 @@ are only requested if Node.js or ffmpeg have to be installed system-wide.
 
 ---
 
+## The user manual
+
+The archive carries the full user manual as PDF:
+
+- `USER_MANUAL_EN.pdf` — English
+- `USER_MANUAL.pdf` — Russian
+
+It describes the board, the plot cards, the script editor, dictation, import
+and export. Nothing needs to be installed to read it.
+
+---
+
 ## Requirements
 
 - A working internet connection for the first install (to download Electron,

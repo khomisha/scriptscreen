@@ -59,6 +59,22 @@ If you are unsure which one to take, take the plain (CPU) archive: it works
 everywhere, and the GPU one only changes how fast dictation is, not what the app
 can do.
 
+### Is a GPU archive worth it on my machine?
+
+A GPU build pays off only on a machine with the matching video card and driver.
+You can check that **before downloading an archive** — the GPU test ships inside
+every archive, but it also runs on its own:
+
+| Platform | Script | Run it with |
+|---|---|---|
+| Linux | [`check-gpu.sh`](dist/templates/linux/check-gpu.sh) | `bash check-gpu.sh` |
+| Windows | [`check-gpu.ps1`](dist/templates/windows/check-gpu.ps1) | `powershell -ExecutionPolicy Bypass -File .\check-gpu.ps1` |
+
+Open the link, download the raw file and run it. The script only reads — nothing
+is installed or changed — and tells you whether a CUDA or a Vulkan build suits
+this machine. Run it again from the unpacked archive to also test the whisper
+binaries the archive brought with it.
+
 The installer also sets up the components used for dictation: whisper.cpp speech
 models and ffmpeg, placed under `~/whisper.cpp`.
 
@@ -71,9 +87,12 @@ inside every archive as `INSTALL.md` / `INSTALL.ru.md`.
 
 ## Documentation
 
-- [User Manual (English)](USER_MANUAL_EN.md)
-- [Руководство пользователя (русский)](USER_MANUAL.md)
+- [User Manual (English)](USER_MANUAL_EN.md) ([PDF](USER_MANUAL_EN.pdf))
+- [Руководство пользователя (русский)](USER_MANUAL.md) ([PDF](USER_MANUAL.pdf))
 - [Distribution guide](DISTRIBUTION.md) — building the archives, for maintainers.
+
+Both manuals ship as PDF inside every distribution archive
+(`USER_MANUAL_EN.pdf`, `USER_MANUAL.pdf`).
 
 ## Getting started
 

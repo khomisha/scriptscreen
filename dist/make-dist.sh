@@ -7,8 +7,9 @@
 #   - a prebuilt whisper.cpp (whisper/), taken from dist/vendor/<platform>
 #   - a bundled ffmpeg binary (ffmpeg/), taken from dist/vendor/<platform>
 #   - per-platform install/uninstall scripts and the install guide in English
-#     and Russian, as .md and .pdf (regenerate the PDFs with
-#     dist/scripts/make-install-pdf.sh after editing a guide)
+#     and Russian, as .md and .pdf, plus the user manual in both languages as
+#     .pdf (regenerate the PDFs with dist/scripts/make-docs-pdf.sh after
+#     editing any of these documents)
 #   - a check-gpu script (linux/windows) so users can test GPU suitability
 #
 # Speech models (ggml-*.bin) are NOT included by default — they are large, and
@@ -211,10 +212,17 @@ package_one() {  # $1 = whisper payload dir, or "" with --skip-vendor
     fi
 
     # Install/uninstall scripts, docs, icon, metadata.
+    # The PDFs are generated on the build host and committed, see make-docs-pdf.sh.
+    for doc in dist/templates/common/INSTALL.pdf dist/templates/common/INSTALL.ru.pdf \
+               USER_MANUAL.pdf USER_MANUAL_EN.pdf; do
+        [ -f "$REPO_ROOT/$doc" ] || die "missing $doc — run dist/scripts/make-docs-pdf.sh"
+    done
     cp "$REPO_ROOT/dist/templates/common/INSTALL.md"     "$stage/INSTALL.md"
     cp "$REPO_ROOT/dist/templates/common/INSTALL.ru.md"  "$stage/INSTALL.ru.md"
     cp "$REPO_ROOT/dist/templates/common/INSTALL.pdf"    "$stage/INSTALL.pdf"
     cp "$REPO_ROOT/dist/templates/common/INSTALL.ru.pdf" "$stage/INSTALL.ru.pdf"
+    cp "$REPO_ROOT/USER_MANUAL.pdf"    "$stage/USER_MANUAL.pdf"
+    cp "$REPO_ROOT/USER_MANUAL_EN.pdf" "$stage/USER_MANUAL_EN.pdf"
     cp "$REPO_ROOT/web/icons/Icon-512.png" "$stage/icon.png" 2>/dev/null || true
     echo "$VERSION" > "$stage/VERSION"
 

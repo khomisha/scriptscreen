@@ -374,13 +374,20 @@ Access from the **Roles** panel.
    - **Description** (optional) — Notes about the character.
 3. Confirm.
 
-### Editing a Role
+### Editing and Deleting
 
-Click on a role in the list to open its edit form. Modify the fields and confirm.
+The edit and delete buttons are hidden behind the list item — the way they are
+in the lists on an iPhone or an iPad.
 
-### Deleting a Role
+1. Click the list item to **select** it — its border turns pink and the form
+   with its fields opens on the right (read-only for now).
+2. **Drag the selected item to the left** with the mouse — two buttons appear
+   next to it: **Edit** and **Delete**.
+3. **Edit** — the fields of the form on the right side of the panel become
+   editable. Make the changes and confirm.
+4. **Delete** — the item is removed from the project.
 
-Open a role's edit form and use the **Delete** button.
+> Only a selected item can be dragged: until it is selected the buttons do not appear.
 
 > Deleting a role removes it from all scene cards that reference it.
 
@@ -404,9 +411,10 @@ Access from the **Locations** panel.
    - **Description** (optional) — Notes about the location.
 3. Confirm.
 
-### Editing / Deleting
+### Editing and Deleting
 
-Same as Roles: click the item in the list to edit, use **Delete** to remove.
+Same as Roles: select the list item, drag it to the left and press **Edit** or
+**Delete**, see "[Roles](#7-roles-characters)".
 
 ---
 
@@ -428,9 +436,10 @@ Details represent recurring story elements, motifs, props, or narrative threads 
 2. Fill in **Name** (required) and **Description** (optional).
 3. Confirm.
 
-### Editing / Deleting
+### Editing and Deleting
 
-Click the item in the list to edit or delete.
+Select the list item, drag it to the left and press **Edit** or **Delete**, see
+"[Roles](#7-roles-characters)".
 
 ---
 
@@ -452,9 +461,10 @@ Action times are temporal markers that describe *when* a scene takes place (e.g.
 2. Fill in **Name** (required) and **Description** (optional).
 3. Confirm.
 
-### Editing / Deleting
+### Editing and Deleting
 
-Click the item in the list to edit or delete.
+Select the list item, drag it to the left and press **Edit** or **Delete**, see
+"[Roles](#7-roles-characters)".
 
 ---
 
@@ -465,6 +475,13 @@ The editor is a rich text editor (TinyMCE) that opens in a separate webview wind
 ### Showing and Hiding the Editor
 
 In the **Cards** panel menu, choose **Show Editor** or **Hide Editor** to toggle the editor window.
+
+### Switching Between the Windows
+
+**F2** — or **Ctrl+Shift+E**, on the keyboards where F2 only works together with
+**Fn** — moves the focus from the application window to the editor window and
+back. When the editor window is hidden, the first press shows it. Both shortcuts
+do the same thing and work in either window.
 
 ### How the Editor Works
 
@@ -545,6 +562,8 @@ On the **Cards** board, you can filter which cards are visible by clicking the a
 
 Multiple filters can be active at once. A card is shown if it matches **any** of the active filters (OR logic).
 
+> The chips on a card are all of one width, so a long name is cut with an ellipsis. To read it in full, hover over the chip — the whole name appears in a tooltip.
+
 > **Which attributes filter:** The visibility filter is applied against all of a card's attributes — **Roles**, **Details**, **Locations**, and **Action Times**.
 
 When no chips are active, all cards are visible.
@@ -564,6 +583,9 @@ When no chips are active, all cards are visible.
 | Zoom board in / out | **Middle mouse wheel** scroll up / down |
 | Pan (move the board) | **Hold left mouse button** on empty board and drag |
 | Refresh board view | **Right-click** on board |
+| Switch between the application window and the editor window | **F2** or **Ctrl+Shift+E** |
+| Reveal the **Edit** / **Delete** buttons of a list item | **Drag the selected list item to the left** |
+| Read a chip label that did not fit | **Hover** over the chip |
 
 ---
 

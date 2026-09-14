@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Render one of the install guides to a self-contained, print-styled HTML page.
+"""Render one of the end-user documents to a self-contained, print-styled HTML page.
 
-Used by make-install-pdf.sh, which then prints the page to PDF with headless
-Chrome. Links between the two guides (INSTALL.md <-> INSTALL.ru.md) are
-rewritten to point at the PDF next to it.
+Used by make-docs-pdf.sh, which then prints the page to PDF with headless
+Chrome. Links to a document that ships as a PDF of its own are rewritten to
+point at that PDF, and every heading is given the anchor its markdown link
+uses, so the table of contents of the user manual works inside the PDF.
 """
 import re
 import sys
@@ -55,11 +56,37 @@ th { background: #f1f3f5; font-weight: 650; }
 td code { font-size: 0.85em; }
 """
 
-# The two guides cross-link by markdown filename; in the PDFs the sibling is a PDF.
+# The documents cross-link by markdown filename; in the PDFs the sibling is a
+# PDF. The distribution guide ships in the archive as the install guide, so a
+# link to it points at that.
 LINK_FIXUPS = {
     "INSTALL.md": "INSTALL.pdf",
     "INSTALL.ru.md": "INSTALL.ru.pdf",
+    "DISTRIBUTION.md": "INSTALL.pdf",
+    "DISTRIBUTION.ru.md": "INSTALL.ru.pdf",
+    "USER_MANUAL.md": "USER_MANUAL.pdf",
+    "USER_MANUAL_EN.md": "USER_MANUAL_EN.pdf",
 }
+
+_HEADING = re.compile(r"<h([1-6])>(.*?)</h\1>", re.S)
+_TAGS = re.compile(r"<[^>]+>")
+_DROPPED = re.compile(r"[^\w\- ]", re.U)
+
+
+def slug(html: str) -> str:
+    """Returns the anchor of a heading, the way the markdown links spell it:
+    the markup and the punctuation are dropped, the spaces become hyphens."""
+    text = _TAGS.sub("", html)
+    text = text.replace("&amp;", "").replace("&lt;", "").replace("&gt;", "")
+    return _DROPPED.sub("", text.strip().lower()).replace(" ", "-")
+
+
+def add_anchors(body: str) -> str:
+    """Gives every heading the id its table of contents links to."""
+    return _HEADING.sub(
+        lambda m: f'<h{m.group(1)} id="{slug(m.group(2))}">{m.group(2)}</h{m.group(1)}>',
+        body,
+    )
 
 
 def main() -> int:
@@ -70,7 +97,7 @@ def main() -> int:
     text = src.read_text(encoding="utf-8")
 
     md = MarkdownIt("commonmark").enable("table").enable("strikethrough")
-    body = md.render(text)
+    body = add_anchors(md.render(text))
     for old, new in LINK_FIXUPS.items():
         body = body.replace(f'href="{old}"', f'href="{new}"')
         body = body.replace(f'>{old}</a>', f'>{new}</a>')

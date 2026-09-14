@@ -22,16 +22,21 @@ scriptscreen-<version>-<platform>[-gpu-<backend>]/
 ├── INSTALL.ru.md   the same instructions in Russian
 ├── INSTALL.pdf     PDF of INSTALL.md
 ├── INSTALL.ru.pdf  PDF of INSTALL.ru.md
+├── USER_MANUAL.pdf     the user manual, Russian
+├── USER_MANUAL_EN.pdf  the user manual, English
 ├── icon.png
 └── VERSION
 ```
 
 The end-user guide lives in `dist/templates/common/` in two languages
-(`INSTALL.md`, `INSTALL.ru.md`). After editing either one, regenerate the PDFs
-that ship alongside them:
+(`INSTALL.md`, `INSTALL.ru.md`), the user manual in the repository root
+(`USER_MANUAL.md`, `USER_MANUAL_EN.md`). The archive carries the guide as both
+markdown and PDF and the manual as PDF only. After editing any of the four
+sources, regenerate the PDFs — `make-dist.sh` refuses to build without them:
 
 ```bash
-dist/scripts/make-install-pdf.sh
+dist/scripts/make-docs-pdf.sh            # all four
+dist/scripts/make-docs-pdf.sh manual     # or just the one you edited
 ```
 
 It needs `python3` with `markdown-it-py` and a Chrome/Chromium binary on the
