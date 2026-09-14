@@ -39,6 +39,14 @@ abstract class Editor {
      * returns the resulting visibility of the browser window
      */
     Future< bool > setVisible( bool visible );
+
+    /**
+     * Subscribes to the visibility changes of the editor window made outside
+     * [setVisible], by the window switching shortcut for one, so the menu item
+     * toggling the window keeps the matching label
+     * callback takes the resulting visibility of the editor window
+     */
+    void onVisibilityChanged( void Function( bool visible ) callback );
 }
 
 final Editor editor = Editor( );

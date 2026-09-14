@@ -16,6 +16,9 @@ tinymce.init({
       'bullist numlist outdent indent | link image table media | removeformat charmap code | searchreplace | help',
 	init_instance_callback: function( editor ) {
 		editor.execCommand( 'mceFullScreen' );
+		// the application holds back everything it has to say to this window
+		// until this point, see whenEditorReady in main.js
+		window.contentAPI.ready( );
 	},
 	// the object references of the card text, see editor_refs.js
 	extended_valid_elements: 'span[id|class|style|title|dir|lang|data-type|data-name]',

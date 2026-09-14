@@ -59,6 +59,14 @@ void _toggleEditor( ) async {
     _editorVisible = await editor.setVisible( !_editorVisible );
 }
 
+/**
+ * Follows the editor window visibility changed outside the menu, by the window
+ * switching shortcut for one, so the menu item keeps the matching label
+ */
+void watchEditorVisibility( ) {
+    editor.onVisibilityChanged( ( visible ) { _editorVisible = visible; } );
+}
+
 void create( ) async {
     AppPresenter( ).create( true );
 }

@@ -15,6 +15,7 @@ void main( ) async {
     await initI18n( config[ 'language' ] as String? );
     await loadNotice( );
     _registerLicense( );
+    watchEditorVisibility( );
     AppFacing( );
     runApp( const App( ) );
 }

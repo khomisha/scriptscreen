@@ -3,6 +3,9 @@ const { contextBridge, ipcRenderer } = require( 'electron' );
 contextBridge.exposeInMainWorld(
 	'contentAPI', 
 	{
+        // the editor is up and the messages sent to this window are taken from
+        // here on, see whenEditorReady in main.js
+        ready: ( ) => ipcRenderer.send( 'editor-ready' ),
         onChunkRequest: ( callback ) => ipcRenderer.on( 'request-chunk', callback ),
         sendChunk: ( chunk ) => ipcRenderer.send( 'save-chunk', chunk ),
         skipSave: ( ) => ipcRenderer.send( 'skip-save' ),

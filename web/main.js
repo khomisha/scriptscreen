@@ -88,6 +88,119 @@ let mainWindow = null;
 let browser = null;
 let whisper = null;
 
+// The editor window is created after the main window and its TinyMCE instance
+// takes a while to come up, while the application starts talking to it right
+// away: the text of the first card is loaded as soon as the project is read.
+// Every message to the editor waits for this promise, the editor window
+// resolves it once TinyMCE is initialized ( see editor_renderer.js ). Without
+// the wait the first load-content is sent into a window with no editor in it
+// and the card opens empty until the author reselects it.
+let resolveEditorReady = null;
+let editorIsReady = false;
+const editorReady = new Promise( ( resolve ) => { resolveEditorReady = resolve; } );
+
+// the editor window is given this long to report itself ready, after that the
+// message is sent anyway and the failure, if any, is logged by the renderer
+const READY_TIMEOUT = 20000;
+
+/**
+ * Resolves when the editor window is ready to take messages, see editorReady
+ */
+function whenEditorReady( ) {
+    if( editorIsReady ) {
+        return Promise.resolve( );
+    }
+    return Promise.race(
+        [
+            editorReady,
+            new Promise(
+                ( resolve ) => setTimeout(
+                    ( ) => {
+                        if( !editorIsReady ) {
+                            console.log( 'the editor window is not ready in time' );
+                        }
+                        resolve( );
+                    },
+                    READY_TIMEOUT
+                )
+            )
+        ]
+    );
+}
+
+ipcMain.on(
+    'editor-ready',
+    ( ) => {
+        console.log( 'the editor window is ready' );
+        editorIsReady = true;
+        resolveEditorReady( );
+    }
+);
+
+// F2 — and Ctrl+Shift+E, for the keyboards where F2 sits under the Fn key —
+// moves the focus between the application window and the editor window: a
+// hidden editor window is shown, a focused one hands the focus back to the
+// application. Bound with before-input-event on both windows and not as a
+// global shortcut, so the key is taken only while ScriptScreen is in front of
+// the other applications.
+function isToggleKey( input ) {
+    if( input.type !== 'keyDown' || input.isAutoRepeat ) {
+        return false;
+    }
+    if( input.key === 'F2' && !input.control && !input.alt && !input.meta && !input.shift ) {
+        return true;
+    }
+    // the physical key is matched, so the shortcut works on any keyboard layout
+    return input.code === 'KeyE' && input.control && input.shift && !input.alt && !input.meta;
+}
+
+/**
+ * Moves the focus between the application window and the editor window, see isToggleKey
+ */
+function toggleWindow( ) {
+    if( !browser || browser.isDestroyed( ) ) {
+        return;
+    }
+    if( !browser.isVisible( ) ) {
+        browser.show( );
+        notifyVisibility( true );
+        return;
+    }
+    if( browser.isFocused( ) ) {
+        if( mainWindow && !mainWindow.isDestroyed( ) ) {
+            mainWindow.focus( );
+        }
+    } else {
+        browser.focus( );
+    }
+}
+
+/**
+ * Tells the application the editor window has been shown or hidden, so the menu
+ * item toggling it keeps the matching label, see _toggleEditor in app_menu.dart
+ * visible the resulting visibility of the editor window
+ */
+function notifyVisibility( visible ) {
+    if( mainWindow && !mainWindow.isDestroyed( ) ) {
+        mainWindow.webContents.send( 'editor-visibility', visible );
+    }
+}
+
+/**
+ * Binds the window switching shortcut to the specified window, see isToggleKey
+ */
+function bindToggleKey( win ) {
+    win.webContents.on(
+        'before-input-event',
+        ( event, input ) => {
+            if( isToggleKey( input ) ) {
+                event.preventDefault( );
+                toggleWindow( );
+            }
+        }
+    );
+}
+
 const createWindow = ( ) => {
     // Create the main window.
     mainWindow = new BrowserWindow(
@@ -119,7 +232,11 @@ const createWindow = ( ) => {
                         nodeIntegration: true, 
                         contextIsolation: true,
                         preload: path.join( __dirname, 'editor_preload.js' ),
-                        spellcheck: true
+                        spellcheck: true,
+                        // the window is created hidden and the application talks
+                        // to it right away, a throttled window would answer the
+                        // first cards with a delay of seconds
+                        backgroundThrottling: false
                     }
                 }
             );
@@ -196,6 +313,7 @@ const createWindow = ( ) => {
             );
 
             browser.setMenuBarVisibility( false );
+            bindToggleKey( browser );
             browser.on( "close", ( event ) => { event.preventDefault( ) } );
             browser.loadFile( 'editor.html', { query: { lang: getInterfaceLang( ) } } );
             if( args.dev ) {
@@ -206,6 +324,7 @@ const createWindow = ( ) => {
     );
 
     mainWindow.setMenuBarVisibility( false );
+    bindToggleKey( mainWindow );
     mainWindow.on( 
         "closed", 
         ( ) => {
@@ -247,6 +366,9 @@ ipcMain.handle(
     'load-content', 
     async ( _, fileName ) => {
         try {
+            // the first card is loaded while the editor window is still coming
+            // up, see whenEditorReady
+            await whenEditorReady( );
             const stats = await fs.stat( fileName );
             const fileSize = stats.size;
             const CHUNK_SIZE = fileSize > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
@@ -302,6 +424,9 @@ ipcMain.handle(
     'save-content', 
     async ( _, fileName ) => {
         try {
+            // the chunk request would be lost by a window with no editor in it
+            // yet, see whenEditorReady
+            await whenEditorReady( );
             // the previous save, if any, is left behind by this one
             finishSave( saveStream, null );
             return await new Promise(
@@ -373,6 +498,7 @@ ipcMain.handle(
 	'clear-content', 
 	async ( _, arg ) => {
 		try {
+            await whenEditorReady( );
             await browser.webContents.executeJavaScript( 'tinymce.activeEditor.setContent("")' );
             // 'tinymce.activeEditor.setContent("")'
 			return "success";
@@ -457,6 +583,7 @@ ipcMain.handle(
 			    browser.hide( );
             } else {
                 browser.show( );
+                browser.focus( );
             }
             return !visible
 		} catch( err ) {
@@ -609,6 +736,7 @@ ipcMain.handle(
             console.log( `Transcription completed successfully in ${duration}s` );
 
             // ✅ Send to editor in chunks (reuse same logic as file loader)
+            await whenEditorReady( );
             const text = result.text || '';
             const CHUNK_SIZE = text.length > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024; // 1MB or 64KB
             browser.webContents.send( 'begin-loading' );

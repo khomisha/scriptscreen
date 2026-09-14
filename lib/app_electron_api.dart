@@ -12,6 +12,7 @@ extension type AppElectronAPI._( JSObject _ ) implements JSObject {
     external JSPromise< JSAny > transcribe( JSString path, JSString model, JSString lang, JSString format );
     external JSPromise< JSAny > startLiveTranscribe( JSString model, JSString lang );
     external JSPromise< JSAny > stopLiveTranscribe( );
+    external void onEditorVisibility( JSFunction callback );
 }
 
 @JS( )

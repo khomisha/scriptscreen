@@ -25,7 +25,28 @@ class NotePresenter extends WidgetPresenter {
     NotePresenter( ) : super( NOTE ) {
         eventBroker.subscribe( this, UPDATE );
         eventBroker.subscribe( this, SAVE_CONTENT );
-        list = AppPresenter( ).getData( dataType );
+        // the board is built after the project has been read, so the [UPDATE]
+        // of that first load is gone by the time this presenter exists: the
+        // first card is opened here the way [onEvent] opens it on every load
+        // that follows, otherwise the board starts with nothing selected and
+        // an empty editor
+        final initial = AppPresenter( ).getData( dataType );
+        if( initial.isNotEmpty ) {
+            selectedIndex = 0;
+        }
+        list = initial;
+        if( selectedIndex != -1 ) {
+            _openFirst( );
+        }
+    }
+
+    /**
+     * Puts the object descriptions and the text of the first card to the editor
+     * on the start of the application, see the constructor
+     */
+    Future< void > _openFirst( ) async {
+        await editor.setRefs( refsAsJson( ) );
+        await onSelect( list[ selectedIndex ] );
     }
 
     @override

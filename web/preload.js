@@ -29,5 +29,7 @@ contextBridge.exposeInMainWorld(
 		startLiveTranscribe: ( model, lang ) => ipcRenderer.invoke( 'start-live-transcribe', model, lang ),
 		stopLiveTranscribe: ( ) => ipcRenderer.invoke( 'stop-live-transcribe' ),
 		onLiveTranscribeError: ( callback ) => ipcRenderer.on( 'live-transcribe-error', ( _, msg ) => callback( msg ) ),
+		// the window switching shortcut may show the editor window, see notifyVisibility in main.js
+		onEditorVisibility: ( callback ) => ipcRenderer.on( 'editor-visibility', ( _, visible ) => callback( visible ) ),
 	}
 );

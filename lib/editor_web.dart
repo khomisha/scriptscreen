@@ -50,6 +50,13 @@ class EditorImpl implements Editor {
         final bool isVisible = await changeVisibility( );
         return isVisible;
     }
+
+    @override
+    void onVisibilityChanged( void Function( bool visible ) callback ) {
+        appElectronAPI.onEditorVisibility(
+            ( ( JSBoolean visible ) { callback( visible.toDart ); } ).toJS
+        );
+    }
     
     @override
     Future< void > clear( ) async {

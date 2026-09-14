@@ -73,6 +73,12 @@ class EditorImpl implements Editor {
         _webview.setWebviewWindowVisibility( visible );
         return visible;
     }
+
+    // the window switching shortcut is bound by the electron shell, the io
+    // build has none, so the visibility only ever changes through [setVisible]
+    @override
+    void onVisibilityChanged( void Function( bool visible ) callback ) {
+    }
     
     @override
     Future< void > clear( ) async {
