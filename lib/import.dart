@@ -34,6 +34,12 @@ import 'script_data.dart';
  * first appearance of the object, see [resolveRefs]. The import is
  * transactional: on any error the project stays as it was before, see
  * [importText].
+ *
+ * The markup is written by hand, so a file usually carries more than one
+ * mistake. The parser reads the file to the end whatever it meets, collects
+ * every error it finds and reports them as one list, see [ImportException] —
+ * the author fixes them in one pass instead of running the import again after
+ * every single one.
  */
 
 const String TAG_TEXT = "text";
@@ -75,12 +81,15 @@ final RegExp _TAG = RegExp(
 );
 
 /**
- * Error found in the imported markup, the message is ready to show to the user
+ * The errors found in the imported markup, in the order they are met in the
+ * text. The messages are ready to show to the user, one per line.
  */
 class ImportException implements Exception {
-    final String message;
+    final List< String > errors;
 
-    ImportException( this.message );
+    ImportException( this.errors );
+
+    String get message => errors.join( '\n' );
 
     @override
     String toString( ) => message;
@@ -126,8 +135,9 @@ class ImportStat {
 
 /**
  * Imports the marked up text file into the current project. Parses the whole
- * file first, so a malformed markup leaves the project untouched, then applies
- * the result and saves the project. If applying fails, the project is rolled
+ * file first, so a malformed markup leaves the project untouched and every
+ * error found in it is written to the log as one list, then applies the result
+ * and saves the project. If applying fails, the project is rolled
  * back to the state before the import and the content files written by this
  * import are removed.
  * path the marked up text file path
@@ -139,7 +149,15 @@ Future< void > importText( String path ) async {
         fragments = parse( content );
     }
     on ImportException catch( e ) {
-        logger.severe( '${tr( 'import_failed' )} ${e.message}' );
+        // the toast carries the count, the list itself goes to the log file,
+        // see [initLogger]
+        logger.severe(
+            Message(
+                '${tr( 'import_failed' )} '
+                '${tr( 'import_errors' ).replaceAll( '@count', e.errors.length.toString( ) )}',
+                e.message
+            )
+        );
         return;
     }
     if( fragments.isEmpty ) {
@@ -167,12 +185,15 @@ Future< void > importText( String path ) async {
 }
 
 /**
- * Parses the marked up text into fragments, throws [ImportException] on a
- * malformed markup
+ * Parses the marked up text into fragments. The whole text is read whatever is
+ * met on the way: a malformed tag is reported, the state it left behind is
+ * dropped and the reading goes on, so one run reports every error of the file.
+ * Throws [ImportException] with the collected errors when there is at least one.
  * content the marked up text
  */
 List< Fragment > parse( String content ) {
     final counter = _LineCounter( content );
+    final errors = < String > [];
     final fragments = < Fragment > [];
     Fragment? fragment;         // the fragment being read, null outside <text>
     String? openTag;            // the inner tag being read, null when none is open
@@ -191,15 +212,19 @@ List< Fragment > parse( String content ) {
         final line = counter.lineAt( match.start );
         last = match.end;
         if( openDesc != null ) {
-            if( !closing || tag != openDesc ) {
-                throw ImportException( _error( 'err_import_unclosed_tag', openDescLine, tag: openDesc ) );
+            if( closing && tag == openDesc ) {
+                descBuffer.write( text );
+                // the first description of the object wins, the rest are ignored
+                description ??= descBuffer.toString( ).trim( );
+                descBuffer = StringBuffer( );
+                openDesc = null;
+                continue;
             }
-            descBuffer.write( text );
-            // the first description of the object wins, the rest are ignored
-            description ??= descBuffer.toString( ).trim( );
+            // the description tag is left open: it is given up and the tag met
+            // here is read on its own, so the rest of the text is checked as well
+            errors.add( _error( 'err_import_unclosed_tag', openDescLine, tag: openDesc ) );
             descBuffer = StringBuffer( );
             openDesc = null;
-            continue;
         }
         if( openTag != null ) {
             if( !closing && tag == _DESC_TAGS[ openTag ] ) {
@@ -209,17 +234,23 @@ List< Fragment > parse( String content ) {
                 continue;
             }
             if( _DESC_TAGS.containsValue( tag ) ) {
-                throw ImportException( _error( 'err_import_desc_outside', line, tag: tag ) );
+                errors.add( _error( 'err_import_desc_outside', line, tag: tag ) );
+                continue;
             }
-            if( !closing || tag != openTag ) {
-                throw ImportException( _error( 'err_import_unclosed_tag', openLine, tag: openTag ) );
+            if( closing && tag == openTag ) {
+                buffer.write( text );
+                _closeTag( fragment!, openTag, buffer.toString( ), description, line, errors );
+                buffer = StringBuffer( );
+                description = null;
+                openTag = null;
+                continue;
             }
-            buffer.write( text );
-            _closeTag( fragment!, openTag, buffer.toString( ), description, line );
+            // the object tag is left open: what was read within it goes to the
+            // card text and the tag met here is read on its own
+            errors.add( _error( 'err_import_unclosed_tag', openLine, tag: openTag ) );
             buffer = StringBuffer( );
             description = null;
             openTag = null;
-            continue;
         }
         if( fragment != null ) {
             fragment.body.write( text );
@@ -227,16 +258,20 @@ List< Fragment > parse( String content ) {
         if( tag == TAG_TEXT ) {
             if( closing ) {
                 if( fragment == null ) {
-                    throw ImportException( _error( 'err_import_unexpected_close', line, tag: tag ) );
+                    errors.add( _error( 'err_import_unexpected_close', line, tag: tag ) );
+                    continue;
                 }
                 if( fragment.title.isEmpty ) {
-                    throw ImportException( _error( 'err_import_no_title', fragment.line ) );
+                    errors.add( _error( 'err_import_no_title', fragment.line ) );
+                } else {
+                    fragments.add( fragment );
                 }
-                fragments.add( fragment );
                 fragment = null;
             } else {
                 if( fragment != null ) {
-                    throw ImportException( _error( 'err_import_nested_text', line ) );
+                    // the previous fragment is left unclosed, it is given up and
+                    // this tag is taken as the start of the next one
+                    errors.add( _error( 'err_import_nested_text', line ) );
                 }
                 fragment = Fragment( line );
             }
@@ -247,23 +282,28 @@ List< Fragment > parse( String content ) {
             continue;
         }
         if( closing ) {
-            throw ImportException( _error( 'err_import_unexpected_close', line, tag: tag ) );
+            errors.add( _error( 'err_import_unexpected_close', line, tag: tag ) );
+            continue;
         }
         // a description belongs to the object it describes and to nothing else
         if( _DESC_TAGS.containsValue( tag ) ) {
-            throw ImportException( _error( 'err_import_desc_outside', line, tag: tag ) );
+            errors.add( _error( 'err_import_desc_outside', line, tag: tag ) );
+            continue;
         }
         openTag = tag;
         openLine = line;
     }
     if( openDesc != null ) {
-        throw ImportException( _error( 'err_import_unclosed_tag', openDescLine, tag: openDesc ) );
+        errors.add( _error( 'err_import_unclosed_tag', openDescLine, tag: openDesc ) );
     }
     if( openTag != null ) {
-        throw ImportException( _error( 'err_import_unclosed_tag', openLine, tag: openTag ) );
+        errors.add( _error( 'err_import_unclosed_tag', openLine, tag: openTag ) );
     }
     if( fragment != null ) {
-        throw ImportException( _error( 'err_import_unclosed_text', fragment.line ) );
+        errors.add( _error( 'err_import_unclosed_text', fragment.line ) );
+    }
+    if( errors.isNotEmpty ) {
+        throw ImportException( errors );
     }
     return fragments;
 }
@@ -280,13 +320,17 @@ List< Fragment > parse( String content ) {
  * value the tag content, the description left out
  * description the description read within the tag, null when there is none
  * line the line the tag is closed at
+ * errors collects the errors found in the tag, see [parse]
  */
-void _closeTag( Fragment fragment, String tag, String value, String? description, int line ) {
+void _closeTag(
+    Fragment fragment, String tag, String value, String? description, int line, List< String > errors
+) {
     final name = value.trim( );
     switch( tag ) {
         case TAG_TITLE:
             if( name.isEmpty && fragment.title.isEmpty ) {
-                throw ImportException( _error( 'err_import_empty_value', line, tag: tag ) );
+                errors.add( _error( 'err_import_empty_value', line, tag: tag ) );
+                break;
             }
             if( fragment.title.isEmpty ) {
                 fragment.title = name;
@@ -299,7 +343,8 @@ void _closeTag( Fragment fragment, String tag, String value, String? description
             break;
         default:
             if( name.isEmpty ) {
-                throw ImportException( _error( 'err_import_empty_value', line, tag: tag ) );
+                errors.add( _error( 'err_import_empty_value', line, tag: tag ) );
+                break;
             }
             final type = _TYPES[ tag ]!;
             final names = fragment.names[ type ]!;

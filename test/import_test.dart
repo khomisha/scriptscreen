@@ -193,6 +193,37 @@ void main( ) {
             );
         } );
 
+        test( 'reports every error of the file, not the first one only', ( ) {
+            try {
+                parse(
+                    '<text><title>t</title><role> </role></text>\n'   // empty name
+                    '</text>\n'                                       // close without an open
+                    '<text><title>two</title><loc>Кухня</text>\n'     // unclosed loc
+                );
+                fail( 'the malformed markup is not reported' );
+            }
+            on ImportException catch( e ) {
+                expect( e.errors.length, 3 );
+                expect( e.errors[ 0 ], contains( 'err_import_empty_value' ) );
+                expect( e.errors[ 1 ], contains( 'err_import_unexpected_close' ) );
+                expect( e.errors[ 2 ], contains( 'err_import_unclosed_tag' ) );
+                expect( e.message, e.errors.join( '\n' ) );
+            }
+        } );
+
+        test( 'reads the fragments following the malformed one', ( ) {
+            try {
+                parse( '<text><title>one</title><role>ANNA<text><title>two</title></text>' );
+                fail( 'the nested text tag is not reported' );
+            }
+            on ImportException catch( e ) {
+                // the unclosed <role> and the <text> opened within the fragment
+                expect( e.errors.length, 2 );
+                expect( e.errors[ 0 ], contains( 'err_import_unclosed_tag' ) );
+                expect( e.errors[ 1 ], contains( 'err_import_nested_text' ) );
+            }
+        } );
+
         test( 'reports the line the error is found at', ( ) {
             try {
                 parse( 'line one\nline two\n<text>\n<title>t</title>\n<role>A\n</text>\n' );
