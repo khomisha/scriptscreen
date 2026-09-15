@@ -128,10 +128,14 @@ void export( ) async {
         titles.add( note.title );
     }
     final script = AppPresenter( ).getData( SCRIPT )[ 0 ].customData as ScriptData;
-    await export2pdf( _buildPreamble( script ), headers, bodies, pdfPath, titles, tr( 'toc_title' ) );
+    // the headings of the document are written in the language of the project,
+    // the GUI language the author happens to work in has no say in it
+    final lang = ( AppPresenter( ).getData( PROJECT )[ 0 ].customData as ProjectData ).lang;
+    final trDoc = await translator( lang );
+    await export2pdf( _buildPreamble( script, trDoc ), headers, bodies, pdfPath, titles, trDoc( 'toc_title' ) );
 }
 
-String _buildPreamble( ScriptData script ) {
+String _buildPreamble( ScriptData script, String Function( String ) trDoc ) {
     final buffer = StringBuffer( );
     buffer.writeln( '<div style="page-break-after: always; text-align: center; padding-top: 200px;">' );
     // the author is optional, an empty one must not leave a blank line
@@ -147,13 +151,13 @@ String _buildPreamble( ScriptData script ) {
     buffer.writeln( '</div>' );
     if( script.logline.isNotEmpty ) {
         buffer.writeln( '<div style="page-break-after: always; padding: 40px;">' );
-        buffer.writeln( '<h2>${tr( 'logline' )}</h2>' );
+        buffer.writeln( '<h2>${trDoc( 'logline' )}</h2>' );
         buffer.writeln( '<p>${script.logline}</p>' );
         buffer.writeln( '</div>' );
     }
     if( script.synopsis.isNotEmpty ) {
         buffer.writeln( '<div style="page-break-after: always; padding: 40px;">' );
-        buffer.writeln( '<h2>${tr( 'synopsis' )}</h2>' );
+        buffer.writeln( '<h2>${trDoc( 'synopsis' )}</h2>' );
         buffer.writeln( '<p>${script.synopsis}</p>' );
         buffer.writeln( '</div>' );
     }
