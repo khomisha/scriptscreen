@@ -134,9 +134,16 @@ void export( ) async {
 String _buildPreamble( ScriptData script ) {
     final buffer = StringBuffer( );
     buffer.writeln( '<div style="page-break-after: always; text-align: center; padding-top: 200px;">' );
-    buffer.writeln( '<p style="font-size: 14pt;"><strong>${script.authors}</strong></p>' );
+    // the author is optional, an empty one must not leave a blank line
+    if( script.authors.isNotEmpty ) {
+        buffer.writeln( '<p style="font-size: 14pt;"><strong>${script.authors}</strong></p>' );
+    }
     buffer.writeln( '<h1 style="font-size: 24pt;">${script.title}</h1>' );
-    buffer.writeln( '<p style="font-size: 12pt; margin-top: 60px;">${script.place}, ${script.date}</p>' );
+    // the place is optional, an empty one must not leave a dangling comma
+    final origin = [ script.place, script.date ].where( ( s ) => s.isNotEmpty ).join( ', ' );
+    if( origin.isNotEmpty ) {
+        buffer.writeln( '<p style="font-size: 12pt; margin-top: 60px;">$origin</p>' );
+    }
     buffer.writeln( '</div>' );
     if( script.logline.isNotEmpty ) {
         buffer.writeln( '<div style="page-break-after: always; padding: 40px;">' );

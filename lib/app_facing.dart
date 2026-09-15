@@ -104,15 +104,13 @@ class AppFacing {
             style: TEXT_FIELD
         ),
         AUTHOR: FieldPattern( label: tr( 'author' ), style: TEXT_FIELD ),
+        // the date is shown on the title page only, it never becomes a file
+        // name, so any wording the author prefers goes, see [_buildPreamble]
         'date': FieldPattern(
             label: tr( 'date' ),
             validator: ( value ) {
                 if( value == null || value.isEmpty ) {
                     return tr( 'err_empty' );
-                }
-                var validChars = RegExp( r'^[a-zA-Z0-9_\-=\.]+$' );
-                if( !validChars.hasMatch( value ) ) {
-                    return '${tr( 'err_invalid_name' )} $value';
                 }
                 return null;
             },
