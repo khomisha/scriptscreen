@@ -105,20 +105,29 @@ if ([string]::IsNullOrWhiteSpace($ElectronZip)) {
 if ($ElectronZip) {
     $ElectronZip = (Resolve-Path $ElectronZip).Path
     Log "Using local Electron archive $ElectronZip (skipping the Electron download)"
-    # Lets npm finish without fetching the binary; it is unpacked below.
-    $env:ELECTRON_SKIP_BINARY_DOWNLOAD = '1'
 }
 
-Log "Installing npm dependencies (downloads Electron - needs network)"
+# The Electron binary is fetched by electron's postinstall (install.js).
+# Newer npm (11.16+) does not run dependency install scripts unless they are
+# approved (allowScripts), so the postinstall may silently never run. Skip it
+# during npm install and run install.js explicitly below instead, so the
+# result does not depend on the npm version or its script policy.
+Log "Installing npm dependencies (needs network)"
+$env:ELECTRON_SKIP_BINARY_DOWNLOAD = '1'
 Push-Location $AppDir
 try { npm install --omit=dev --no-audit --no-fund } finally { Pop-Location }
 if ($LASTEXITCODE -ne 0) { Log "WARNING: npm install exited with code $LASTEXITCODE" }
+Remove-Item Env:ELECTRON_SKIP_BINARY_DOWNLOAD -ErrorAction SilentlyContinue
 
-# The Electron binary is fetched from GitHub releases by a postinstall step.
-# On networks where that download is blocked or reset, npm leaves
-# node_modules\electron in place without the binary - and a plain re-run of
-# npm install then skips the postinstall, so the tree never heals itself.
-# Verify the binary and, if missing, retry the download through a mirror.
+# Runs electron's install.js (downloads unless already installed) with its
+# output - errors included - going to the console and the install log.
+# Native stderr must not trip ErrorActionPreference 'Stop' here.
+function Invoke-ElectronInstall {
+    $ErrorActionPreference = 'Continue'
+    Push-Location $ElectronPkg
+    try { & node install.js 2>&1 | ForEach-Object { Write-Host "$_" } } finally { Pop-Location }
+}
+
 $ElectronPkg = Join-Path $AppDir 'node_modules\electron'
 $ElectronExe = Join-Path $ElectronPkg 'dist\electron.exe'
 if ($ElectronZip) {
@@ -138,20 +147,22 @@ if ($ElectronZip) {
     Expand-Archive -Path $ElectronZip -DestinationPath $ElectronDist -Force
     Set-Content -Path (Join-Path $ElectronPkg 'path.txt') -Value 'electron.exe' -NoNewline -Encoding Ascii
     if (-not (Test-Path $ElectronExe)) { Die "electron.exe not found after unpacking $ElectronZip - is the archive complete?" }
-} elseif (-not (Test-Path $ElectronExe)) {
-    Log "Electron binary missing (GitHub download failed?) - retrying via mirror"
-    if (-not $env:ELECTRON_MIRROR) { $env:ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/' }
-    if (Test-Path (Join-Path $ElectronPkg 'install.js')) {
-        Push-Location $ElectronPkg
-        try { node install.js } finally { Pop-Location }
-    } else {
-        # npm rolled the tree back on failure - run the whole install again
-        # with the mirror active so the postinstall fetches from it.
-        Push-Location $AppDir
-        try { npm install --omit=dev --no-audit --no-fund } finally { Pop-Location }
+} else {
+    if (-not (Test-Path (Join-Path $ElectronPkg 'install.js'))) {
+        Die "npm install did not set up node_modules\electron - see the npm output above, then re-run install.ps1."
     }
     if (-not (Test-Path $ElectronExe)) {
-        Die "Electron download failed even via mirror ($env:ELECTRON_MIRROR). Set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-win32-x64.zip by other means, put it next to install.ps1 and re-run install.ps1 (the version is in $ElectronPkg\package.json)."
+        $src = if ($env:ELECTRON_MIRROR) { $env:ELECTRON_MIRROR } else { 'GitHub' }
+        Log "Downloading Electron from $src"
+        Invoke-ElectronInstall
+    }
+    if ((-not (Test-Path $ElectronExe)) -and (-not $env:ELECTRON_MIRROR)) {
+        Log "Electron download from GitHub failed - retrying via mirror"
+        $env:ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/'
+        Invoke-ElectronInstall
+    }
+    if (-not (Test-Path $ElectronExe)) {
+        Die "Electron download failed (last tried $env:ELECTRON_MIRROR) - the error is printed above. Set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-win32-x64.zip by other means, put it next to install.ps1 and re-run install.ps1 (the version is in $ElectronPkg\package.json)."
     }
 }
 

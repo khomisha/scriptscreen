@@ -109,19 +109,17 @@ fi
 if [ -n "$ELECTRON_ZIP" ]; then
     ELECTRON_ZIP="$(cd "$(dirname "$ELECTRON_ZIP")" && pwd)/$(basename "$ELECTRON_ZIP")"
     log "Using local Electron archive $ELECTRON_ZIP (skipping the Electron download)"
-    # Lets npm finish without fetching the binary; it is unpacked below.
-    export ELECTRON_SKIP_BINARY_DOWNLOAD=1
 fi
 
-log "Installing npm dependencies (this downloads Electron — needs network)"
-( cd "$APP_DIR" && npm install --omit=dev --no-audit --no-fund ) \
-    || log "WARNING: npm install failed — retrying the Electron download below"
+# The Electron binary is fetched by electron's postinstall (install.js).
+# Newer npm (11.16+) does not run dependency install scripts unless they are
+# approved (allowScripts), so the postinstall may silently never run. Skip it
+# during npm install and run install.js explicitly below instead, so the
+# result does not depend on the npm version or its script policy.
+log "Installing npm dependencies (needs network)"
+( cd "$APP_DIR" && ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install --omit=dev --no-audit --no-fund ) \
+    || log "WARNING: npm install failed"
 
-# The Electron binary is fetched from GitHub releases by a postinstall step.
-# On networks where that download is blocked or reset, npm leaves
-# node_modules/electron in place without the binary — and a plain re-run of
-# npm install then skips the postinstall, so the tree never heals itself.
-# Verify the binary and, if missing, retry the download through a mirror.
 ELECTRON_PKG="$APP_DIR/node_modules/electron"
 ELECTRON_BIN="$ELECTRON_PKG/dist/electron"
 # Unpack the local zip the way electron's own install.js does: binaries in
@@ -167,18 +165,20 @@ PY
 
 if [ -n "$ELECTRON_ZIP" ]; then
     install_electron_zip
-elif [ ! -x "$ELECTRON_BIN" ]; then
-    log "Electron binary missing (GitHub download failed?) — retrying via mirror"
-    export ELECTRON_MIRROR="${ELECTRON_MIRROR:-https://npmmirror.com/mirrors/electron/}"
-    if [ -f "$ELECTRON_PKG/install.js" ]; then
+else
+    [ -f "$ELECTRON_PKG/install.js" ] \
+        || die "npm install did not set up node_modules/electron — see the npm output above, then re-run"
+    if [ ! -x "$ELECTRON_BIN" ]; then
+        log "Downloading Electron from ${ELECTRON_MIRROR:-GitHub}"
         ( cd "$ELECTRON_PKG" && node install.js ) || true
-    else
-        # npm rolled the tree back on failure — run the whole install again
-        # with the mirror active so the postinstall fetches from it.
-        ( cd "$APP_DIR" && npm install --omit=dev --no-audit --no-fund ) || true
+    fi
+    if [ ! -x "$ELECTRON_BIN" ] && [ -z "${ELECTRON_MIRROR:-}" ]; then
+        log "Electron download from GitHub failed — retrying via mirror"
+        export ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/"
+        ( cd "$ELECTRON_PKG" && node install.js ) || true
     fi
     [ -x "$ELECTRON_BIN" ] \
-        || die "Electron download failed even via mirror ($ELECTRON_MIRROR) — set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-linux-<arch>.zip by other means, put it next to this script and re-run (the version is in $ELECTRON_PKG/package.json)"
+        || die "Electron download failed (last tried $ELECTRON_MIRROR; the error is printed above) — set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-linux-<arch>.zip by other means, put it next to this script and re-run (the version is in $ELECTRON_PKG/package.json)"
 fi
 
 # ---------------------------------------------------------------------------
