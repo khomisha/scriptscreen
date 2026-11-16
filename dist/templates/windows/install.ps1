@@ -36,7 +36,18 @@ $StartMenu  = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
 $Launcher   = Join-Path $AppDir 'scriptscreen.cmd'
 
 function Log($m) { Write-Host "==> $m" }
-function Die($m) { Write-Error $m; exit 1 }
+# Plain red message + exit code. Not Write-Error: under ErrorActionPreference
+# 'Stop' that throws a WriteErrorException whose banner points at this line
+# rather than the real failure, and skips the exit/transcript cleanup.
+function Die($m) {
+    Write-Host ""
+    Write-Host "ERROR: $m" -ForegroundColor Red
+    if ($script:LogPath) {
+        Write-Host "Full log: $script:LogPath" -ForegroundColor Red
+        Stop-Transcript | Out-Null
+    }
+    exit 1
+}
 
 if (-not (Test-Path (Join-Path $SrcDir 'app'))) { Die "Run this from the unpacked archive (app\ not found)." }
 
