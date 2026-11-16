@@ -206,12 +206,16 @@ no longer need them.
   different mirror, set `ELECTRON_MIRROR` before re-running the installer,
   e.g. `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/`
   (PowerShell: `$env:ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/'`).
-- **No mirror is reachable either (Windows)** — download
-  `electron-v<version>-win32-x64.zip` by any other means (browser, VPN, another
-  network) from https://github.com/electron/electron/releases or
-  https://npmmirror.com/mirrors/electron/, put it next to `install.ps1` and
-  re-run the installer; it installs Electron from the zip without downloading.
-  The required version is in
-  `%LOCALAPPDATA%\ScriptScreen\node_modules\electron\package.json`; if the zip
-  has the wrong version, the installer names the one it needs. A zip elsewhere
-  can be passed as `.\install.ps1 -ElectronZip <path>`.
+- **No mirror is reachable either** — download the Electron archive by any
+  other means (browser, VPN, another network) from
+  https://github.com/electron/electron/releases or
+  https://npmmirror.com/mirrors/electron/, put it next to the installer and
+  re-run it; it installs Electron from the zip without downloading. Archive
+  name: `electron-v<version>-win32-x64.zip` (Windows),
+  `electron-v<version>-linux-x64.zip` (Linux),
+  `electron-v<version>-darwin-arm64.zip` or `-darwin-x64.zip` (macOS, Apple
+  Silicon / Intel). The required version is in
+  `node_modules/electron/package.json` inside the app folder; if the zip has
+  the wrong version, the installer names the one it needs. A zip elsewhere can
+  be passed as `.\install.ps1 -ElectronZip <path>` (Windows) or
+  `--electron-zip <path>` (Linux, macOS).

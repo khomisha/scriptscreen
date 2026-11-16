@@ -215,12 +215,16 @@ Homebrew и общесистемный ffmpeg остаются на месте �
   `ELECTRON_MIRROR` перед повторным запуском установщика, например
   `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/`
   (PowerShell: `$env:ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/'`).
-- **Зеркало тоже недоступно (Windows)** — скачайте
-  `electron-v<версия>-win32-x64.zip` любым другим способом (браузер, VPN,
-  другая сеть) с https://github.com/electron/electron/releases или
-  https://npmmirror.com/mirrors/electron/, положите рядом с `install.ps1` и
-  запустите установщик ещё раз — он установит Electron из архива без загрузки.
-  Нужная версия указана в
-  `%LOCALAPPDATA%\ScriptScreen\node_modules\electron\package.json`; если версия
-  архива не та, установщик назовёт нужную. Архив из другой папки можно указать
-  так: `.\install.ps1 -ElectronZip <путь>`.
+- **Зеркало тоже недоступно** — скачайте архив Electron любым другим
+  способом (браузер, VPN, другая сеть) с
+  https://github.com/electron/electron/releases или
+  https://npmmirror.com/mirrors/electron/, положите рядом с установщиком и
+  запустите его ещё раз — он установит Electron из архива без загрузки. Имя
+  архива: `electron-v<версия>-win32-x64.zip` (Windows),
+  `electron-v<версия>-linux-x64.zip` (Linux),
+  `electron-v<версия>-darwin-arm64.zip` или `-darwin-x64.zip` (macOS, Apple
+  Silicon / Intel). Нужная версия указана в
+  `node_modules/electron/package.json` в папке приложения; если версия архива
+  не та, установщик назовёт нужную. Архив из другой папки можно указать так:
+  `.\install.ps1 -ElectronZip <путь>` (Windows) или `--electron-zip <путь>`
+  (Linux, macOS).

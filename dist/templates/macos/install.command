@@ -11,6 +11,10 @@
 #   --log <file>        Write the install log to a custom file
 #                       (default: ~/Library/Application Support/ScriptScreen/install.log).
 #   --no-log            Do not write a log file.
+#   --electron-zip <f>  Install Electron from this local
+#                       electron-v<ver>-darwin-<arch>.zip instead of downloading
+#                       it. A zip with that name next to this script is used
+#                       automatically.
 #
 set -euo pipefail
 
@@ -25,6 +29,7 @@ log() { echo "==> $*"; }
 MODELS="${SCRIPTSCREEN_MODELS:-small}"
 WANT_LOG=1
 LOG_FILE=""
+ELECTRON_ZIP=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --models) MODELS="${2:-}"; shift 2;;
@@ -33,7 +38,8 @@ while [ $# -gt 0 ]; do
             if [ $# -ge 2 ] && [ "${2#-}" = "$2" ]; then LOG_FILE="$2"; shift 2; else shift; fi
             ;;
         --no-log) WANT_LOG=0; shift;;
-        -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+        --electron-zip) ELECTRON_ZIP="${2:-}"; shift 2;;
+        -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
         *) die "unknown argument: $1";;
     esac
 done
@@ -71,6 +77,20 @@ log "Using node $(node --version), npm $(npm --version)"
 log "Installing app to $APP_DIR"
 mkdir -p "$APP_DIR"
 cp -a "$SRC_DIR/app/." "$APP_DIR/"
+# A local Electron zip (for networks where neither GitHub nor the mirror is
+# reachable): --electron-zip, or electron-v*-darwin-*.zip next to this script.
+if [ -z "$ELECTRON_ZIP" ]; then
+    ELECTRON_ZIP="$(ls -1 "$SRC_DIR"/electron-v*-darwin-*.zip 2>/dev/null | sort -r | head -n 1 || true)"
+elif [ ! -f "$ELECTRON_ZIP" ]; then
+    die "Electron zip not found: $ELECTRON_ZIP"
+fi
+if [ -n "$ELECTRON_ZIP" ]; then
+    ELECTRON_ZIP="$(cd "$(dirname "$ELECTRON_ZIP")" && pwd)/$(basename "$ELECTRON_ZIP")"
+    log "Using local Electron archive $ELECTRON_ZIP (skipping the Electron download)"
+    # Lets npm finish without fetching the binary; it is unpacked below.
+    export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+fi
+
 log "Installing npm dependencies (downloads Electron — needs network)"
 ( cd "$APP_DIR" && npm install --omit=dev --no-audit --no-fund ) \
     || log "WARNING: npm install failed — retrying the Electron download below"
@@ -82,7 +102,36 @@ log "Installing npm dependencies (downloads Electron — needs network)"
 # Verify the binary and, if missing, retry the download through a mirror.
 ELECTRON_PKG="$APP_DIR/node_modules/electron"
 ELECTRON_BIN="$ELECTRON_PKG/dist/Electron.app/Contents/MacOS/Electron"
-if [ ! -x "$ELECTRON_BIN" ]; then
+# Unpack the local zip the way electron's own install.js does: binaries in
+# dist/, the executable's path (relative to dist/) in path.txt, no newline.
+install_electron_zip() {
+    [ -f "$ELECTRON_PKG/package.json" ] \
+        || die "npm install did not set up node_modules/electron — see the npm output above"
+    local want arch want_name
+    want="$(node -p 'require(process.argv[1]).version' "$ELECTRON_PKG/package.json")"
+    case "$(uname -m)" in
+        x86_64|amd64)  arch=x64 ;;
+        aarch64|arm64) arch=arm64 ;;
+        armv7l)        arch=armv7l ;;
+        *)             arch="$(uname -m)" ;;
+    esac
+    want_name="electron-v$want-darwin-$arch.zip"
+    [ "$(basename "$ELECTRON_ZIP")" = "$want_name" ] \
+        || die "local Electron archive is $(basename "$ELECTRON_ZIP"), but this app needs $want_name — download it from https://github.com/electron/electron/releases/tag/v$want (or https://npmmirror.com/mirrors/electron/$want/) and re-run"
+    log "Unpacking $want_name"
+    rm -rf "$ELECTRON_PKG/dist"
+    mkdir -p "$ELECTRON_PKG/dist"
+    # ditto keeps the symlinks inside Electron.app's frameworks intact.
+    ditto -x -k "$ELECTRON_ZIP" "$ELECTRON_PKG/dist"
+    # A browser-downloaded zip is quarantined; don't let that block the app.
+    xattr -dr com.apple.quarantine "$ELECTRON_PKG/dist" 2>/dev/null || true
+    printf '%s' "Electron.app/Contents/MacOS/Electron" > "$ELECTRON_PKG/path.txt"
+    [ -x "$ELECTRON_BIN" ] || die "Electron executable not found after unpacking $ELECTRON_ZIP — is the archive complete?"
+}
+
+if [ -n "$ELECTRON_ZIP" ]; then
+    install_electron_zip
+elif [ ! -x "$ELECTRON_BIN" ]; then
     log "Electron binary missing (GitHub download failed?) — retrying via mirror"
     export ELECTRON_MIRROR="${ELECTRON_MIRROR:-https://npmmirror.com/mirrors/electron/}"
     if [ -f "$ELECTRON_PKG/install.js" ]; then
@@ -93,7 +142,7 @@ if [ ! -x "$ELECTRON_BIN" ]; then
         ( cd "$APP_DIR" && npm install --omit=dev --no-audit --no-fund ) || true
     fi
     [ -x "$ELECTRON_BIN" ] \
-        || die "Electron download failed even via mirror ($ELECTRON_MIRROR) — set ELECTRON_MIRROR to a reachable mirror and re-run"
+        || die "Electron download failed even via mirror ($ELECTRON_MIRROR) — set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-darwin-<arch>.zip by other means, put it next to this script and re-run (the version is in $ELECTRON_PKG/package.json)"
 fi
 
 # ---------------------------------------------------------------------------

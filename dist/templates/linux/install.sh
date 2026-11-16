@@ -13,6 +13,10 @@
 #   --log <file>        Write the install log to a custom file
 #                       (default: ~/.local/share/scriptscreen/install.log).
 #   --no-log            Do not write a log file.
+#   --electron-zip <f>  Install Electron from this local
+#                       electron-v<ver>-linux-<arch>.zip instead of downloading
+#                       it. A zip with that name next to this script is used
+#                       automatically.
 #
 set -euo pipefail
 
@@ -34,6 +38,7 @@ log() { echo "==> $*"; }
 MODELS="${SCRIPTSCREEN_MODELS:-small}"
 WANT_LOG=1
 LOG_FILE=""
+ELECTRON_ZIP=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --models) MODELS="${2:-}"; shift 2;;
@@ -42,7 +47,8 @@ while [ $# -gt 0 ]; do
             if [ $# -ge 2 ] && [ "${2#-}" = "$2" ]; then LOG_FILE="$2"; shift 2; else shift; fi
             ;;
         --no-log) WANT_LOG=0; shift;;
-        -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+        --electron-zip) ELECTRON_ZIP="${2:-}"; shift 2;;
+        -h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
         *) die "unknown argument: $1";;
     esac
 done
@@ -93,6 +99,20 @@ log "Installing app to $APP_DIR"
 mkdir -p "$APP_DIR"
 cp -a "$SRC_DIR/app/." "$APP_DIR/"
 
+# A local Electron zip (for networks where neither GitHub nor the mirror is
+# reachable): --electron-zip, or electron-v*-linux-*.zip next to this script.
+if [ -z "$ELECTRON_ZIP" ]; then
+    ELECTRON_ZIP="$(ls -1 "$SRC_DIR"/electron-v*-linux-*.zip 2>/dev/null | sort -r | head -n 1 || true)"
+elif [ ! -f "$ELECTRON_ZIP" ]; then
+    die "Electron zip not found: $ELECTRON_ZIP"
+fi
+if [ -n "$ELECTRON_ZIP" ]; then
+    ELECTRON_ZIP="$(cd "$(dirname "$ELECTRON_ZIP")" && pwd)/$(basename "$ELECTRON_ZIP")"
+    log "Using local Electron archive $ELECTRON_ZIP (skipping the Electron download)"
+    # Lets npm finish without fetching the binary; it is unpacked below.
+    export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+fi
+
 log "Installing npm dependencies (this downloads Electron — needs network)"
 ( cd "$APP_DIR" && npm install --omit=dev --no-audit --no-fund ) \
     || log "WARNING: npm install failed — retrying the Electron download below"
@@ -103,7 +123,51 @@ log "Installing npm dependencies (this downloads Electron — needs network)"
 # npm install then skips the postinstall, so the tree never heals itself.
 # Verify the binary and, if missing, retry the download through a mirror.
 ELECTRON_PKG="$APP_DIR/node_modules/electron"
-if [ ! -x "$ELECTRON_PKG/dist/electron" ]; then
+ELECTRON_BIN="$ELECTRON_PKG/dist/electron"
+# Unpack the local zip the way electron's own install.js does: binaries in
+# dist/, the executable's path (relative to dist/) in path.txt, no newline.
+install_electron_zip() {
+    [ -f "$ELECTRON_PKG/package.json" ] \
+        || die "npm install did not set up node_modules/electron — see the npm output above"
+    local want arch want_name
+    want="$(node -p 'require(process.argv[1]).version' "$ELECTRON_PKG/package.json")"
+    case "$(uname -m)" in
+        x86_64|amd64)  arch=x64 ;;
+        aarch64|arm64) arch=arm64 ;;
+        armv7l)        arch=armv7l ;;
+        *)             arch="$(uname -m)" ;;
+    esac
+    want_name="electron-v$want-linux-$arch.zip"
+    [ "$(basename "$ELECTRON_ZIP")" = "$want_name" ] \
+        || die "local Electron archive is $(basename "$ELECTRON_ZIP"), but this app needs $want_name — download it from https://github.com/electron/electron/releases/tag/v$want (or https://npmmirror.com/mirrors/electron/$want/) and re-run"
+    log "Unpacking $want_name"
+    rm -rf "$ELECTRON_PKG/dist"
+    mkdir -p "$ELECTRON_PKG/dist"
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -q "$ELECTRON_ZIP" -d "$ELECTRON_PKG/dist"
+    elif command -v bsdtar >/dev/null 2>&1; then
+        bsdtar -xf "$ELECTRON_ZIP" -C "$ELECTRON_PKG/dist"
+    elif command -v python3 >/dev/null 2>&1; then
+        # zipfile drops the permission bits — restore them from the archive.
+        python3 -I - "$ELECTRON_ZIP" "$ELECTRON_PKG/dist" <<'PY'
+import os, sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+    for i in z.infolist():
+        p = z.extract(i, sys.argv[2])
+        mode = (i.external_attr >> 16) & 0o777
+        if mode:
+            os.chmod(p, mode)
+PY
+    else
+        die "need unzip (or bsdtar/python3) to unpack $ELECTRON_ZIP — install unzip and re-run"
+    fi
+    printf '%s' "electron" > "$ELECTRON_PKG/path.txt"
+    [ -x "$ELECTRON_BIN" ] || die "Electron executable not found after unpacking $ELECTRON_ZIP — is the archive complete?"
+}
+
+if [ -n "$ELECTRON_ZIP" ]; then
+    install_electron_zip
+elif [ ! -x "$ELECTRON_BIN" ]; then
     log "Electron binary missing (GitHub download failed?) — retrying via mirror"
     export ELECTRON_MIRROR="${ELECTRON_MIRROR:-https://npmmirror.com/mirrors/electron/}"
     if [ -f "$ELECTRON_PKG/install.js" ]; then
@@ -113,8 +177,8 @@ if [ ! -x "$ELECTRON_PKG/dist/electron" ]; then
         # with the mirror active so the postinstall fetches from it.
         ( cd "$APP_DIR" && npm install --omit=dev --no-audit --no-fund ) || true
     fi
-    [ -x "$ELECTRON_PKG/dist/electron" ] \
-        || die "Electron download failed even via mirror ($ELECTRON_MIRROR) — set ELECTRON_MIRROR to a reachable mirror and re-run"
+    [ -x "$ELECTRON_BIN" ] \
+        || die "Electron download failed even via mirror ($ELECTRON_MIRROR) — set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-linux-<arch>.zip by other means, put it next to this script and re-run (the version is in $ELECTRON_PKG/package.json)"
 fi
 
 # ---------------------------------------------------------------------------
