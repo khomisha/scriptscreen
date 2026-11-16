@@ -17,6 +17,11 @@
         -Log <file>               Write the install log to a custom file
                                   (default: %LOCALAPPDATA%\ScriptScreen\install.log).
         -NoLog                    Do not write a log file.
+        -ElectronZip <file>       Install Electron from this local
+                                  electron-v<ver>-win32-<arch>.zip instead of
+                                  downloading it. A zip with that name placed
+                                  next to install.ps1 is picked up
+                                  automatically.
 
     SDL2 (needed for live transcription) ships as SDL2.dll inside the archive
     next to the whisper binaries, so nothing extra is installed on this machine.
@@ -25,6 +30,7 @@
 param(
     [string]$Models = 'small',
     [string]$Log    = '',
+    [string]$ElectronZip = '',
     [switch]$NoLog
 )
 $ErrorActionPreference = 'Stop'
@@ -87,6 +93,22 @@ Log "Installing app to $AppDir"
 New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
 Copy-Item -Path (Join-Path $SrcDir 'app\*') -Destination $AppDir -Recurse -Force
 
+# A local Electron zip (for networks where neither GitHub nor the mirror is
+# reachable): -ElectronZip, or electron-v*-win32-*.zip next to install.ps1.
+if ([string]::IsNullOrWhiteSpace($ElectronZip)) {
+    $found = Get-ChildItem -Path $SrcDir -Filter 'electron-v*-win32-*.zip' -File -ErrorAction SilentlyContinue |
+             Sort-Object Name -Descending | Select-Object -First 1
+    if ($found) { $ElectronZip = $found.FullName }
+} elseif (-not (Test-Path $ElectronZip -PathType Leaf)) {
+    Die "Electron zip not found: $ElectronZip"
+}
+if ($ElectronZip) {
+    $ElectronZip = (Resolve-Path $ElectronZip).Path
+    Log "Using local Electron archive $ElectronZip (skipping the Electron download)"
+    # Lets npm finish without fetching the binary; it is unpacked below.
+    $env:ELECTRON_SKIP_BINARY_DOWNLOAD = '1'
+}
+
 Log "Installing npm dependencies (downloads Electron - needs network)"
 Push-Location $AppDir
 try { npm install --omit=dev --no-audit --no-fund } finally { Pop-Location }
@@ -99,7 +121,24 @@ if ($LASTEXITCODE -ne 0) { Log "WARNING: npm install exited with code $LASTEXITC
 # Verify the binary and, if missing, retry the download through a mirror.
 $ElectronPkg = Join-Path $AppDir 'node_modules\electron'
 $ElectronExe = Join-Path $ElectronPkg 'dist\electron.exe'
-if (-not (Test-Path $ElectronExe)) {
+if ($ElectronZip) {
+    $pkgJson = Join-Path $ElectronPkg 'package.json'
+    if (-not (Test-Path $pkgJson)) { Die "npm install did not set up node_modules\electron - see the npm output above." }
+    $want = (Get-Content $pkgJson -Raw | ConvertFrom-Json).version
+    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+    $wantName = "electron-v$want-win32-$arch.zip"
+    if ((Split-Path $ElectronZip -Leaf) -ne $wantName) {
+        Die "Local Electron archive is $(Split-Path $ElectronZip -Leaf), but this app needs $wantName. Download it from https://github.com/electron/electron/releases/tag/v$want (or https://npmmirror.com/mirrors/electron/$want/) and re-run install.ps1."
+    }
+    # Same layout as electron's own install.js: binaries in dist\, the
+    # executable's name in path.txt (no trailing newline).
+    $ElectronDist = Join-Path $ElectronPkg 'dist'
+    if (Test-Path $ElectronDist) { Remove-Item -Recurse -Force $ElectronDist }
+    Log "Unpacking $wantName"
+    Expand-Archive -Path $ElectronZip -DestinationPath $ElectronDist -Force
+    Set-Content -Path (Join-Path $ElectronPkg 'path.txt') -Value 'electron.exe' -NoNewline -Encoding Ascii
+    if (-not (Test-Path $ElectronExe)) { Die "electron.exe not found after unpacking $ElectronZip - is the archive complete?" }
+} elseif (-not (Test-Path $ElectronExe)) {
     Log "Electron binary missing (GitHub download failed?) - retrying via mirror"
     if (-not $env:ELECTRON_MIRROR) { $env:ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/' }
     if (Test-Path (Join-Path $ElectronPkg 'install.js')) {
@@ -112,7 +151,7 @@ if (-not (Test-Path $ElectronExe)) {
         try { npm install --omit=dev --no-audit --no-fund } finally { Pop-Location }
     }
     if (-not (Test-Path $ElectronExe)) {
-        Die "Electron download failed even via mirror ($env:ELECTRON_MIRROR). Set ELECTRON_MIRROR to a reachable mirror and re-run install.ps1."
+        Die "Electron download failed even via mirror ($env:ELECTRON_MIRROR). Set ELECTRON_MIRROR to a reachable mirror, or download electron-v<version>-win32-x64.zip by other means, put it next to install.ps1 and re-run install.ps1 (the version is in $ElectronPkg\package.json)."
     }
 }
 

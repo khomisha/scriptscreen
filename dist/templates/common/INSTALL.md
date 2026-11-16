@@ -206,3 +206,12 @@ no longer need them.
   different mirror, set `ELECTRON_MIRROR` before re-running the installer,
   e.g. `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/`
   (PowerShell: `$env:ELECTRON_MIRROR = 'https://npmmirror.com/mirrors/electron/'`).
+- **No mirror is reachable either (Windows)** — download
+  `electron-v<version>-win32-x64.zip` by any other means (browser, VPN, another
+  network) from https://github.com/electron/electron/releases or
+  https://npmmirror.com/mirrors/electron/, put it next to `install.ps1` and
+  re-run the installer; it installs Electron from the zip without downloading.
+  The required version is in
+  `%LOCALAPPDATA%\ScriptScreen\node_modules\electron\package.json`; if the zip
+  has the wrong version, the installer names the one it needs. A zip elsewhere
+  can be passed as `.\install.ps1 -ElectronZip <path>`.
